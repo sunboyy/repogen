@@ -58,7 +58,7 @@ func TestParseRepositoryInterface(t *testing.T) {
 						},
 						Operation: spec.FindOperation{
 							Mode:  spec.QueryModeOne,
-							Query: spec.Query{Fields: []string{"ID"}},
+							Query: spec.QuerySpec{Fields: []string{"ID"}},
 						},
 					},
 				},
@@ -98,7 +98,7 @@ func TestParseRepositoryInterface(t *testing.T) {
 						Operation: spec.FindOperation{
 
 							Mode:  spec.QueryModeOne,
-							Query: spec.Query{Fields: []string{"PhoneNumber"}},
+							Query: spec.QuerySpec{Fields: []string{"PhoneNumber"}},
 						},
 					},
 				},
@@ -137,7 +137,7 @@ func TestParseRepositoryInterface(t *testing.T) {
 						},
 						Operation: spec.FindOperation{
 							Mode:  spec.QueryModeMany,
-							Query: spec.Query{Fields: []string{"City"}},
+							Query: spec.QuerySpec{Fields: []string{"City"}},
 						},
 					},
 				},
@@ -214,7 +214,7 @@ func TestParseRepositoryInterface(t *testing.T) {
 						},
 						Operation: spec.FindOperation{
 							Mode:  spec.QueryModeMany,
-							Query: spec.Query{Fields: []string{"City", "Gender"}},
+							Query: spec.QuerySpec{Fields: []string{"City", "Gender"}},
 						},
 					},
 				},
