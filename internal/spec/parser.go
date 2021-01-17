@@ -58,12 +58,12 @@ func (p repositoryInterfaceParser) parseFindMethod(method code.Method, tokens []
 		return MethodSpec{}, err
 	}
 
-	query, err := p.parseQuery(tokens)
+	querySpec, err := p.parseQuery(tokens)
 	if err != nil {
 		return MethodSpec{}, err
 	}
 
-	if query.NumberOfArguments()+1 != len(method.Params) {
+	if querySpec.NumberOfArguments()+1 != len(method.Params) {
 		return MethodSpec{}, errors.New("method parameter not supported")
 	}
 
@@ -73,7 +73,7 @@ func (p repositoryInterfaceParser) parseFindMethod(method code.Method, tokens []
 		Returns: method.Returns,
 		Operation: FindOperation{
 			Mode:  mode,
-			Query: query,
+			Query: querySpec,
 		},
 	}, nil
 }
@@ -111,13 +111,13 @@ func (p repositoryInterfaceParser) extractFindReturns(returns []code.Type) (Quer
 	return "", errors.New("method return not supported")
 }
 
-func (p repositoryInterfaceParser) parseQuery(tokens []string) (Query, error) {
+func (p repositoryInterfaceParser) parseQuery(tokens []string) (QuerySpec, error) {
 	if len(tokens) == 0 {
-		return Query{}, errors.New("method name not supported")
+		return QuerySpec{}, errors.New("method name not supported")
 	}
 
 	if len(tokens) == 1 && tokens[0] == "All" {
-		return Query{}, nil
+		return QuerySpec{}, nil
 	}
 
 	if tokens[0] == "One" {
@@ -128,7 +128,7 @@ func (p repositoryInterfaceParser) parseQuery(tokens []string) (Query, error) {
 	}
 
 	if tokens[0] == "And" {
-		return Query{}, errors.New("method name not supported")
+		return QuerySpec{}, errors.New("method name not supported")
 	}
 	var queryFields []string
 	var aggregatedToken string
@@ -141,9 +141,9 @@ func (p repositoryInterfaceParser) parseQuery(tokens []string) (Query, error) {
 		}
 	}
 	if aggregatedToken == "" {
-		return Query{}, errors.New("method name not supported")
+		return QuerySpec{}, errors.New("method name not supported")
 	}
 	queryFields = append(queryFields, aggregatedToken)
 
-	return Query{Fields: queryFields}, nil
+	return QuerySpec{Fields: queryFields}, nil
 }

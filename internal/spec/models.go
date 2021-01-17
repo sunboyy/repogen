@@ -32,15 +32,15 @@ type Operation interface {
 // FindOperation is a method specification for find operations
 type FindOperation struct {
 	Mode  QueryMode
-	Query Query
+	Query QuerySpec
 }
 
-// Query is a condition of querying the database
-type Query struct {
+// QuerySpec is a condition of querying the database
+type QuerySpec struct {
 	Fields []string
 }
 
 // NumberOfArguments returns number of arguments required to perform the query
-func (q Query) NumberOfArguments() int {
+func (q QuerySpec) NumberOfArguments() int {
 	return len(q.Fields)
 }
