@@ -22,6 +22,16 @@ func TestGenerateMongoRepository(t *testing.T) {
 				Type: code.SimpleType("string"),
 				Tags: map[string][]string{"bson": {"username"}},
 			},
+			{
+				Name: "Gender",
+				Type: code.SimpleType("Gender"),
+				Tags: map[string][]string{"bson": {"gender"}},
+			},
+			{
+				Name: "Age",
+				Type: code.SimpleType("int"),
+				Tags: map[string][]string{"bson": {"age"}},
+			},
 		},
 	}
 	intf := code.Interface{
@@ -66,6 +76,61 @@ func TestGenerateMongoRepository(t *testing.T) {
 				},
 				Returns: []code.Type{
 					code.PointerType{ContainedType: code.SimpleType("UserModel")},
+					code.SimpleType("error"),
+				},
+			},
+			{
+				Name: "FindByGenderNot",
+				Params: []code.Param{
+					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Name: "gender", Type: code.SimpleType("int")},
+				},
+				Returns: []code.Type{
+					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+					code.SimpleType("error"),
+				},
+			},
+			{
+				Name: "FindByAgeLessThan",
+				Params: []code.Param{
+					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Name: "age", Type: code.SimpleType("int")},
+				},
+				Returns: []code.Type{
+					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+					code.SimpleType("error"),
+				},
+			},
+			{
+				Name: "FindByAgeLessThanEqual",
+				Params: []code.Param{
+					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Name: "age", Type: code.SimpleType("int")},
+				},
+				Returns: []code.Type{
+					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+					code.SimpleType("error"),
+				},
+			},
+			{
+				Name: "FindByAgeGreaterThan",
+				Params: []code.Param{
+					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Name: "age", Type: code.SimpleType("int")},
+				},
+				Returns: []code.Type{
+					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+					code.SimpleType("error"),
+				},
+			},
+			{
+				Name: "FindByAgeGreaterThanEqual",
+				Params: []code.Param{
+					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Name: "age", Type: code.SimpleType("int")},
+				},
+				Returns: []code.Type{
+					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
 					code.SimpleType("error"),
 				},
 			},
@@ -141,6 +206,76 @@ func (r *UserRepositoryMongo) FindByIDAndUsername(ctx context.Context, arg0 prim
 		return nil, err
 	}
 	return &entity, nil
+}
+
+func (r *UserRepositoryMongo) FindByGenderNot(ctx context.Context, arg0 int) ([]*UserModel, error) {
+	cursor, err := r.collection.Find(ctx, bson.M{
+		"gender": bson.M{"$ne": arg0},
+	})
+	if err != nil {
+		return nil, err
+	}
+	var entities []*UserModel
+	if err := cursor.All(ctx, &entities); err != nil {
+		return nil, err
+	}
+	return entities, nil
+}
+
+func (r *UserRepositoryMongo) FindByAgeLessThan(ctx context.Context, arg0 int) ([]*UserModel, error) {
+	cursor, err := r.collection.Find(ctx, bson.M{
+		"age": bson.M{"$lt": arg0},
+	})
+	if err != nil {
+		return nil, err
+	}
+	var entities []*UserModel
+	if err := cursor.All(ctx, &entities); err != nil {
+		return nil, err
+	}
+	return entities, nil
+}
+
+func (r *UserRepositoryMongo) FindByAgeLessThanEqual(ctx context.Context, arg0 int) ([]*UserModel, error) {
+	cursor, err := r.collection.Find(ctx, bson.M{
+		"age": bson.M{"$lte": arg0},
+	})
+	if err != nil {
+		return nil, err
+	}
+	var entities []*UserModel
+	if err := cursor.All(ctx, &entities); err != nil {
+		return nil, err
+	}
+	return entities, nil
+}
+
+func (r *UserRepositoryMongo) FindByAgeGreaterThan(ctx context.Context, arg0 int) ([]*UserModel, error) {
+	cursor, err := r.collection.Find(ctx, bson.M{
+		"age": bson.M{"$gt": arg0},
+	})
+	if err != nil {
+		return nil, err
+	}
+	var entities []*UserModel
+	if err := cursor.All(ctx, &entities); err != nil {
+		return nil, err
+	}
+	return entities, nil
+}
+
+func (r *UserRepositoryMongo) FindByAgeGreaterThanEqual(ctx context.Context, arg0 int) ([]*UserModel, error) {
+	cursor, err := r.collection.Find(ctx, bson.M{
+		"age": bson.M{"$gte": arg0},
+	})
+	if err != nil {
+		return nil, err
+	}
+	var entities []*UserModel
+	if err := cursor.All(ctx, &entities); err != nil {
+		return nil, err
+	}
+	return entities, nil
 }
 `
 	expectedCodeLines := strings.Split(expectedCode, "\n")

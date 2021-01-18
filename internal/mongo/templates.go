@@ -75,19 +75,19 @@ func (data mongoMethodTemplateData) Returns() string {
 
 const findOneTemplate = `	var entity {{.EntityType}}
 	if err := r.collection.FindOne(ctx, bson.M{
-{{range $index, $field := .QueryFields}}		"{{$field}}": arg{{$index}},
+{{range $index, $field := .Predicates}}		{{$field.Code $index}},
 {{end}}	}).Decode(&entity); err != nil {
 		return nil, err
 	}
 	return &entity, nil`
 
 type mongoFindTemplateData struct {
-	EntityType  string
-	QueryFields []string
+	EntityType string
+	Predicates []predicate
 }
 
 const findManyTemplate = `	cursor, err := r.collection.Find(ctx, bson.M{
-{{range $index, $field := .QueryFields}}		"{{$field}}": arg{{$index}},
+{{range $index, $field := .Predicates}}		{{$field.Code $index}},
 {{end}}	})
 	if err != nil {
 		return nil, err

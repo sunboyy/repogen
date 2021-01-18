@@ -130,20 +130,21 @@ func (p repositoryInterfaceParser) parseQuery(tokens []string) (QuerySpec, error
 	if tokens[0] == "And" {
 		return QuerySpec{}, errors.New("method name not supported")
 	}
-	var queryFields []string
-	var aggregatedToken string
+
+	var predicates []Predicate
+	var aggregatedToken predicateToken
 	for _, token := range tokens {
 		if token != "And" {
-			aggregatedToken += token
+			aggregatedToken = append(aggregatedToken, token)
 		} else {
-			queryFields = append(queryFields, aggregatedToken)
-			aggregatedToken = ""
+			predicates = append(predicates, aggregatedToken.ToPredicate())
+			aggregatedToken = predicateToken{}
 		}
 	}
-	if aggregatedToken == "" {
+	if len(aggregatedToken) == 0 {
 		return QuerySpec{}, errors.New("method name not supported")
 	}
-	queryFields = append(queryFields, aggregatedToken)
+	predicates = append(predicates, aggregatedToken.ToPredicate())
 
-	return QuerySpec{Fields: queryFields}, nil
+	return QuerySpec{Predicates: predicates}, nil
 }
