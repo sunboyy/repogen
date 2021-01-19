@@ -5,3 +5,7 @@
 </a>
 
 Repogen is a code generator for database repository in Golang. (WIP)
+
+## Features
+
+Repogen is a library that generates MongoDB repository implementation from repository interface by using method name pattern.

@@ -57,8 +57,10 @@ func TestParseRepositoryInterface(t *testing.T) {
 							code.SimpleType("error"),
 						},
 						Operation: spec.FindOperation{
-							Mode:  spec.QueryModeOne,
-							Query: spec.QuerySpec{Fields: []string{"ID"}},
+							Mode: spec.QueryModeOne,
+							Query: spec.QuerySpec{Predicates: []spec.Predicate{
+								{Field: "ID", Operator: spec.OperatorEqual},
+							}},
 						},
 					},
 				},
@@ -96,9 +98,10 @@ func TestParseRepositoryInterface(t *testing.T) {
 							code.SimpleType("error"),
 						},
 						Operation: spec.FindOperation{
-
-							Mode:  spec.QueryModeOne,
-							Query: spec.QuerySpec{Fields: []string{"PhoneNumber"}},
+							Mode: spec.QueryModeOne,
+							Query: spec.QuerySpec{Predicates: []spec.Predicate{
+								{Field: "PhoneNumber", Operator: spec.OperatorEqual},
+							}},
 						},
 					},
 				},
@@ -136,8 +139,10 @@ func TestParseRepositoryInterface(t *testing.T) {
 							code.SimpleType("error"),
 						},
 						Operation: spec.FindOperation{
-							Mode:  spec.QueryModeMany,
-							Query: spec.QuerySpec{Fields: []string{"City"}},
+							Mode: spec.QueryModeMany,
+							Query: spec.QuerySpec{Predicates: []spec.Predicate{
+								{Field: "City", Operator: spec.OperatorEqual},
+							}},
 						},
 					},
 				},
@@ -213,8 +218,216 @@ func TestParseRepositoryInterface(t *testing.T) {
 							code.SimpleType("error"),
 						},
 						Operation: spec.FindOperation{
-							Mode:  spec.QueryModeMany,
-							Query: spec.QuerySpec{Fields: []string{"City", "Gender"}},
+							Mode: spec.QueryModeMany,
+							Query: spec.QuerySpec{Predicates: []spec.Predicate{
+								{Field: "City", Operator: spec.OperatorEqual},
+								{Field: "Gender", Operator: spec.OperatorEqual},
+							}},
+						},
+					},
+				},
+			},
+		},
+		{
+			Name: "FindByArgNot method",
+			Interface: code.Interface{
+				Name: "UserRepository",
+				Methods: []code.Method{
+					{
+						Name: "FindByCityNot",
+						Params: []code.Param{
+							{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+							{Type: code.SimpleType("string")},
+						},
+						Returns: []code.Type{
+							code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+							code.SimpleType("error"),
+						},
+					},
+				},
+			},
+			ExpectedOutput: spec.RepositorySpec{
+				InterfaceName: "UserRepository",
+				Methods: []spec.MethodSpec{
+					{
+						Name: "FindByCityNot",
+						Params: []code.Param{
+							{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+							{Type: code.SimpleType("string")},
+						},
+						Returns: []code.Type{
+							code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+							code.SimpleType("error"),
+						},
+						Operation: spec.FindOperation{
+							Mode: spec.QueryModeMany,
+							Query: spec.QuerySpec{Predicates: []spec.Predicate{
+								{Field: "City", Operator: spec.OperatorNot},
+							}},
+						},
+					},
+				},
+			},
+		},
+		{
+			Name: "FindByArgLessThan method",
+			Interface: code.Interface{
+				Name: "UserRepository",
+				Methods: []code.Method{
+					{
+						Name: "FindByAgeLessThan",
+						Params: []code.Param{
+							{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+							{Type: code.SimpleType("string")},
+						},
+						Returns: []code.Type{
+							code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+							code.SimpleType("error"),
+						},
+					},
+				},
+			},
+			ExpectedOutput: spec.RepositorySpec{
+				InterfaceName: "UserRepository",
+				Methods: []spec.MethodSpec{
+					{
+						Name: "FindByAgeLessThan",
+						Params: []code.Param{
+							{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+							{Type: code.SimpleType("string")},
+						},
+						Returns: []code.Type{
+							code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+							code.SimpleType("error"),
+						},
+						Operation: spec.FindOperation{
+							Mode: spec.QueryModeMany,
+							Query: spec.QuerySpec{Predicates: []spec.Predicate{
+								{Field: "Age", Operator: spec.OperatorLessThan},
+							}},
+						},
+					},
+				},
+			},
+		},
+		{
+			Name: "FindByArgLessThanEqual method",
+			Interface: code.Interface{
+				Name: "UserRepository",
+				Methods: []code.Method{
+					{
+						Name: "FindByAgeLessThanEqual",
+						Params: []code.Param{
+							{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+							{Type: code.SimpleType("string")},
+						},
+						Returns: []code.Type{
+							code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+							code.SimpleType("error"),
+						},
+					},
+				},
+			},
+			ExpectedOutput: spec.RepositorySpec{
+				InterfaceName: "UserRepository",
+				Methods: []spec.MethodSpec{
+					{
+						Name: "FindByAgeLessThanEqual",
+						Params: []code.Param{
+							{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+							{Type: code.SimpleType("string")},
+						},
+						Returns: []code.Type{
+							code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+							code.SimpleType("error"),
+						},
+						Operation: spec.FindOperation{
+							Mode: spec.QueryModeMany,
+							Query: spec.QuerySpec{Predicates: []spec.Predicate{
+								{Field: "Age", Operator: spec.OperatorLessThanEqual},
+							}},
+						},
+					},
+				},
+			},
+		},
+		{
+			Name: "FindByArgGreaterThan method",
+			Interface: code.Interface{
+				Name: "UserRepository",
+				Methods: []code.Method{
+					{
+						Name: "FindByAgeGreaterThan",
+						Params: []code.Param{
+							{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+							{Type: code.SimpleType("string")},
+						},
+						Returns: []code.Type{
+							code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+							code.SimpleType("error"),
+						},
+					},
+				},
+			},
+			ExpectedOutput: spec.RepositorySpec{
+				InterfaceName: "UserRepository",
+				Methods: []spec.MethodSpec{
+					{
+						Name: "FindByAgeGreaterThan",
+						Params: []code.Param{
+							{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+							{Type: code.SimpleType("string")},
+						},
+						Returns: []code.Type{
+							code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+							code.SimpleType("error"),
+						},
+						Operation: spec.FindOperation{
+							Mode: spec.QueryModeMany,
+							Query: spec.QuerySpec{Predicates: []spec.Predicate{
+								{Field: "Age", Operator: spec.OperatorGreaterThan},
+							}},
+						},
+					},
+				},
+			},
+		},
+		{
+			Name: "FindByArgGreaterThanEqual method",
+			Interface: code.Interface{
+				Name: "UserRepository",
+				Methods: []code.Method{
+					{
+						Name: "FindByAgeGreaterThanEqual",
+						Params: []code.Param{
+							{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+							{Type: code.SimpleType("string")},
+						},
+						Returns: []code.Type{
+							code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+							code.SimpleType("error"),
+						},
+					},
+				},
+			},
+			ExpectedOutput: spec.RepositorySpec{
+				InterfaceName: "UserRepository",
+				Methods: []spec.MethodSpec{
+					{
+						Name: "FindByAgeGreaterThanEqual",
+						Params: []code.Param{
+							{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+							{Type: code.SimpleType("string")},
+						},
+						Returns: []code.Type{
+							code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+							code.SimpleType("error"),
+						},
+						Operation: spec.FindOperation{
+							Mode: spec.QueryModeMany,
+							Query: spec.QuerySpec{Predicates: []spec.Predicate{
+								{Field: "Age", Operator: spec.OperatorGreaterThanEqual},
+							}},
 						},
 					},
 				},
@@ -240,6 +453,10 @@ func TestParseRepositoryInterface(t *testing.T) {
 			{
 				Name: "City",
 				Type: code.SimpleType("string"),
+			},
+			{
+				Name: "Age",
+				Type: code.SimpleType("int"),
 			},
 		},
 	}

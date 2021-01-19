@@ -120,24 +120,24 @@ func (g mongoRepositoryGenerator) generateMethodImplementation(methodSpec spec.M
 func (g mongoRepositoryGenerator) generateFindImplementation(operation spec.FindOperation) (string, error) {
 	buffer := new(bytes.Buffer)
 
-	var queryFields []string
-	for _, fieldName := range operation.Query.Fields {
-		structField, ok := g.StructModel.Fields.ByName(fieldName)
+	var predicates []predicate
+	for _, predicateSpec := range operation.Query.Predicates {
+		structField, ok := g.StructModel.Fields.ByName(predicateSpec.Field)
 		if !ok {
-			return "", fmt.Errorf("struct field %s not found", fieldName)
+			return "", fmt.Errorf("struct field %s not found", predicateSpec.Field)
 		}
 
 		bsonTag, ok := structField.Tags["bson"]
 		if !ok {
-			return "", fmt.Errorf("struct field %s does not have bson tag", fieldName)
+			return "", fmt.Errorf("struct field %s does not have bson tag", predicateSpec.Field)
 		}
 
-		queryFields = append(queryFields, bsonTag[0])
+		predicates = append(predicates, predicate{Field: bsonTag[0], Operator: predicateSpec.Operator})
 	}
 
 	tmplData := mongoFindTemplateData{
-		EntityType:  g.StructModel.Name,
-		QueryFields: queryFields,
+		EntityType: g.StructModel.Name,
+		Predicates: predicates,
 	}
 
 	if operation.Mode == spec.QueryModeOne {
