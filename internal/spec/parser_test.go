@@ -59,7 +59,7 @@ func TestParseRepositoryInterface(t *testing.T) {
 						Operation: spec.FindOperation{
 							Mode: spec.QueryModeOne,
 							Query: spec.QuerySpec{Predicates: []spec.Predicate{
-								{Field: "ID", Operator: spec.OperatorEqual},
+								{Field: "ID", Comparator: spec.ComparatorEqual},
 							}},
 						},
 					},
@@ -100,7 +100,7 @@ func TestParseRepositoryInterface(t *testing.T) {
 						Operation: spec.FindOperation{
 							Mode: spec.QueryModeOne,
 							Query: spec.QuerySpec{Predicates: []spec.Predicate{
-								{Field: "PhoneNumber", Operator: spec.OperatorEqual},
+								{Field: "PhoneNumber", Comparator: spec.ComparatorEqual},
 							}},
 						},
 					},
@@ -141,7 +141,7 @@ func TestParseRepositoryInterface(t *testing.T) {
 						Operation: spec.FindOperation{
 							Mode: spec.QueryModeMany,
 							Query: spec.QuerySpec{Predicates: []spec.Predicate{
-								{Field: "City", Operator: spec.OperatorEqual},
+								{Field: "City", Comparator: spec.ComparatorEqual},
 							}},
 						},
 					},
@@ -219,10 +219,60 @@ func TestParseRepositoryInterface(t *testing.T) {
 						},
 						Operation: spec.FindOperation{
 							Mode: spec.QueryModeMany,
-							Query: spec.QuerySpec{Predicates: []spec.Predicate{
-								{Field: "City", Operator: spec.OperatorEqual},
-								{Field: "Gender", Operator: spec.OperatorEqual},
-							}},
+							Query: spec.QuerySpec{
+								Operator: spec.OperatorAnd,
+								Predicates: []spec.Predicate{
+									{Field: "City", Comparator: spec.ComparatorEqual},
+									{Field: "Gender", Comparator: spec.ComparatorEqual},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			Name: "FindByArgOrArg method",
+			Interface: code.Interface{
+				Name: "UserRepository",
+				Methods: []code.Method{
+					{
+						Name: "FindByCityOrGender",
+						Params: []code.Param{
+							{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+							{Type: code.SimpleType("string")},
+							{Type: code.SimpleType("Gender")},
+						},
+						Returns: []code.Type{
+							code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+							code.SimpleType("error"),
+						},
+					},
+				},
+			},
+			ExpectedOutput: spec.RepositorySpec{
+				InterfaceName: "UserRepository",
+				Methods: []spec.MethodSpec{
+					{
+						Name: "FindByCityOrGender",
+						Params: []code.Param{
+							{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+							{Type: code.SimpleType("string")},
+							{Type: code.SimpleType("Gender")},
+						},
+						Returns: []code.Type{
+							code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+							code.SimpleType("error"),
+						},
+						Operation: spec.FindOperation{
+							Mode: spec.QueryModeMany,
+							Query: spec.QuerySpec{
+								Operator: spec.OperatorOr,
+								Predicates: []spec.Predicate{
+									{Field: "City", Comparator: spec.ComparatorEqual},
+									{Field: "Gender", Comparator: spec.ComparatorEqual},
+								},
+							},
 						},
 					},
 				},
@@ -262,7 +312,7 @@ func TestParseRepositoryInterface(t *testing.T) {
 						Operation: spec.FindOperation{
 							Mode: spec.QueryModeMany,
 							Query: spec.QuerySpec{Predicates: []spec.Predicate{
-								{Field: "City", Operator: spec.OperatorNot},
+								{Field: "City", Comparator: spec.ComparatorNot},
 							}},
 						},
 					},
@@ -303,7 +353,7 @@ func TestParseRepositoryInterface(t *testing.T) {
 						Operation: spec.FindOperation{
 							Mode: spec.QueryModeMany,
 							Query: spec.QuerySpec{Predicates: []spec.Predicate{
-								{Field: "Age", Operator: spec.OperatorLessThan},
+								{Field: "Age", Comparator: spec.ComparatorLessThan},
 							}},
 						},
 					},
@@ -344,7 +394,7 @@ func TestParseRepositoryInterface(t *testing.T) {
 						Operation: spec.FindOperation{
 							Mode: spec.QueryModeMany,
 							Query: spec.QuerySpec{Predicates: []spec.Predicate{
-								{Field: "Age", Operator: spec.OperatorLessThanEqual},
+								{Field: "Age", Comparator: spec.ComparatorLessThanEqual},
 							}},
 						},
 					},
@@ -385,7 +435,7 @@ func TestParseRepositoryInterface(t *testing.T) {
 						Operation: spec.FindOperation{
 							Mode: spec.QueryModeMany,
 							Query: spec.QuerySpec{Predicates: []spec.Predicate{
-								{Field: "Age", Operator: spec.OperatorGreaterThan},
+								{Field: "Age", Comparator: spec.ComparatorGreaterThan},
 							}},
 						},
 					},
@@ -426,7 +476,7 @@ func TestParseRepositoryInterface(t *testing.T) {
 						Operation: spec.FindOperation{
 							Mode: spec.QueryModeMany,
 							Query: spec.QuerySpec{Predicates: []spec.Predicate{
-								{Field: "Age", Operator: spec.OperatorGreaterThanEqual},
+								{Field: "Age", Comparator: spec.ComparatorGreaterThanEqual},
 							}},
 						},
 					},
