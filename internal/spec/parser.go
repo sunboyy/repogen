@@ -127,18 +127,26 @@ func (p repositoryInterfaceParser) parseQuery(tokens []string) (QuerySpec, error
 		tokens = tokens[1:]
 	}
 
-	if tokens[0] == "And" {
+	if tokens[0] == "And" || tokens[0] == "Or" {
 		return QuerySpec{}, errors.New("method name not supported")
 	}
 
+	var operator Operator
 	var predicates []Predicate
 	var aggregatedToken predicateToken
 	for _, token := range tokens {
-		if token != "And" {
+		if token != "And" && token != "Or" {
 			aggregatedToken = append(aggregatedToken, token)
-		} else {
+		} else if token == "And" && operator != OperatorOr {
+			operator = OperatorAnd
 			predicates = append(predicates, aggregatedToken.ToPredicate())
 			aggregatedToken = predicateToken{}
+		} else if token == "Or" && operator != OperatorAnd {
+			operator = OperatorOr
+			predicates = append(predicates, aggregatedToken.ToPredicate())
+			aggregatedToken = predicateToken{}
+		} else {
+			return QuerySpec{}, errors.New("method name contains ambiguous query")
 		}
 	}
 	if len(aggregatedToken) == 0 {
@@ -146,5 +154,5 @@ func (p repositoryInterfaceParser) parseQuery(tokens []string) (QuerySpec, error
 	}
 	predicates = append(predicates, aggregatedToken.ToPredicate())
 
-	return QuerySpec{Predicates: predicates}, nil
+	return QuerySpec{Operator: operator, Predicates: predicates}, nil
 }

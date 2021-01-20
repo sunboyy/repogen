@@ -132,12 +132,15 @@ func (g mongoRepositoryGenerator) generateFindImplementation(operation spec.Find
 			return "", fmt.Errorf("struct field %s does not have bson tag", predicateSpec.Field)
 		}
 
-		predicates = append(predicates, predicate{Field: bsonTag[0], Operator: predicateSpec.Operator})
+		predicates = append(predicates, predicate{Field: bsonTag[0], Comparator: predicateSpec.Comparator})
 	}
 
 	tmplData := mongoFindTemplateData{
 		EntityType: g.StructModel.Name,
-		Predicates: predicates,
+		QuerySpec: querySpec{
+			Operator:   operation.Query.Operator,
+			Predicates: predicates,
+		},
 	}
 
 	if operation.Mode == spec.QueryModeOne {
