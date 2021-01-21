@@ -1,59 +1,40 @@
 package spec
 
 import (
-	"errors"
-	"fmt"
-
 	"github.com/fatih/camelcase"
 	"github.com/sunboyy/repogen/internal/code"
 )
 
-// ParseRepositoryInterface returns repository spec from declared repository interface
-func ParseRepositoryInterface(structModel code.Struct, intf code.Interface) (RepositorySpec, error) {
-	parser := repositoryInterfaceParser{
+// ParseInterfaceMethod returns repository method spec from declared interface method
+func ParseInterfaceMethod(structModel code.Struct, method code.Method) (MethodSpec, error) {
+	parser := interfaceMethodParser{
 		StructModel: structModel,
-		Interface:   intf,
+		Method:      method,
 	}
 
 	return parser.Parse()
 }
 
-type repositoryInterfaceParser struct {
+type interfaceMethodParser struct {
 	StructModel code.Struct
-	Interface   code.Interface
+	Method      code.Method
 }
 
-func (p repositoryInterfaceParser) Parse() (RepositorySpec, error) {
-	repositorySpec := RepositorySpec{
-		InterfaceName: p.Interface.Name,
-	}
-
-	for _, method := range p.Interface.Methods {
-		methodSpec, err := p.parseMethod(method)
-		if err != nil {
-			return RepositorySpec{}, err
-		}
-		repositorySpec.Methods = append(repositorySpec.Methods, methodSpec)
-	}
-
-	return repositorySpec, nil
-}
-
-func (p repositoryInterfaceParser) parseMethod(method code.Method) (MethodSpec, error) {
-	methodNameTokens := camelcase.Split(method.Name)
+func (p interfaceMethodParser) Parse() (MethodSpec, error) {
+	methodNameTokens := camelcase.Split(p.Method.Name)
 	switch methodNameTokens[0] {
 	case "Find":
-		return p.parseFindMethod(method, methodNameTokens[1:])
+		return p.parseFindMethod(methodNameTokens[1:])
 	}
-	return MethodSpec{}, errors.New("method name not supported")
+	return MethodSpec{}, UnknownOperationError
 }
 
-func (p repositoryInterfaceParser) parseFindMethod(method code.Method, tokens []string) (MethodSpec, error) {
+func (p interfaceMethodParser) parseFindMethod(tokens []string) (MethodSpec, error) {
 	if len(tokens) == 0 {
-		return MethodSpec{}, errors.New("method name not supported")
+		return MethodSpec{}, UnsupportedNameError
 	}
 
-	mode, err := p.extractFindReturns(method.Returns)
+	mode, err := p.extractFindReturns(p.Method.Returns)
 	if err != nil {
 		return MethodSpec{}, err
 	}
@@ -63,14 +44,14 @@ func (p repositoryInterfaceParser) parseFindMethod(method code.Method, tokens []
 		return MethodSpec{}, err
 	}
 
-	if querySpec.NumberOfArguments()+1 != len(method.Params) {
-		return MethodSpec{}, errors.New("method parameter not supported")
+	if err := p.validateMethodSignature(querySpec); err != nil {
+		return MethodSpec{}, err
 	}
 
 	return MethodSpec{
-		Name:    method.Name,
-		Params:  method.Params,
-		Returns: method.Returns,
+		Name:    p.Method.Name,
+		Params:  p.Method.Params,
+		Returns: p.Method.Returns,
 		Operation: FindOperation{
 			Mode:  mode,
 			Query: querySpec,
@@ -78,13 +59,13 @@ func (p repositoryInterfaceParser) parseFindMethod(method code.Method, tokens []
 	}, nil
 }
 
-func (p repositoryInterfaceParser) extractFindReturns(returns []code.Type) (QueryMode, error) {
+func (p interfaceMethodParser) extractFindReturns(returns []code.Type) (QueryMode, error) {
 	if len(returns) != 2 {
-		return "", errors.New("method return not supported")
+		return "", UnsupportedReturnError
 	}
 
 	if returns[1] != code.SimpleType("error") {
-		return "", errors.New("method return not supported")
+		return "", UnsupportedReturnError
 	}
 
 	pointerType, ok := returns[0].(code.PointerType)
@@ -93,7 +74,7 @@ func (p repositoryInterfaceParser) extractFindReturns(returns []code.Type) (Quer
 		if simpleType == code.SimpleType(p.StructModel.Name) {
 			return QueryModeOne, nil
 		}
-		return "", fmt.Errorf("invalid return type %s", pointerType.Code())
+		return "", UnsupportedReturnError
 	}
 
 	arrayType, ok := returns[0].(code.ArrayType)
@@ -104,16 +85,16 @@ func (p repositoryInterfaceParser) extractFindReturns(returns []code.Type) (Quer
 			if simpleType == code.SimpleType(p.StructModel.Name) {
 				return QueryModeMany, nil
 			}
-			return "", fmt.Errorf("invalid return type %s", pointerType.Code())
+			return "", UnsupportedReturnError
 		}
 	}
 
-	return "", errors.New("method return not supported")
+	return "", UnsupportedReturnError
 }
 
-func (p repositoryInterfaceParser) parseQuery(tokens []string) (QuerySpec, error) {
+func (p interfaceMethodParser) parseQuery(tokens []string) (QuerySpec, error) {
 	if len(tokens) == 0 {
-		return QuerySpec{}, errors.New("method name not supported")
+		return QuerySpec{}, InvalidQueryError
 	}
 
 	if len(tokens) == 1 && tokens[0] == "All" {
@@ -128,7 +109,7 @@ func (p repositoryInterfaceParser) parseQuery(tokens []string) (QuerySpec, error
 	}
 
 	if tokens[0] == "And" || tokens[0] == "Or" {
-		return QuerySpec{}, errors.New("method name not supported")
+		return QuerySpec{}, InvalidQueryError
 	}
 
 	var operator Operator
@@ -137,6 +118,8 @@ func (p repositoryInterfaceParser) parseQuery(tokens []string) (QuerySpec, error
 	for _, token := range tokens {
 		if token != "And" && token != "Or" {
 			aggregatedToken = append(aggregatedToken, token)
+		} else if len(aggregatedToken) == 0 {
+			return QuerySpec{}, InvalidQueryError
 		} else if token == "And" && operator != OperatorOr {
 			operator = OperatorAnd
 			predicates = append(predicates, aggregatedToken.ToPredicate())
@@ -146,13 +129,40 @@ func (p repositoryInterfaceParser) parseQuery(tokens []string) (QuerySpec, error
 			predicates = append(predicates, aggregatedToken.ToPredicate())
 			aggregatedToken = predicateToken{}
 		} else {
-			return QuerySpec{}, errors.New("method name contains ambiguous query")
+			return QuerySpec{}, InvalidQueryError
 		}
 	}
 	if len(aggregatedToken) == 0 {
-		return QuerySpec{}, errors.New("method name not supported")
+		return QuerySpec{}, InvalidQueryError
 	}
 	predicates = append(predicates, aggregatedToken.ToPredicate())
 
 	return QuerySpec{Operator: operator, Predicates: predicates}, nil
+}
+
+func (p interfaceMethodParser) validateMethodSignature(querySpec QuerySpec) error {
+	contextType := code.ExternalType{PackageAlias: "context", Name: "Context"}
+	if len(p.Method.Params) == 0 || p.Method.Params[0].Type != contextType {
+		return ContextParamRequiredError
+	}
+
+	if querySpec.NumberOfArguments()+1 != len(p.Method.Params) {
+		return InvalidParamError
+	}
+
+	currentParamIndex := 1
+	for _, predicate := range querySpec.Predicates {
+		structField, ok := p.StructModel.Fields.ByName(predicate.Field)
+		if !ok {
+			return StructFieldNotFoundError
+		}
+
+		if structField.Type != p.Method.Params[currentParamIndex].Type {
+			return InvalidParamError
+		}
+
+		currentParamIndex++
+	}
+
+	return nil
 }

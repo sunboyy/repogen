@@ -83,7 +83,7 @@ func TestGenerateMongoRepository(t *testing.T) {
 				Name: "FindByGenderNot",
 				Params: []code.Param{
 					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Name: "gender", Type: code.SimpleType("int")},
+					{Name: "gender", Type: code.SimpleType("Gender")},
 				},
 				Returns: []code.Type{
 					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
@@ -220,7 +220,7 @@ func (r *UserRepositoryMongo) FindByIDAndUsername(ctx context.Context, arg0 prim
 	return &entity, nil
 }
 
-func (r *UserRepositoryMongo) FindByGenderNot(ctx context.Context, arg0 int) ([]*UserModel, error) {
+func (r *UserRepositoryMongo) FindByGenderNot(ctx context.Context, arg0 Gender) ([]*UserModel, error) {
 	cursor, err := r.collection.Find(ctx, bson.M{
 		"gender": bson.M{"$ne": arg0},
 	})
