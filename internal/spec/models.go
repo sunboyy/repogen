@@ -15,12 +15,6 @@ const (
 	QueryModeMany QueryMode = "MANY"
 )
 
-// RepositorySpec is a specification generated from the repository interface
-type RepositorySpec struct {
-	InterfaceName string
-	Methods       []MethodSpec
-}
-
 // MethodSpec is a method specification inside repository specification
 type MethodSpec struct {
 	Name      string

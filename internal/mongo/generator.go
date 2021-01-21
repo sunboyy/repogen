@@ -13,15 +13,20 @@ import (
 
 // GenerateMongoRepository generates mongodb repository
 func GenerateMongoRepository(packageName string, structModel code.Struct, intf code.Interface) (string, error) {
-	repositorySpec, err := spec.ParseRepositoryInterface(structModel, intf)
-	if err != nil {
-		return "", err
+	var methodSpecs []spec.MethodSpec
+	for _, method := range intf.Methods {
+		methodSpec, err := spec.ParseInterfaceMethod(structModel, method)
+		if err != nil {
+			return "", err
+		}
+		methodSpecs = append(methodSpecs, methodSpec)
 	}
 
 	generator := mongoRepositoryGenerator{
-		PackageName:    packageName,
-		StructModel:    structModel,
-		RepositorySpec: repositorySpec,
+		PackageName:   packageName,
+		StructModel:   structModel,
+		InterfaceName: intf.Name,
+		MethodSpecs:   methodSpecs,
 	}
 
 	output, err := generator.Generate()
@@ -33,9 +38,10 @@ func GenerateMongoRepository(packageName string, structModel code.Struct, intf c
 }
 
 type mongoRepositoryGenerator struct {
-	PackageName    string
-	StructModel    code.Struct
-	RepositorySpec spec.RepositorySpec
+	PackageName   string
+	StructModel   code.Struct
+	InterfaceName string
+	MethodSpecs   []spec.MethodSpec
 }
 
 func (g mongoRepositoryGenerator) Generate() (string, error) {
@@ -44,7 +50,7 @@ func (g mongoRepositoryGenerator) Generate() (string, error) {
 		return "", err
 	}
 
-	for _, method := range g.RepositorySpec.Methods {
+	for _, method := range g.MethodSpecs {
 		if err := g.generateMethod(buffer, method); err != nil {
 			return "", err
 		}
@@ -66,7 +72,7 @@ func (g mongoRepositoryGenerator) generateBaseContent(buffer *bytes.Buffer) erro
 
 	tmplData := mongoBaseTemplateData{
 		PackageName:   g.PackageName,
-		InterfaceName: g.RepositorySpec.InterfaceName,
+		InterfaceName: g.InterfaceName,
 		StructName:    g.structName(),
 	}
 
@@ -167,5 +173,5 @@ func (g mongoRepositoryGenerator) generateFindImplementation(operation spec.Find
 }
 
 func (g mongoRepositoryGenerator) structName() string {
-	return g.RepositorySpec.InterfaceName + "Mongo"
+	return g.InterfaceName + "Mongo"
 }
