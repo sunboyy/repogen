@@ -53,6 +53,8 @@ func (p predicate) Code(argIndex int) string {
 		return fmt.Sprintf(`"%s": bson.M{"$gt": arg%d}`, p.Field, argIndex)
 	case spec.ComparatorGreaterThanEqual:
 		return fmt.Sprintf(`"%s": bson.M{"$gte": arg%d}`, p.Field, argIndex)
+	case spec.ComparatorIn:
+		return fmt.Sprintf(`"%s": bson.M{"$in": arg%d}`, p.Field, argIndex)
 	}
 	return ""
 }
