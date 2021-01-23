@@ -146,6 +146,17 @@ func TestGenerateMongoRepository(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
+			{
+				Name: "FindByGenderIn",
+				Params: []code.Param{
+					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Name: "gender", Type: code.ArrayType{ContainedType: code.SimpleType("Gender")}},
+				},
+				Returns: []code.Type{
+					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+					code.SimpleType("error"),
+				},
+			},
 		},
 	}
 
@@ -296,6 +307,20 @@ func (r *UserRepositoryMongo) FindByGenderOrAgeLessThan(ctx context.Context, arg
 			{"gender": arg0},
 			{"age": bson.M{"$lt": arg1}},
 		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	var entities []*UserModel
+	if err := cursor.All(ctx, &entities); err != nil {
+		return nil, err
+	}
+	return entities, nil
+}
+
+func (r *UserRepositoryMongo) FindByGenderIn(ctx context.Context, arg0 []Gender) ([]*UserModel, error) {
+	cursor, err := r.collection.Find(ctx, bson.M{
+		"gender": bson.M{"$in": arg0},
 	})
 	if err != nil {
 		return nil, err

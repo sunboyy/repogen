@@ -390,6 +390,37 @@ func TestParseInterfaceMethod(t *testing.T) {
 				},
 			},
 		},
+		{
+			Name: "FindByArgIn method",
+			Method: code.Method{
+				Name: "FindByCityIn",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.ArrayType{ContainedType: code.SimpleType("string")}},
+				},
+				Returns: []code.Type{
+					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedOutput: spec.MethodSpec{
+				Name: "FindByCityIn",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.ArrayType{ContainedType: code.SimpleType("string")}},
+				},
+				Returns: []code.Type{
+					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+					code.SimpleType("error"),
+				},
+				Operation: spec.FindOperation{
+					Mode: spec.QueryModeMany,
+					Query: spec.QuerySpec{Predicates: []spec.Predicate{
+						{Field: "City", Comparator: spec.ComparatorIn},
+					}},
+				},
+			},
+		},
 	}
 
 	for _, testCase := range testTable {
@@ -555,6 +586,21 @@ func TestParseInterfaceMethodInvalid(t *testing.T) {
 			Name: "mismatched method parameter type",
 			Method: code.Method{
 				Name: "FindByGender",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("string")},
+				},
+				Returns: []code.Type{
+					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedError: spec.InvalidParamError,
+		},
+		{
+			Name: "mismatched method parameter type for special case",
+			Method: code.Method{
+				Name: "FindByCityIn",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
 					{Type: code.SimpleType("string")},

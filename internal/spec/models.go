@@ -64,7 +64,16 @@ const (
 	ComparatorLessThanEqual    Comparator = "LESS_THAN_EQUAL"
 	ComparatorGreaterThan      Comparator = "GREATER_THAN"
 	ComparatorGreaterThanEqual Comparator = "GREATER_THAN_EQUAL"
+	ComparatorIn               Comparator = "IN"
 )
+
+// ArgumentTypeFromFieldType returns a type of required argument from the given struct field type
+func (c Comparator) ArgumentTypeFromFieldType(t code.Type) code.Type {
+	if c == ComparatorIn {
+		return code.ArrayType{ContainedType: t}
+	}
+	return t
+}
 
 // Predicate is a criteria for querying a field
 type Predicate struct {
@@ -89,6 +98,9 @@ func (t predicateToken) ToPredicate() Predicate {
 	}
 	if len(t) > 3 && t[len(t)-3] == "Greater" && t[len(t)-2] == "Than" && t[len(t)-1] == "Equal" {
 		return Predicate{Field: strings.Join(t[:len(t)-3], ""), Comparator: ComparatorGreaterThanEqual}
+	}
+	if len(t) > 1 && t[len(t)-1] == "In" {
+		return Predicate{Field: strings.Join(t[:len(t)-1], ""), Comparator: ComparatorIn}
 	}
 	return Predicate{Field: strings.Join(t, ""), Comparator: ComparatorEqual}
 }

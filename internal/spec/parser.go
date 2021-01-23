@@ -157,7 +157,8 @@ func (p interfaceMethodParser) validateMethodSignature(querySpec QuerySpec) erro
 			return StructFieldNotFoundError
 		}
 
-		if structField.Type != p.Method.Params[currentParamIndex].Type {
+		if p.Method.Params[currentParamIndex].Type != predicate.Comparator.ArgumentTypeFromFieldType(
+			structField.Type) {
 			return InvalidParamError
 		}
 
