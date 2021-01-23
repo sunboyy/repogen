@@ -4,76 +4,37 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"text/template"
 
 	"github.com/sunboyy/repogen/internal/code"
 	"github.com/sunboyy/repogen/internal/spec"
-	"golang.org/x/tools/imports"
 )
 
-// GenerateMongoRepository generates mongodb repository
-func GenerateMongoRepository(packageName string, structModel code.Struct, intf code.Interface) (string, error) {
-	var methodSpecs []spec.MethodSpec
-	for _, method := range intf.Methods {
-		methodSpec, err := spec.ParseInterfaceMethod(structModel, method)
-		if err != nil {
-			return "", err
-		}
-		methodSpecs = append(methodSpecs, methodSpec)
-	}
-
-	generator := mongoRepositoryGenerator{
-		PackageName:   packageName,
+// NewGenerator creates a new instance of MongoDB repository generator
+func NewGenerator(structModel code.Struct, interfaceName string) RepositoryGenerator {
+	return RepositoryGenerator{
 		StructModel:   structModel,
-		InterfaceName: intf.Name,
-		MethodSpecs:   methodSpecs,
+		InterfaceName: interfaceName,
 	}
-
-	output, err := generator.Generate()
-	if err != nil {
-		return "", err
-	}
-
-	return output, nil
 }
 
-type mongoRepositoryGenerator struct {
-	PackageName   string
+// RepositoryGenerator provides repository constructor and method generation from provided specification
+type RepositoryGenerator struct {
 	StructModel   code.Struct
 	InterfaceName string
-	MethodSpecs   []spec.MethodSpec
 }
 
-func (g mongoRepositoryGenerator) Generate() (string, error) {
-	buffer := new(bytes.Buffer)
-	if err := g.generateBaseContent(buffer); err != nil {
-		return "", err
-	}
-
-	for _, method := range g.MethodSpecs {
-		if err := g.generateMethod(buffer, method); err != nil {
-			return "", err
-		}
-	}
-
-	newOutput, err := imports.Process("", buffer.Bytes(), nil)
-	if err != nil {
-		return "", err
-	}
-
-	return string(newOutput), nil
-}
-
-func (g mongoRepositoryGenerator) generateBaseContent(buffer *bytes.Buffer) error {
-	tmpl, err := template.New("mongo_repository_base").Parse(baseTemplate)
+// GenerateConstructor generates mongo repository struct implementation and constructor for the struct
+func (g RepositoryGenerator) GenerateConstructor(buffer io.Writer) error {
+	tmpl, err := template.New("mongo_repository_base").Parse(constructorTemplate)
 	if err != nil {
 		return err
 	}
 
-	tmplData := mongoBaseTemplateData{
-		PackageName:   g.PackageName,
-		InterfaceName: g.InterfaceName,
-		StructName:    g.structName(),
+	tmplData := mongoConstructorTemplateData{
+		InterfaceName:  g.InterfaceName,
+		ImplStructName: g.structName(),
 	}
 
 	if err := tmpl.Execute(buffer, tmplData); err != nil {
@@ -83,27 +44,28 @@ func (g mongoRepositoryGenerator) generateBaseContent(buffer *bytes.Buffer) erro
 	return nil
 }
 
-func (g mongoRepositoryGenerator) generateMethod(buffer *bytes.Buffer, method spec.MethodSpec) error {
+// GenerateMethod generates implementation of from provided method specification
+func (g RepositoryGenerator) GenerateMethod(methodSpec spec.MethodSpec, buffer io.Writer) error {
 	tmpl, err := template.New("mongo_repository_method").Parse(methodTemplate)
 	if err != nil {
 		return err
 	}
 
-	implementation, err := g.generateMethodImplementation(method)
+	implementation, err := g.generateMethodImplementation(methodSpec)
 	if err != nil {
 		return err
 	}
 
 	var paramTypes []code.Type
-	for _, param := range method.Params[1:] {
+	for _, param := range methodSpec.Params[1:] {
 		paramTypes = append(paramTypes, param.Type)
 	}
 
 	tmplData := mongoMethodTemplateData{
 		StructName:     g.structName(),
-		MethodName:     method.Name,
+		MethodName:     methodSpec.Name,
 		ParamTypes:     paramTypes,
-		ReturnTypes:    method.Returns,
+		ReturnTypes:    methodSpec.Returns,
 		Implementation: implementation,
 	}
 
@@ -114,7 +76,7 @@ func (g mongoRepositoryGenerator) generateMethod(buffer *bytes.Buffer, method sp
 	return nil
 }
 
-func (g mongoRepositoryGenerator) generateMethodImplementation(methodSpec spec.MethodSpec) (string, error) {
+func (g RepositoryGenerator) generateMethodImplementation(methodSpec spec.MethodSpec) (string, error) {
 	switch operation := methodSpec.Operation.(type) {
 	case spec.FindOperation:
 		return g.generateFindImplementation(operation)
@@ -123,7 +85,7 @@ func (g mongoRepositoryGenerator) generateMethodImplementation(methodSpec spec.M
 	return "", errors.New("method spec not supported")
 }
 
-func (g mongoRepositoryGenerator) generateFindImplementation(operation spec.FindOperation) (string, error) {
+func (g RepositoryGenerator) generateFindImplementation(operation spec.FindOperation) (string, error) {
 	buffer := new(bytes.Buffer)
 
 	var predicates []predicate
@@ -172,6 +134,6 @@ func (g mongoRepositoryGenerator) generateFindImplementation(operation spec.Find
 	return buffer.String(), nil
 }
 
-func (g mongoRepositoryGenerator) structName() string {
+func (g RepositoryGenerator) structName() string {
 	return g.InterfaceName + "Mongo"
 }
