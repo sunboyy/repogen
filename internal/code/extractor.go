@@ -79,14 +79,19 @@ func ExtractComponents(f *ast.File) File {
 						}
 
 						for _, param := range funcType.Params.List {
-							var p Param
-							for _, name := range param.Names {
-								p.Name = name.Name
-								break
-							}
-							p.Type = getType(param.Type)
+							paramType := getType(param.Type)
 
-							meth.Params = append(meth.Params, p)
+							if len(param.Names) == 0 {
+								meth.Params = append(meth.Params, Param{Type: paramType})
+								continue
+							}
+
+							for _, name := range param.Names {
+								meth.Params = append(meth.Params, Param{
+									Name: name.Name,
+									Type: paramType,
+								})
+							}
 						}
 
 						for _, result := range funcType.Results.List {

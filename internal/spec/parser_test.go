@@ -391,6 +391,39 @@ func TestParseInterfaceMethod(t *testing.T) {
 			},
 		},
 		{
+			Name: "FindByArgBetween method",
+			Method: code.Method{
+				Name: "FindByAgeBetween",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("int")},
+					{Type: code.SimpleType("int")},
+				},
+				Returns: []code.Type{
+					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedOutput: spec.MethodSpec{
+				Name: "FindByAgeBetween",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("int")},
+					{Type: code.SimpleType("int")},
+				},
+				Returns: []code.Type{
+					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+					code.SimpleType("error"),
+				},
+				Operation: spec.FindOperation{
+					Mode: spec.QueryModeMany,
+					Query: spec.QuerySpec{Predicates: []spec.Predicate{
+						{Field: "Age", Comparator: spec.ComparatorBetween},
+					}},
+				},
+			},
+		},
+		{
 			Name: "FindByArgIn method",
 			Method: code.Method{
 				Name: "FindByCityIn",

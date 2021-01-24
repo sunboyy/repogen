@@ -96,6 +96,7 @@ type UserModel struct {
 type UserRepository interface {
 	FindOneByID(ctx context.Context, id primitive.ObjectID) (*UserModel, error)
 	FindAll(context.Context) ([]*UserModel, error)
+	FindByAgeBetween(ctx context.Context, fromAge, toAge int) ([]*UserModel, error)
 }`,
 			ExpectedOutput: code.File{
 				PackageName: "user",
@@ -118,6 +119,18 @@ type UserRepository interface {
 								Name: "FindAll",
 								Params: []code.Param{
 									{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+								},
+								Returns: []code.Type{
+									code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+									code.SimpleType("error"),
+								},
+							},
+							{
+								Name: "FindByAgeBetween",
+								Params: []code.Param{
+									{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+									{Name: "fromAge", Type: code.SimpleType("int")},
+									{Name: "toAge", Type: code.SimpleType("int")},
 								},
 								Returns: []code.Type{
 									code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},

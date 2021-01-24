@@ -41,7 +41,11 @@ type QuerySpec struct {
 
 // NumberOfArguments returns number of arguments required to perform the query
 func (q QuerySpec) NumberOfArguments() int {
-	return len(q.Predicates)
+	var totalArgs int
+	for _, predicate := range q.Predicates {
+		totalArgs += predicate.Comparator.NumberOfArguments()
+	}
+	return totalArgs
 }
 
 // Operator is a boolean operator for merging conditions
@@ -64,6 +68,7 @@ const (
 	ComparatorLessThanEqual    Comparator = "LESS_THAN_EQUAL"
 	ComparatorGreaterThan      Comparator = "GREATER_THAN"
 	ComparatorGreaterThanEqual Comparator = "GREATER_THAN_EQUAL"
+	ComparatorBetween          Comparator = "BETWEEN"
 	ComparatorIn               Comparator = "IN"
 )
 
@@ -73,6 +78,14 @@ func (c Comparator) ArgumentTypeFromFieldType(t code.Type) code.Type {
 		return code.ArrayType{ContainedType: t}
 	}
 	return t
+}
+
+// NumberOfArguments returns the number of arguments required to perform the comparison
+func (c Comparator) NumberOfArguments() int {
+	if c == ComparatorBetween {
+		return 2
+	}
+	return 1
 }
 
 // Predicate is a criteria for querying a field
@@ -101,6 +114,9 @@ func (t predicateToken) ToPredicate() Predicate {
 	}
 	if len(t) > 1 && t[len(t)-1] == "In" {
 		return Predicate{Field: strings.Join(t[:len(t)-1], ""), Comparator: ComparatorIn}
+	}
+	if len(t) > 1 && t[len(t)-1] == "Between" {
+		return Predicate{Field: strings.Join(t[:len(t)-1], ""), Comparator: ComparatorBetween}
 	}
 	return Predicate{Field: strings.Join(t, ""), Comparator: ComparatorEqual}
 }
