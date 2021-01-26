@@ -414,6 +414,44 @@ func (r *UserRepositoryMongo) FindByAgeGreaterThanEqual(ctx context.Context, arg
 `,
 		},
 		{
+			Name: "find with Between comparator",
+			MethodSpec: spec.MethodSpec{
+				Name: "FindByAgeBetween",
+				Params: []code.Param{
+					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Name: "fromAge", Type: code.SimpleType("int")},
+					{Name: "toAge", Type: code.SimpleType("int")},
+				},
+				Returns: []code.Type{
+					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+					code.SimpleType("error"),
+				},
+				Operation: spec.FindOperation{
+					Mode: spec.QueryModeMany,
+					Query: spec.QuerySpec{
+						Predicates: []spec.Predicate{
+							{Comparator: spec.ComparatorBetween, Field: "Age"},
+						},
+					},
+				},
+			},
+			ExpectedCode: `
+func (r *UserRepositoryMongo) FindByAgeBetween(ctx context.Context, arg0 int, arg1 int) ([]*UserModel, error) {
+	cursor, err := r.collection.Find(ctx, bson.M{
+		"age": bson.M{"$gte": arg0, "$lte": arg1},
+	})
+	if err != nil {
+		return nil, err
+	}
+	var entities []*UserModel
+	if err := cursor.All(ctx, &entities); err != nil {
+		return nil, err
+	}
+	return entities, nil
+}
+`,
+		},
+		{
 			Name: "find with In comparator",
 			MethodSpec: spec.MethodSpec{
 				Name: "FindByGenderIn",

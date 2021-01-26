@@ -14,8 +14,10 @@ type querySpec struct {
 
 func (q querySpec) Code() string {
 	var predicateCodes []string
-	for i, predicate := range q.Predicates {
-		predicateCodes = append(predicateCodes, predicate.Code(i))
+	var argIndex int
+	for _, predicate := range q.Predicates {
+		predicateCodes = append(predicateCodes, predicate.Code(argIndex))
+		argIndex += predicate.Comparator.NumberOfArguments()
 	}
 
 	var lines []string
@@ -53,6 +55,8 @@ func (p predicate) Code(argIndex int) string {
 		return fmt.Sprintf(`"%s": bson.M{"$gt": arg%d}`, p.Field, argIndex)
 	case spec.ComparatorGreaterThanEqual:
 		return fmt.Sprintf(`"%s": bson.M{"$gte": arg%d}`, p.Field, argIndex)
+	case spec.ComparatorBetween:
+		return fmt.Sprintf(`"%s": bson.M{"$gte": arg%d, "$lte": arg%d}`, p.Field, argIndex, argIndex+1)
 	case spec.ComparatorIn:
 		return fmt.Sprintf(`"%s": bson.M{"$in": arg%d}`, p.Field, argIndex)
 	}
