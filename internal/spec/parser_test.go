@@ -40,7 +40,7 @@ type ParseInterfaceMethodTestCase struct {
 	ExpectedOutput spec.MethodSpec
 }
 
-func TestParseInterfaceMethod(t *testing.T) {
+func TestParseInterfaceMethod_Find(t *testing.T) {
 	testTable := []ParseInterfaceMethodTestCase{
 		{
 			Name: "FindOneByArg method",
@@ -470,21 +470,454 @@ func TestParseInterfaceMethod(t *testing.T) {
 	}
 }
 
+func TestParseInterfaceMethod_Delete(t *testing.T) {
+	testTable := []ParseInterfaceMethodTestCase{
+		{
+			Name: "DeleteOneByArg method",
+			Method: code.Method{
+				Name: "DeleteOneByID",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
+				},
+				Returns: []code.Type{
+					code.SimpleType("bool"),
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedOutput: spec.MethodSpec{
+				Name: "DeleteOneByID",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
+				},
+				Returns: []code.Type{
+					code.SimpleType("bool"),
+					code.SimpleType("error"),
+				},
+				Operation: spec.DeleteOperation{
+					Mode: spec.QueryModeOne,
+					Query: spec.QuerySpec{Predicates: []spec.Predicate{
+						{Field: "ID", Comparator: spec.ComparatorEqual},
+					}},
+				},
+			},
+		},
+		{
+			Name: "DeleteOneByMultiWordArg method",
+			Method: code.Method{
+				Name: "DeleteOneByPhoneNumber",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("string")},
+				},
+				Returns: []code.Type{
+					code.SimpleType("bool"),
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedOutput: spec.MethodSpec{
+				Name: "DeleteOneByPhoneNumber",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("string")},
+				},
+				Returns: []code.Type{
+					code.SimpleType("bool"),
+					code.SimpleType("error"),
+				},
+				Operation: spec.DeleteOperation{
+					Mode: spec.QueryModeOne,
+					Query: spec.QuerySpec{Predicates: []spec.Predicate{
+						{Field: "PhoneNumber", Comparator: spec.ComparatorEqual},
+					}},
+				},
+			},
+		},
+		{
+			Name: "DeleteByArg method",
+			Method: code.Method{
+				Name: "DeleteByCity",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("string")},
+				},
+				Returns: []code.Type{
+					code.SimpleType("int"),
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedOutput: spec.MethodSpec{
+				Name: "DeleteByCity",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("string")},
+				},
+				Returns: []code.Type{
+					code.SimpleType("int"),
+					code.SimpleType("error"),
+				},
+				Operation: spec.DeleteOperation{
+					Mode: spec.QueryModeMany,
+					Query: spec.QuerySpec{Predicates: []spec.Predicate{
+						{Field: "City", Comparator: spec.ComparatorEqual},
+					}},
+				},
+			},
+		},
+		{
+			Name: "DeleteAll method",
+			Method: code.Method{
+				Name: "DeleteAll",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+				},
+				Returns: []code.Type{
+					code.SimpleType("int"),
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedOutput: spec.MethodSpec{
+				Name: "DeleteAll",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+				},
+				Returns: []code.Type{
+					code.SimpleType("int"),
+					code.SimpleType("error"),
+				},
+				Operation: spec.DeleteOperation{
+					Mode: spec.QueryModeMany,
+				},
+			},
+		},
+		{
+			Name: "DeleteByArgAndArg method",
+			Method: code.Method{
+				Name: "DeleteByCityAndGender",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("string")},
+					{Type: code.SimpleType("Gender")},
+				},
+				Returns: []code.Type{
+					code.SimpleType("int"),
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedOutput: spec.MethodSpec{
+				Name: "DeleteByCityAndGender",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("string")},
+					{Type: code.SimpleType("Gender")},
+				},
+				Returns: []code.Type{
+					code.SimpleType("int"),
+					code.SimpleType("error"),
+				},
+				Operation: spec.DeleteOperation{
+					Mode: spec.QueryModeMany,
+					Query: spec.QuerySpec{
+						Operator: spec.OperatorAnd,
+						Predicates: []spec.Predicate{
+							{Field: "City", Comparator: spec.ComparatorEqual},
+							{Field: "Gender", Comparator: spec.ComparatorEqual},
+						},
+					},
+				},
+			},
+		},
+		{
+			Name: "DeleteByArgOrArg method",
+			Method: code.Method{
+				Name: "DeleteByCityOrGender",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("string")},
+					{Type: code.SimpleType("Gender")},
+				},
+				Returns: []code.Type{
+					code.SimpleType("int"),
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedOutput: spec.MethodSpec{
+				Name: "DeleteByCityOrGender",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("string")},
+					{Type: code.SimpleType("Gender")},
+				},
+				Returns: []code.Type{
+					code.SimpleType("int"),
+					code.SimpleType("error"),
+				},
+				Operation: spec.DeleteOperation{
+					Mode: spec.QueryModeMany,
+					Query: spec.QuerySpec{
+						Operator: spec.OperatorOr,
+						Predicates: []spec.Predicate{
+							{Field: "City", Comparator: spec.ComparatorEqual},
+							{Field: "Gender", Comparator: spec.ComparatorEqual},
+						},
+					},
+				},
+			},
+		},
+		{
+			Name: "DeleteByArgNot method",
+			Method: code.Method{
+				Name: "DeleteByCityNot",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("string")},
+				},
+				Returns: []code.Type{
+					code.SimpleType("int"),
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedOutput: spec.MethodSpec{
+				Name: "DeleteByCityNot",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("string")},
+				},
+				Returns: []code.Type{
+					code.SimpleType("int"),
+					code.SimpleType("error"),
+				},
+				Operation: spec.DeleteOperation{
+					Mode: spec.QueryModeMany,
+					Query: spec.QuerySpec{Predicates: []spec.Predicate{
+						{Field: "City", Comparator: spec.ComparatorNot},
+					}},
+				},
+			},
+		},
+		{
+			Name: "DeleteByArgLessThan method",
+			Method: code.Method{
+				Name: "DeleteByAgeLessThan",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("int")},
+				},
+				Returns: []code.Type{
+					code.SimpleType("int"),
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedOutput: spec.MethodSpec{
+				Name: "DeleteByAgeLessThan",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("int")},
+				},
+				Returns: []code.Type{
+					code.SimpleType("int"),
+					code.SimpleType("error"),
+				},
+				Operation: spec.DeleteOperation{
+					Mode: spec.QueryModeMany,
+					Query: spec.QuerySpec{Predicates: []spec.Predicate{
+						{Field: "Age", Comparator: spec.ComparatorLessThan},
+					}},
+				},
+			},
+		},
+		{
+			Name: "DeleteByArgLessThanEqual method",
+			Method: code.Method{
+				Name: "DeleteByAgeLessThanEqual",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("int")},
+				},
+				Returns: []code.Type{
+					code.SimpleType("int"),
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedOutput: spec.MethodSpec{
+				Name: "DeleteByAgeLessThanEqual",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("int")},
+				},
+				Returns: []code.Type{
+					code.SimpleType("int"),
+					code.SimpleType("error"),
+				},
+				Operation: spec.DeleteOperation{
+					Mode: spec.QueryModeMany,
+					Query: spec.QuerySpec{Predicates: []spec.Predicate{
+						{Field: "Age", Comparator: spec.ComparatorLessThanEqual},
+					}},
+				},
+			},
+		},
+		{
+			Name: "DeleteByArgGreaterThan method",
+			Method: code.Method{
+				Name: "DeleteByAgeGreaterThan",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("int")},
+				},
+				Returns: []code.Type{
+					code.SimpleType("int"),
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedOutput: spec.MethodSpec{
+				Name: "DeleteByAgeGreaterThan",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("int")},
+				},
+				Returns: []code.Type{
+					code.SimpleType("int"),
+					code.SimpleType("error"),
+				},
+				Operation: spec.DeleteOperation{
+					Mode: spec.QueryModeMany,
+					Query: spec.QuerySpec{Predicates: []spec.Predicate{
+						{Field: "Age", Comparator: spec.ComparatorGreaterThan},
+					}},
+				},
+			},
+		},
+		{
+			Name: "DeleteByArgGreaterThanEqual method",
+			Method: code.Method{
+				Name: "DeleteByAgeGreaterThanEqual",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("int")},
+				},
+				Returns: []code.Type{
+					code.SimpleType("int"),
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedOutput: spec.MethodSpec{
+				Name: "DeleteByAgeGreaterThanEqual",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("int")},
+				},
+				Returns: []code.Type{
+					code.SimpleType("int"),
+					code.SimpleType("error"),
+				},
+				Operation: spec.DeleteOperation{
+					Mode: spec.QueryModeMany,
+					Query: spec.QuerySpec{Predicates: []spec.Predicate{
+						{Field: "Age", Comparator: spec.ComparatorGreaterThanEqual},
+					}},
+				},
+			},
+		},
+		{
+			Name: "DeleteByArgBetween method",
+			Method: code.Method{
+				Name: "DeleteByAgeBetween",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("int")},
+					{Type: code.SimpleType("int")},
+				},
+				Returns: []code.Type{
+					code.SimpleType("int"),
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedOutput: spec.MethodSpec{
+				Name: "DeleteByAgeBetween",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("int")},
+					{Type: code.SimpleType("int")},
+				},
+				Returns: []code.Type{
+					code.SimpleType("int"),
+					code.SimpleType("error"),
+				},
+				Operation: spec.DeleteOperation{
+					Mode: spec.QueryModeMany,
+					Query: spec.QuerySpec{Predicates: []spec.Predicate{
+						{Field: "Age", Comparator: spec.ComparatorBetween},
+					}},
+				},
+			},
+		},
+		{
+			Name: "DeleteByArgIn method",
+			Method: code.Method{
+				Name: "DeleteByCityIn",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.ArrayType{ContainedType: code.SimpleType("string")}},
+				},
+				Returns: []code.Type{
+					code.SimpleType("int"),
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedOutput: spec.MethodSpec{
+				Name: "DeleteByCityIn",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.ArrayType{ContainedType: code.SimpleType("string")}},
+				},
+				Returns: []code.Type{
+					code.SimpleType("int"),
+					code.SimpleType("error"),
+				},
+				Operation: spec.DeleteOperation{
+					Mode: spec.QueryModeMany,
+					Query: spec.QuerySpec{Predicates: []spec.Predicate{
+						{Field: "City", Comparator: spec.ComparatorIn},
+					}},
+				},
+			},
+		},
+	}
+
+	for _, testCase := range testTable {
+		t.Run(testCase.Name, func(t *testing.T) {
+			actualSpec, err := spec.ParseInterfaceMethod(structModel, testCase.Method)
+
+			if err != nil {
+				t.Errorf("Error = %s", err)
+			}
+			if !reflect.DeepEqual(actualSpec, testCase.ExpectedOutput) {
+				t.Errorf("Expected = %v\nReceived = %v", testCase.ExpectedOutput, actualSpec)
+			}
+		})
+	}
+}
+
 type ParseInterfaceMethodInvalidTestCase struct {
 	Name          string
 	Method        code.Method
 	ExpectedError error
 }
 
-func TestParseInterfaceMethodInvalid(t *testing.T) {
+func TestParseInterfaceMethod_Invalid(t *testing.T) {
+	_, err := spec.ParseInterfaceMethod(structModel, code.Method{
+		Name: "SearchByID",
+	})
+
+	if err != spec.UnknownOperationError {
+		t.Errorf("\nExpected = %v\nReceived = %v", spec.UnknownOperationError, err)
+	}
+}
+
+func TestParseInterfaceMethod_Find_Invalid(t *testing.T) {
 	testTable := []ParseInterfaceMethodInvalidTestCase{
-		{
-			Name: "unknown operation",
-			Method: code.Method{
-				Name: "SearchByID",
-			},
-			ExpectedError: spec.UnknownOperationError,
-		},
 		{
 			Name: "unsupported find method name",
 			Method: code.Method{
@@ -640,6 +1073,181 @@ func TestParseInterfaceMethodInvalid(t *testing.T) {
 				},
 				Returns: []code.Type{
 					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedError: spec.InvalidParamError,
+		},
+	}
+
+	for _, testCase := range testTable {
+		t.Run(testCase.Name, func(t *testing.T) {
+			_, err := spec.ParseInterfaceMethod(structModel, testCase.Method)
+
+			if err != testCase.ExpectedError {
+				t.Errorf("\nExpected = %v\nReceived = %v", testCase.ExpectedError, err)
+			}
+		})
+	}
+}
+
+func TestParseInterfaceMethod_Delete_Invalid(t *testing.T) {
+	testTable := []ParseInterfaceMethodInvalidTestCase{
+		{
+			Name: "unsupported delete method name",
+			Method: code.Method{
+				Name: "Delete",
+			},
+			ExpectedError: spec.UnsupportedNameError,
+		},
+		{
+			Name: "invalid number of returns",
+			Method: code.Method{
+				Name: "DeleteOneByID",
+				Returns: []code.Type{
+					code.SimpleType("UserModel"),
+					code.SimpleType("int"),
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedError: spec.UnsupportedReturnError,
+		},
+		{
+			Name: "unsupported return values from find method",
+			Method: code.Method{
+				Name: "DeleteOneByID",
+				Returns: []code.Type{
+					code.SimpleType("float64"),
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedError: spec.UnsupportedReturnError,
+		},
+		{
+			Name: "error return not provided",
+			Method: code.Method{
+				Name: "DeleteOneByID",
+				Returns: []code.Type{
+					code.SimpleType("int"),
+					code.SimpleType("bool"),
+				},
+			},
+			ExpectedError: spec.UnsupportedReturnError,
+		},
+		{
+			Name: "misplaced operator token (leftmost)",
+			Method: code.Method{
+				Name: "DeleteByAndGender",
+				Returns: []code.Type{
+					code.SimpleType("int"),
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedError: spec.InvalidQueryError,
+		},
+		{
+			Name: "misplaced operator token (rightmost)",
+			Method: code.Method{
+				Name: "DeleteByGenderAnd",
+				Returns: []code.Type{
+					code.SimpleType("int"),
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedError: spec.InvalidQueryError,
+		},
+		{
+			Name: "misplaced operator token (double operator)",
+			Method: code.Method{
+				Name: "DeleteByGenderAndAndCity",
+				Returns: []code.Type{
+					code.SimpleType("int"),
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedError: spec.InvalidQueryError,
+		},
+		{
+			Name: "ambiguous query",
+			Method: code.Method{
+				Name: "DeleteByGenderAndCityOrAge",
+				Returns: []code.Type{
+					code.SimpleType("int"),
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedError: spec.InvalidQueryError,
+		},
+		{
+			Name: "no context parameter",
+			Method: code.Method{
+				Name: "DeleteByGender",
+				Params: []code.Param{
+					{Type: code.SimpleType("Gender")},
+				},
+				Returns: []code.Type{
+					code.SimpleType("int"),
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedError: spec.ContextParamRequiredError,
+		},
+		{
+			Name: "mismatched number of parameters",
+			Method: code.Method{
+				Name: "DeleteByCountry",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("string")},
+					{Type: code.SimpleType("string")},
+				},
+				Returns: []code.Type{
+					code.SimpleType("int"),
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedError: spec.InvalidParamError,
+		},
+		{
+			Name: "struct field not found",
+			Method: code.Method{
+				Name: "DeleteByCountry",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("string")},
+				},
+				Returns: []code.Type{
+					code.SimpleType("int"),
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedError: spec.StructFieldNotFoundError,
+		},
+		{
+			Name: "mismatched method parameter type",
+			Method: code.Method{
+				Name: "DeleteByGender",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("string")},
+				},
+				Returns: []code.Type{
+					code.SimpleType("int"),
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedError: spec.InvalidParamError,
+		},
+		{
+			Name: "mismatched method parameter type for special case",
+			Method: code.Method{
+				Name: "DeleteByCityIn",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("string")},
+				},
+				Returns: []code.Type{
+					code.SimpleType("int"),
 					code.SimpleType("error"),
 				},
 			},
