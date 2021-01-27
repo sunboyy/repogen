@@ -95,16 +95,16 @@ func TestGenerateMethod_Find(t *testing.T) {
 					Mode: spec.QueryModeOne,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorEqual, Field: "ID"},
+							{Comparator: spec.ComparatorEqual, Field: "ID", ParamIndex: 1},
 						},
 					},
 				},
 			},
 			ExpectedCode: `
-func (r *UserRepositoryMongo) FindByID(ctx context.Context, arg0 primitive.ObjectID) (*UserModel, error) {
+func (r *UserRepositoryMongo) FindByID(arg0 context.Context, arg1 primitive.ObjectID) (*UserModel, error) {
 	var entity UserModel
-	if err := r.collection.FindOne(ctx, bson.M{
-		"_id": arg0,
+	if err := r.collection.FindOne(arg0, bson.M{
+		"_id": arg1,
 	}).Decode(&entity); err != nil {
 		return nil, err
 	}
@@ -128,21 +128,21 @@ func (r *UserRepositoryMongo) FindByID(ctx context.Context, arg0 primitive.Objec
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorEqual, Field: "Gender"},
+							{Comparator: spec.ComparatorEqual, Field: "Gender", ParamIndex: 1},
 						},
 					},
 				},
 			},
 			ExpectedCode: `
-func (r *UserRepositoryMongo) FindByGender(ctx context.Context, arg0 Gender) ([]*UserModel, error) {
-	cursor, err := r.collection.Find(ctx, bson.M{
-		"gender": arg0,
+func (r *UserRepositoryMongo) FindByGender(arg0 context.Context, arg1 Gender) ([]*UserModel, error) {
+	cursor, err := r.collection.Find(arg0, bson.M{
+		"gender": arg1,
 	})
 	if err != nil {
 		return nil, err
 	}
 	var entities []*UserModel
-	if err := cursor.All(ctx, &entities); err != nil {
+	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}
 	return entities, nil
@@ -167,23 +167,23 @@ func (r *UserRepositoryMongo) FindByGender(ctx context.Context, arg0 Gender) ([]
 					Query: spec.QuerySpec{
 						Operator: spec.OperatorAnd,
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorEqual, Field: "Gender"},
-							{Comparator: spec.ComparatorEqual, Field: "Age"},
+							{Comparator: spec.ComparatorEqual, Field: "Gender", ParamIndex: 1},
+							{Comparator: spec.ComparatorEqual, Field: "Age", ParamIndex: 2},
 						},
 					},
 				},
 			},
 			ExpectedCode: `
-func (r *UserRepositoryMongo) FindByGenderAndAge(ctx context.Context, arg0 Gender, arg1 int) ([]*UserModel, error) {
-	cursor, err := r.collection.Find(ctx, bson.M{
-		"gender": arg0,
-		"age": arg1,
+func (r *UserRepositoryMongo) FindByGenderAndAge(arg0 context.Context, arg1 Gender, arg2 int) ([]*UserModel, error) {
+	cursor, err := r.collection.Find(arg0, bson.M{
+		"gender": arg1,
+		"age": arg2,
 	})
 	if err != nil {
 		return nil, err
 	}
 	var entities []*UserModel
-	if err := cursor.All(ctx, &entities); err != nil {
+	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}
 	return entities, nil
@@ -208,25 +208,25 @@ func (r *UserRepositoryMongo) FindByGenderAndAge(ctx context.Context, arg0 Gende
 					Query: spec.QuerySpec{
 						Operator: spec.OperatorOr,
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorEqual, Field: "Gender"},
-							{Comparator: spec.ComparatorEqual, Field: "Age"},
+							{Comparator: spec.ComparatorEqual, Field: "Gender", ParamIndex: 1},
+							{Comparator: spec.ComparatorEqual, Field: "Age", ParamIndex: 2},
 						},
 					},
 				},
 			},
 			ExpectedCode: `
-func (r *UserRepositoryMongo) FindByGenderOrAge(ctx context.Context, arg0 Gender, arg1 int) ([]*UserModel, error) {
-	cursor, err := r.collection.Find(ctx, bson.M{
+func (r *UserRepositoryMongo) FindByGenderOrAge(arg0 context.Context, arg1 Gender, arg2 int) ([]*UserModel, error) {
+	cursor, err := r.collection.Find(arg0, bson.M{
 		"$or": []bson.M{
-			{"gender": arg0},
-			{"age": arg1},
+			{"gender": arg1},
+			{"age": arg2},
 		},
 	})
 	if err != nil {
 		return nil, err
 	}
 	var entities []*UserModel
-	if err := cursor.All(ctx, &entities); err != nil {
+	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}
 	return entities, nil
@@ -249,21 +249,21 @@ func (r *UserRepositoryMongo) FindByGenderOrAge(ctx context.Context, arg0 Gender
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorNot, Field: "Gender"},
+							{Comparator: spec.ComparatorNot, Field: "Gender", ParamIndex: 1},
 						},
 					},
 				},
 			},
 			ExpectedCode: `
-func (r *UserRepositoryMongo) FindByGenderNot(ctx context.Context, arg0 Gender) ([]*UserModel, error) {
-	cursor, err := r.collection.Find(ctx, bson.M{
-		"gender": bson.M{"$ne": arg0},
+func (r *UserRepositoryMongo) FindByGenderNot(arg0 context.Context, arg1 Gender) ([]*UserModel, error) {
+	cursor, err := r.collection.Find(arg0, bson.M{
+		"gender": bson.M{"$ne": arg1},
 	})
 	if err != nil {
 		return nil, err
 	}
 	var entities []*UserModel
-	if err := cursor.All(ctx, &entities); err != nil {
+	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}
 	return entities, nil
@@ -286,21 +286,21 @@ func (r *UserRepositoryMongo) FindByGenderNot(ctx context.Context, arg0 Gender) 
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorLessThan, Field: "Age"},
+							{Comparator: spec.ComparatorLessThan, Field: "Age", ParamIndex: 1},
 						},
 					},
 				},
 			},
 			ExpectedCode: `
-func (r *UserRepositoryMongo) FindByAgeLessThan(ctx context.Context, arg0 int) ([]*UserModel, error) {
-	cursor, err := r.collection.Find(ctx, bson.M{
-		"age": bson.M{"$lt": arg0},
+func (r *UserRepositoryMongo) FindByAgeLessThan(arg0 context.Context, arg1 int) ([]*UserModel, error) {
+	cursor, err := r.collection.Find(arg0, bson.M{
+		"age": bson.M{"$lt": arg1},
 	})
 	if err != nil {
 		return nil, err
 	}
 	var entities []*UserModel
-	if err := cursor.All(ctx, &entities); err != nil {
+	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}
 	return entities, nil
@@ -323,21 +323,21 @@ func (r *UserRepositoryMongo) FindByAgeLessThan(ctx context.Context, arg0 int) (
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorLessThanEqual, Field: "Age"},
+							{Comparator: spec.ComparatorLessThanEqual, Field: "Age", ParamIndex: 1},
 						},
 					},
 				},
 			},
 			ExpectedCode: `
-func (r *UserRepositoryMongo) FindByAgeLessThanEqual(ctx context.Context, arg0 int) ([]*UserModel, error) {
-	cursor, err := r.collection.Find(ctx, bson.M{
-		"age": bson.M{"$lte": arg0},
+func (r *UserRepositoryMongo) FindByAgeLessThanEqual(arg0 context.Context, arg1 int) ([]*UserModel, error) {
+	cursor, err := r.collection.Find(arg0, bson.M{
+		"age": bson.M{"$lte": arg1},
 	})
 	if err != nil {
 		return nil, err
 	}
 	var entities []*UserModel
-	if err := cursor.All(ctx, &entities); err != nil {
+	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}
 	return entities, nil
@@ -360,21 +360,21 @@ func (r *UserRepositoryMongo) FindByAgeLessThanEqual(ctx context.Context, arg0 i
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorGreaterThan, Field: "Age"},
+							{Comparator: spec.ComparatorGreaterThan, Field: "Age", ParamIndex: 1},
 						},
 					},
 				},
 			},
 			ExpectedCode: `
-func (r *UserRepositoryMongo) FindByAgeGreaterThan(ctx context.Context, arg0 int) ([]*UserModel, error) {
-	cursor, err := r.collection.Find(ctx, bson.M{
-		"age": bson.M{"$gt": arg0},
+func (r *UserRepositoryMongo) FindByAgeGreaterThan(arg0 context.Context, arg1 int) ([]*UserModel, error) {
+	cursor, err := r.collection.Find(arg0, bson.M{
+		"age": bson.M{"$gt": arg1},
 	})
 	if err != nil {
 		return nil, err
 	}
 	var entities []*UserModel
-	if err := cursor.All(ctx, &entities); err != nil {
+	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}
 	return entities, nil
@@ -397,21 +397,21 @@ func (r *UserRepositoryMongo) FindByAgeGreaterThan(ctx context.Context, arg0 int
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorGreaterThanEqual, Field: "Age"},
+							{Comparator: spec.ComparatorGreaterThanEqual, Field: "Age", ParamIndex: 1},
 						},
 					},
 				},
 			},
 			ExpectedCode: `
-func (r *UserRepositoryMongo) FindByAgeGreaterThanEqual(ctx context.Context, arg0 int) ([]*UserModel, error) {
-	cursor, err := r.collection.Find(ctx, bson.M{
-		"age": bson.M{"$gte": arg0},
+func (r *UserRepositoryMongo) FindByAgeGreaterThanEqual(arg0 context.Context, arg1 int) ([]*UserModel, error) {
+	cursor, err := r.collection.Find(arg0, bson.M{
+		"age": bson.M{"$gte": arg1},
 	})
 	if err != nil {
 		return nil, err
 	}
 	var entities []*UserModel
-	if err := cursor.All(ctx, &entities); err != nil {
+	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}
 	return entities, nil
@@ -435,21 +435,21 @@ func (r *UserRepositoryMongo) FindByAgeGreaterThanEqual(ctx context.Context, arg
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorBetween, Field: "Age"},
+							{Comparator: spec.ComparatorBetween, Field: "Age", ParamIndex: 1},
 						},
 					},
 				},
 			},
 			ExpectedCode: `
-func (r *UserRepositoryMongo) FindByAgeBetween(ctx context.Context, arg0 int, arg1 int) ([]*UserModel, error) {
-	cursor, err := r.collection.Find(ctx, bson.M{
-		"age": bson.M{"$gte": arg0, "$lte": arg1},
+func (r *UserRepositoryMongo) FindByAgeBetween(arg0 context.Context, arg1 int, arg2 int) ([]*UserModel, error) {
+	cursor, err := r.collection.Find(arg0, bson.M{
+		"age": bson.M{"$gte": arg1, "$lte": arg2},
 	})
 	if err != nil {
 		return nil, err
 	}
 	var entities []*UserModel
-	if err := cursor.All(ctx, &entities); err != nil {
+	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}
 	return entities, nil
@@ -472,24 +472,127 @@ func (r *UserRepositoryMongo) FindByAgeBetween(ctx context.Context, arg0 int, ar
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorIn, Field: "Gender"},
+							{Comparator: spec.ComparatorIn, Field: "Gender", ParamIndex: 1},
 						},
 					},
 				},
 			},
 			ExpectedCode: `
-func (r *UserRepositoryMongo) FindByGenderIn(ctx context.Context, arg0 []Gender) ([]*UserModel, error) {
-	cursor, err := r.collection.Find(ctx, bson.M{
-		"gender": bson.M{"$in": arg0},
+func (r *UserRepositoryMongo) FindByGenderIn(arg0 context.Context, arg1 []Gender) ([]*UserModel, error) {
+	cursor, err := r.collection.Find(arg0, bson.M{
+		"gender": bson.M{"$in": arg1},
 	})
 	if err != nil {
 		return nil, err
 	}
 	var entities []*UserModel
-	if err := cursor.All(ctx, &entities); err != nil {
+	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}
 	return entities, nil
+}
+`,
+		},
+	}
+
+	for _, testCase := range testTable {
+		t.Run(testCase.Name, func(t *testing.T) {
+			generator := mongo.NewGenerator(userModel, "UserRepository")
+			buffer := new(bytes.Buffer)
+
+			err := generator.GenerateMethod(testCase.MethodSpec, buffer)
+
+			if err != nil {
+				t.Error(err)
+			}
+			if err := testutils.ExpectMultiLineString(testCase.ExpectedCode, buffer.String()); err != nil {
+				t.Error(err)
+			}
+		})
+	}
+}
+
+func TestGenerateMethod_Update(t *testing.T) {
+	testTable := []GenerateMethodTestCase{
+		{
+			Name: "simple update one method",
+			MethodSpec: spec.MethodSpec{
+				Name: "UpdateAgeByID",
+				Params: []code.Param{
+					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Name: "age", Type: code.SimpleType("int")},
+					{Name: "id", Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
+				},
+				Returns: []code.Type{
+					code.SimpleType("bool"),
+					code.SimpleType("error"),
+				},
+				Operation: spec.UpdateOperation{
+					Fields: []spec.UpdateField{
+						{Name: "Age", ParamIndex: 1},
+					},
+					Mode: spec.QueryModeOne,
+					Query: spec.QuerySpec{
+						Predicates: []spec.Predicate{
+							{Field: "ID", Comparator: spec.ComparatorEqual, ParamIndex: 2},
+						},
+					},
+				},
+			},
+			ExpectedCode: `
+func (r *UserRepositoryMongo) UpdateAgeByID(arg0 context.Context, arg1 int, arg2 primitive.ObjectID) (bool, error) {
+	result, err := r.collection.UpdateOne(arg0, bson.M{
+		"_id": arg2,
+	}, bson.M{
+		"$set": bson.M{
+			"age": arg1,
+		},
+	})
+	if err != nil {
+		return false, err
+	}
+	return result.MatchedCount > 0, err
+}
+`,
+		},
+		{
+			Name: "simple update many method",
+			MethodSpec: spec.MethodSpec{
+				Name: "UpdateAgeByGender",
+				Params: []code.Param{
+					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Name: "age", Type: code.SimpleType("int")},
+					{Name: "gender", Type: code.SimpleType("Gender")},
+				},
+				Returns: []code.Type{
+					code.SimpleType("int"),
+					code.SimpleType("error"),
+				},
+				Operation: spec.UpdateOperation{
+					Fields: []spec.UpdateField{
+						{Name: "Age", ParamIndex: 1},
+					},
+					Mode: spec.QueryModeMany,
+					Query: spec.QuerySpec{
+						Predicates: []spec.Predicate{
+							{Field: "Gender", Comparator: spec.ComparatorEqual, ParamIndex: 2},
+						},
+					},
+				},
+			},
+			ExpectedCode: `
+func (r *UserRepositoryMongo) UpdateAgeByGender(arg0 context.Context, arg1 int, arg2 Gender) (int, error) {
+	result, err := r.collection.UpdateMany(arg0, bson.M{
+		"gender": arg2,
+	}, bson.M{
+		"$set": bson.M{
+			"age": arg1,
+		},
+	})
+	if err != nil {
+		return 0, err
+	}
+	return int(result.MatchedCount), err
 }
 `,
 		},
@@ -527,15 +630,15 @@ func TestGenerateMethod_Delete(t *testing.T) {
 					Mode: spec.QueryModeOne,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorEqual, Field: "ID"},
+							{Comparator: spec.ComparatorEqual, Field: "ID", ParamIndex: 1},
 						},
 					},
 				},
 			},
 			ExpectedCode: `
-func (r *UserRepositoryMongo) DeleteByID(ctx context.Context, arg0 primitive.ObjectID) (bool, error) {
-	result, err := r.collection.DeleteOne(ctx, bson.M{
-		"_id": arg0,
+func (r *UserRepositoryMongo) DeleteByID(arg0 context.Context, arg1 primitive.ObjectID) (bool, error) {
+	result, err := r.collection.DeleteOne(arg0, bson.M{
+		"_id": arg1,
 	})
 	if err != nil {
 		return false, err
@@ -560,15 +663,15 @@ func (r *UserRepositoryMongo) DeleteByID(ctx context.Context, arg0 primitive.Obj
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorEqual, Field: "Gender"},
+							{Comparator: spec.ComparatorEqual, Field: "Gender", ParamIndex: 1},
 						},
 					},
 				},
 			},
 			ExpectedCode: `
-func (r *UserRepositoryMongo) DeleteByGender(ctx context.Context, arg0 Gender) (int, error) {
-	result, err := r.collection.DeleteMany(ctx, bson.M{
-		"gender": arg0,
+func (r *UserRepositoryMongo) DeleteByGender(arg0 context.Context, arg1 Gender) (int, error) {
+	result, err := r.collection.DeleteMany(arg0, bson.M{
+		"gender": arg1,
 	})
 	if err != nil {
 		return 0, err
@@ -595,17 +698,17 @@ func (r *UserRepositoryMongo) DeleteByGender(ctx context.Context, arg0 Gender) (
 					Query: spec.QuerySpec{
 						Operator: spec.OperatorAnd,
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorEqual, Field: "Gender"},
-							{Comparator: spec.ComparatorEqual, Field: "Age"},
+							{Comparator: spec.ComparatorEqual, Field: "Gender", ParamIndex: 1},
+							{Comparator: spec.ComparatorEqual, Field: "Age", ParamIndex: 2},
 						},
 					},
 				},
 			},
 			ExpectedCode: `
-func (r *UserRepositoryMongo) DeleteByGenderAndAge(ctx context.Context, arg0 Gender, arg1 int) (int, error) {
-	result, err := r.collection.DeleteMany(ctx, bson.M{
-		"gender": arg0,
-		"age": arg1,
+func (r *UserRepositoryMongo) DeleteByGenderAndAge(arg0 context.Context, arg1 Gender, arg2 int) (int, error) {
+	result, err := r.collection.DeleteMany(arg0, bson.M{
+		"gender": arg1,
+		"age": arg2,
 	})
 	if err != nil {
 		return 0, err
@@ -632,18 +735,18 @@ func (r *UserRepositoryMongo) DeleteByGenderAndAge(ctx context.Context, arg0 Gen
 					Query: spec.QuerySpec{
 						Operator: spec.OperatorOr,
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorEqual, Field: "Gender"},
-							{Comparator: spec.ComparatorEqual, Field: "Age"},
+							{Comparator: spec.ComparatorEqual, Field: "Gender", ParamIndex: 1},
+							{Comparator: spec.ComparatorEqual, Field: "Age", ParamIndex: 2},
 						},
 					},
 				},
 			},
 			ExpectedCode: `
-func (r *UserRepositoryMongo) DeleteByGenderOrAge(ctx context.Context, arg0 Gender, arg1 int) (int, error) {
-	result, err := r.collection.DeleteMany(ctx, bson.M{
+func (r *UserRepositoryMongo) DeleteByGenderOrAge(arg0 context.Context, arg1 Gender, arg2 int) (int, error) {
+	result, err := r.collection.DeleteMany(arg0, bson.M{
 		"$or": []bson.M{
-			{"gender": arg0},
-			{"age": arg1},
+			{"gender": arg1},
+			{"age": arg2},
 		},
 	})
 	if err != nil {
@@ -669,15 +772,15 @@ func (r *UserRepositoryMongo) DeleteByGenderOrAge(ctx context.Context, arg0 Gend
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorNot, Field: "Gender"},
+							{Comparator: spec.ComparatorNot, Field: "Gender", ParamIndex: 1},
 						},
 					},
 				},
 			},
 			ExpectedCode: `
-func (r *UserRepositoryMongo) DeleteByGenderNot(ctx context.Context, arg0 Gender) (int, error) {
-	result, err := r.collection.DeleteMany(ctx, bson.M{
-		"gender": bson.M{"$ne": arg0},
+func (r *UserRepositoryMongo) DeleteByGenderNot(arg0 context.Context, arg1 Gender) (int, error) {
+	result, err := r.collection.DeleteMany(arg0, bson.M{
+		"gender": bson.M{"$ne": arg1},
 	})
 	if err != nil {
 		return 0, err
@@ -702,15 +805,15 @@ func (r *UserRepositoryMongo) DeleteByGenderNot(ctx context.Context, arg0 Gender
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorLessThan, Field: "Age"},
+							{Comparator: spec.ComparatorLessThan, Field: "Age", ParamIndex: 1},
 						},
 					},
 				},
 			},
 			ExpectedCode: `
-func (r *UserRepositoryMongo) DeleteByAgeLessThan(ctx context.Context, arg0 int) (int, error) {
-	result, err := r.collection.DeleteMany(ctx, bson.M{
-		"age": bson.M{"$lt": arg0},
+func (r *UserRepositoryMongo) DeleteByAgeLessThan(arg0 context.Context, arg1 int) (int, error) {
+	result, err := r.collection.DeleteMany(arg0, bson.M{
+		"age": bson.M{"$lt": arg1},
 	})
 	if err != nil {
 		return 0, err
@@ -735,15 +838,15 @@ func (r *UserRepositoryMongo) DeleteByAgeLessThan(ctx context.Context, arg0 int)
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorLessThanEqual, Field: "Age"},
+							{Comparator: spec.ComparatorLessThanEqual, Field: "Age", ParamIndex: 1},
 						},
 					},
 				},
 			},
 			ExpectedCode: `
-func (r *UserRepositoryMongo) DeleteByAgeLessThanEqual(ctx context.Context, arg0 int) (int, error) {
-	result, err := r.collection.DeleteMany(ctx, bson.M{
-		"age": bson.M{"$lte": arg0},
+func (r *UserRepositoryMongo) DeleteByAgeLessThanEqual(arg0 context.Context, arg1 int) (int, error) {
+	result, err := r.collection.DeleteMany(arg0, bson.M{
+		"age": bson.M{"$lte": arg1},
 	})
 	if err != nil {
 		return 0, err
@@ -768,15 +871,15 @@ func (r *UserRepositoryMongo) DeleteByAgeLessThanEqual(ctx context.Context, arg0
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorGreaterThan, Field: "Age"},
+							{Comparator: spec.ComparatorGreaterThan, Field: "Age", ParamIndex: 1},
 						},
 					},
 				},
 			},
 			ExpectedCode: `
-func (r *UserRepositoryMongo) DeleteByAgeGreaterThan(ctx context.Context, arg0 int) (int, error) {
-	result, err := r.collection.DeleteMany(ctx, bson.M{
-		"age": bson.M{"$gt": arg0},
+func (r *UserRepositoryMongo) DeleteByAgeGreaterThan(arg0 context.Context, arg1 int) (int, error) {
+	result, err := r.collection.DeleteMany(arg0, bson.M{
+		"age": bson.M{"$gt": arg1},
 	})
 	if err != nil {
 		return 0, err
@@ -801,15 +904,15 @@ func (r *UserRepositoryMongo) DeleteByAgeGreaterThan(ctx context.Context, arg0 i
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorGreaterThanEqual, Field: "Age"},
+							{Comparator: spec.ComparatorGreaterThanEqual, Field: "Age", ParamIndex: 1},
 						},
 					},
 				},
 			},
 			ExpectedCode: `
-func (r *UserRepositoryMongo) DeleteByAgeGreaterThanEqual(ctx context.Context, arg0 int) (int, error) {
-	result, err := r.collection.DeleteMany(ctx, bson.M{
-		"age": bson.M{"$gte": arg0},
+func (r *UserRepositoryMongo) DeleteByAgeGreaterThanEqual(arg0 context.Context, arg1 int) (int, error) {
+	result, err := r.collection.DeleteMany(arg0, bson.M{
+		"age": bson.M{"$gte": arg1},
 	})
 	if err != nil {
 		return 0, err
@@ -835,15 +938,15 @@ func (r *UserRepositoryMongo) DeleteByAgeGreaterThanEqual(ctx context.Context, a
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorBetween, Field: "Age"},
+							{Comparator: spec.ComparatorBetween, Field: "Age", ParamIndex: 1},
 						},
 					},
 				},
 			},
 			ExpectedCode: `
-func (r *UserRepositoryMongo) DeleteByAgeBetween(ctx context.Context, arg0 int, arg1 int) (int, error) {
-	result, err := r.collection.DeleteMany(ctx, bson.M{
-		"age": bson.M{"$gte": arg0, "$lte": arg1},
+func (r *UserRepositoryMongo) DeleteByAgeBetween(arg0 context.Context, arg1 int, arg2 int) (int, error) {
+	result, err := r.collection.DeleteMany(arg0, bson.M{
+		"age": bson.M{"$gte": arg1, "$lte": arg2},
 	})
 	if err != nil {
 		return 0, err
@@ -868,15 +971,15 @@ func (r *UserRepositoryMongo) DeleteByAgeBetween(ctx context.Context, arg0 int, 
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorIn, Field: "Gender"},
+							{Comparator: spec.ComparatorIn, Field: "Gender", ParamIndex: 1},
 						},
 					},
 				},
 			},
 			ExpectedCode: `
-func (r *UserRepositoryMongo) DeleteByGenderIn(ctx context.Context, arg0 []Gender) (int, error) {
-	result, err := r.collection.DeleteMany(ctx, bson.M{
-		"gender": bson.M{"$in": arg0},
+func (r *UserRepositoryMongo) DeleteByGenderIn(arg0 context.Context, arg1 []Gender) (int, error) {
+	result, err := r.collection.DeleteMany(arg0, bson.M{
+		"gender": bson.M{"$in": arg1},
 	})
 	if err != nil {
 		return 0, err
@@ -929,7 +1032,7 @@ func TestGenerateMethod_Invalid(t *testing.T) {
 			ExpectedError: mongo.OperationNotSupportedError,
 		},
 		{
-			Name: "bson tag not found",
+			Name: "bson tag not found in query",
 			Method: spec.MethodSpec{
 				Name: "FindByAccessToken",
 				Params: []code.Param{
@@ -944,7 +1047,34 @@ func TestGenerateMethod_Invalid(t *testing.T) {
 					Mode: spec.QueryModeOne,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Field: "AccessToken", Comparator: spec.ComparatorEqual},
+							{Field: "AccessToken", Comparator: spec.ComparatorEqual, ParamIndex: 1},
+						},
+					},
+				},
+			},
+			ExpectedError: mongo.BsonTagNotFoundError,
+		},
+		{
+			Name: "bson tag not found in update field",
+			Method: spec.MethodSpec{
+				Name: "UpdateAccessTokenByID",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("string")},
+					{Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
+				},
+				Returns: []code.Type{
+					code.SimpleType("bool"),
+					code.SimpleType("error"),
+				},
+				Operation: spec.UpdateOperation{
+					Fields: []spec.UpdateField{
+						{Name: "AccessToken", ParamIndex: 1},
+					},
+					Mode: spec.QueryModeOne,
+					Query: spec.QuerySpec{
+						Predicates: []spec.Predicate{
+							{Field: "ID", Comparator: spec.ComparatorEqual, ParamIndex: 2},
 						},
 					},
 				},

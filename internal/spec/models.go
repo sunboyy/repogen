@@ -33,6 +33,19 @@ type FindOperation struct {
 	Query QuerySpec
 }
 
+// UpdateOperation is a method specification for update operations
+type UpdateOperation struct {
+	Fields []UpdateField
+	Mode   QueryMode
+	Query  QuerySpec
+}
+
+// UpdateField stores mapping between field name in the model and the parameter index
+type UpdateField struct {
+	Name       string
+	ParamIndex int
+}
+
 // DeleteOperation is a method specification for delete operations
 type DeleteOperation struct {
 	Mode  QueryMode
@@ -98,31 +111,32 @@ func (c Comparator) NumberOfArguments() int {
 type Predicate struct {
 	Field      string
 	Comparator Comparator
+	ParamIndex int
 }
 
 type predicateToken []string
 
-func (t predicateToken) ToPredicate() Predicate {
+func (t predicateToken) ToPredicate(paramIndex int) Predicate {
 	if len(t) > 1 && t[len(t)-1] == "Not" {
-		return Predicate{Field: strings.Join(t[:len(t)-1], ""), Comparator: ComparatorNot}
+		return Predicate{Field: strings.Join(t[:len(t)-1], ""), Comparator: ComparatorNot, ParamIndex: paramIndex}
 	}
 	if len(t) > 2 && t[len(t)-2] == "Less" && t[len(t)-1] == "Than" {
-		return Predicate{Field: strings.Join(t[:len(t)-2], ""), Comparator: ComparatorLessThan}
+		return Predicate{Field: strings.Join(t[:len(t)-2], ""), Comparator: ComparatorLessThan, ParamIndex: paramIndex}
 	}
 	if len(t) > 3 && t[len(t)-3] == "Less" && t[len(t)-2] == "Than" && t[len(t)-1] == "Equal" {
-		return Predicate{Field: strings.Join(t[:len(t)-3], ""), Comparator: ComparatorLessThanEqual}
+		return Predicate{Field: strings.Join(t[:len(t)-3], ""), Comparator: ComparatorLessThanEqual, ParamIndex: paramIndex}
 	}
 	if len(t) > 2 && t[len(t)-2] == "Greater" && t[len(t)-1] == "Than" {
-		return Predicate{Field: strings.Join(t[:len(t)-2], ""), Comparator: ComparatorGreaterThan}
+		return Predicate{Field: strings.Join(t[:len(t)-2], ""), Comparator: ComparatorGreaterThan, ParamIndex: paramIndex}
 	}
 	if len(t) > 3 && t[len(t)-3] == "Greater" && t[len(t)-2] == "Than" && t[len(t)-1] == "Equal" {
-		return Predicate{Field: strings.Join(t[:len(t)-3], ""), Comparator: ComparatorGreaterThanEqual}
+		return Predicate{Field: strings.Join(t[:len(t)-3], ""), Comparator: ComparatorGreaterThanEqual, ParamIndex: paramIndex}
 	}
 	if len(t) > 1 && t[len(t)-1] == "In" {
-		return Predicate{Field: strings.Join(t[:len(t)-1], ""), Comparator: ComparatorIn}
+		return Predicate{Field: strings.Join(t[:len(t)-1], ""), Comparator: ComparatorIn, ParamIndex: paramIndex}
 	}
 	if len(t) > 1 && t[len(t)-1] == "Between" {
-		return Predicate{Field: strings.Join(t[:len(t)-1], ""), Comparator: ComparatorBetween}
+		return Predicate{Field: strings.Join(t[:len(t)-1], ""), Comparator: ComparatorBetween, ParamIndex: paramIndex}
 	}
-	return Predicate{Field: strings.Join(t, ""), Comparator: ComparatorEqual}
+	return Predicate{Field: strings.Join(t, ""), Comparator: ComparatorEqual, ParamIndex: paramIndex}
 }

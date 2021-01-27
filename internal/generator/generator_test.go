@@ -48,7 +48,7 @@ func TestGenerateMongoRepository(t *testing.T) {
 				Mode: spec.QueryModeOne,
 				Query: spec.QuerySpec{
 					Predicates: []spec.Predicate{
-						{Field: "ID", Comparator: spec.ComparatorEqual},
+						{Field: "ID", Comparator: spec.ComparatorEqual, ParamIndex: 1},
 					},
 				},
 			},
@@ -70,8 +70,8 @@ func TestGenerateMongoRepository(t *testing.T) {
 				Query: spec.QuerySpec{
 					Operator: spec.OperatorAnd,
 					Predicates: []spec.Predicate{
-						{Field: "Gender", Comparator: spec.ComparatorNot},
-						{Field: "Age", Comparator: spec.ComparatorLessThan},
+						{Field: "Gender", Comparator: spec.ComparatorNot, ParamIndex: 1},
+						{Field: "Age", Comparator: spec.ComparatorLessThan, ParamIndex: 2},
 					},
 				},
 			},
@@ -90,7 +90,7 @@ func TestGenerateMongoRepository(t *testing.T) {
 				Mode: spec.QueryModeMany,
 				Query: spec.QuerySpec{
 					Predicates: []spec.Predicate{
-						{Field: "Age", Comparator: spec.ComparatorLessThanEqual},
+						{Field: "Age", Comparator: spec.ComparatorLessThanEqual, ParamIndex: 1},
 					},
 				},
 			},
@@ -109,7 +109,7 @@ func TestGenerateMongoRepository(t *testing.T) {
 				Mode: spec.QueryModeMany,
 				Query: spec.QuerySpec{
 					Predicates: []spec.Predicate{
-						{Field: "Age", Comparator: spec.ComparatorGreaterThan},
+						{Field: "Age", Comparator: spec.ComparatorGreaterThan, ParamIndex: 1},
 					},
 				},
 			},
@@ -128,7 +128,7 @@ func TestGenerateMongoRepository(t *testing.T) {
 				Mode: spec.QueryModeMany,
 				Query: spec.QuerySpec{
 					Predicates: []spec.Predicate{
-						{Field: "Age", Comparator: spec.ComparatorGreaterThanEqual},
+						{Field: "Age", Comparator: spec.ComparatorGreaterThanEqual, ParamIndex: 1},
 					},
 				},
 			},
@@ -148,7 +148,7 @@ func TestGenerateMongoRepository(t *testing.T) {
 				Mode: spec.QueryModeMany,
 				Query: spec.QuerySpec{
 					Predicates: []spec.Predicate{
-						{Field: "Age", Comparator: spec.ComparatorBetween},
+						{Field: "Age", Comparator: spec.ComparatorBetween, ParamIndex: 1},
 					},
 				},
 			},
@@ -169,8 +169,8 @@ func TestGenerateMongoRepository(t *testing.T) {
 				Query: spec.QuerySpec{
 					Operator: spec.OperatorOr,
 					Predicates: []spec.Predicate{
-						{Field: "Gender", Comparator: spec.ComparatorEqual},
-						{Field: "Age", Comparator: spec.ComparatorEqual},
+						{Field: "Gender", Comparator: spec.ComparatorEqual, ParamIndex: 1},
+						{Field: "Age", Comparator: spec.ComparatorEqual, ParamIndex: 2},
 					},
 				},
 			},
@@ -203,99 +203,99 @@ type UserRepositoryMongo struct {
 	collection *mongo.Collection
 }
 
-func (r *UserRepositoryMongo) FindByID(ctx context.Context, arg0 primitive.ObjectID) (*UserModel, error) {
+func (r *UserRepositoryMongo) FindByID(arg0 context.Context, arg1 primitive.ObjectID) (*UserModel, error) {
 	var entity UserModel
-	if err := r.collection.FindOne(ctx, bson.M{
-		"_id": arg0,
+	if err := r.collection.FindOne(arg0, bson.M{
+		"_id": arg1,
 	}).Decode(&entity); err != nil {
 		return nil, err
 	}
 	return &entity, nil
 }
 
-func (r *UserRepositoryMongo) FindByGenderNotAndAgeLessThan(ctx context.Context, arg0 Gender, arg1 int) (*UserModel, error) {
-	cursor, err := r.collection.Find(ctx, bson.M{
-		"gender": bson.M{"$ne": arg0},
-		"age":    bson.M{"$lt": arg1},
+func (r *UserRepositoryMongo) FindByGenderNotAndAgeLessThan(arg0 context.Context, arg1 Gender, arg2 int) (*UserModel, error) {
+	cursor, err := r.collection.Find(arg0, bson.M{
+		"gender": bson.M{"$ne": arg1},
+		"age":    bson.M{"$lt": arg2},
 	})
 	if err != nil {
 		return nil, err
 	}
 	var entities []*UserModel
-	if err := cursor.All(ctx, &entities); err != nil {
+	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}
 	return entities, nil
 }
 
-func (r *UserRepositoryMongo) FindByAgeLessThanEqual(ctx context.Context, arg0 int) ([]*UserModel, error) {
-	cursor, err := r.collection.Find(ctx, bson.M{
-		"age": bson.M{"$lte": arg0},
+func (r *UserRepositoryMongo) FindByAgeLessThanEqual(arg0 context.Context, arg1 int) ([]*UserModel, error) {
+	cursor, err := r.collection.Find(arg0, bson.M{
+		"age": bson.M{"$lte": arg1},
 	})
 	if err != nil {
 		return nil, err
 	}
 	var entities []*UserModel
-	if err := cursor.All(ctx, &entities); err != nil {
+	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}
 	return entities, nil
 }
 
-func (r *UserRepositoryMongo) FindByAgeGreaterThan(ctx context.Context, arg0 int) ([]*UserModel, error) {
-	cursor, err := r.collection.Find(ctx, bson.M{
-		"age": bson.M{"$gt": arg0},
+func (r *UserRepositoryMongo) FindByAgeGreaterThan(arg0 context.Context, arg1 int) ([]*UserModel, error) {
+	cursor, err := r.collection.Find(arg0, bson.M{
+		"age": bson.M{"$gt": arg1},
 	})
 	if err != nil {
 		return nil, err
 	}
 	var entities []*UserModel
-	if err := cursor.All(ctx, &entities); err != nil {
+	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}
 	return entities, nil
 }
 
-func (r *UserRepositoryMongo) FindByAgeGreaterThanEqual(ctx context.Context, arg0 int) ([]*UserModel, error) {
-	cursor, err := r.collection.Find(ctx, bson.M{
-		"age": bson.M{"$gte": arg0},
+func (r *UserRepositoryMongo) FindByAgeGreaterThanEqual(arg0 context.Context, arg1 int) ([]*UserModel, error) {
+	cursor, err := r.collection.Find(arg0, bson.M{
+		"age": bson.M{"$gte": arg1},
 	})
 	if err != nil {
 		return nil, err
 	}
 	var entities []*UserModel
-	if err := cursor.All(ctx, &entities); err != nil {
+	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}
 	return entities, nil
 }
 
-func (r *UserRepositoryMongo) FindByAgeBetween(ctx context.Context, arg0 int, arg1 int) ([]*UserModel, error) {
-	cursor, err := r.collection.Find(ctx, bson.M{
-		"age": bson.M{"$gte": arg0, "$lte": arg1},
+func (r *UserRepositoryMongo) FindByAgeBetween(arg0 context.Context, arg1 int, arg2 int) ([]*UserModel, error) {
+	cursor, err := r.collection.Find(arg0, bson.M{
+		"age": bson.M{"$gte": arg1, "$lte": arg2},
 	})
 	if err != nil {
 		return nil, err
 	}
 	var entities []*UserModel
-	if err := cursor.All(ctx, &entities); err != nil {
+	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}
 	return entities, nil
 }
 
-func (r *UserRepositoryMongo) FindByGenderOrAge(ctx context.Context, arg0 Gender, arg1 int) ([]*UserModel, error) {
-	cursor, err := r.collection.Find(ctx, bson.M{
+func (r *UserRepositoryMongo) FindByGenderOrAge(arg0 context.Context, arg1 Gender, arg2 int) ([]*UserModel, error) {
+	cursor, err := r.collection.Find(arg0, bson.M{
 		"$or": []bson.M{
-			{"gender": arg0},
-			{"age": arg1},
+			{"gender": arg1},
+			{"age": arg2},
 		},
 	})
 	if err != nil {
 		return nil, err
 	}
 	var entities []*UserModel
-	if err := cursor.All(ctx, &entities); err != nil {
+	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}
 	return entities, nil

@@ -35,9 +35,9 @@ var structModel = code.Struct{
 }
 
 type ParseInterfaceMethodTestCase struct {
-	Name           string
-	Method         code.Method
-	ExpectedOutput spec.MethodSpec
+	Name              string
+	Method            code.Method
+	ExpectedOperation spec.Operation
 }
 
 func TestParseInterfaceMethod_Find(t *testing.T) {
@@ -55,22 +55,11 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedOutput: spec.MethodSpec{
-				Name: "FindOneByID",
-				Params: []code.Param{
-					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
-				},
-				Returns: []code.Type{
-					code.PointerType{ContainedType: code.SimpleType("UserModel")},
-					code.SimpleType("error"),
-				},
-				Operation: spec.FindOperation{
-					Mode: spec.QueryModeOne,
-					Query: spec.QuerySpec{Predicates: []spec.Predicate{
-						{Field: "ID", Comparator: spec.ComparatorEqual},
-					}},
-				},
+			ExpectedOperation: spec.FindOperation{
+				Mode: spec.QueryModeOne,
+				Query: spec.QuerySpec{Predicates: []spec.Predicate{
+					{Field: "ID", Comparator: spec.ComparatorEqual, ParamIndex: 1},
+				}},
 			},
 		},
 		{
@@ -86,22 +75,11 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedOutput: spec.MethodSpec{
-				Name: "FindOneByPhoneNumber",
-				Params: []code.Param{
-					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("string")},
-				},
-				Returns: []code.Type{
-					code.PointerType{ContainedType: code.SimpleType("UserModel")},
-					code.SimpleType("error"),
-				},
-				Operation: spec.FindOperation{
-					Mode: spec.QueryModeOne,
-					Query: spec.QuerySpec{Predicates: []spec.Predicate{
-						{Field: "PhoneNumber", Comparator: spec.ComparatorEqual},
-					}},
-				},
+			ExpectedOperation: spec.FindOperation{
+				Mode: spec.QueryModeOne,
+				Query: spec.QuerySpec{Predicates: []spec.Predicate{
+					{Field: "PhoneNumber", Comparator: spec.ComparatorEqual, ParamIndex: 1},
+				}},
 			},
 		},
 		{
@@ -117,22 +95,11 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedOutput: spec.MethodSpec{
-				Name: "FindByCity",
-				Params: []code.Param{
-					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("string")},
-				},
-				Returns: []code.Type{
-					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
-				},
-				Operation: spec.FindOperation{
-					Mode: spec.QueryModeMany,
-					Query: spec.QuerySpec{Predicates: []spec.Predicate{
-						{Field: "City", Comparator: spec.ComparatorEqual},
-					}},
-				},
+			ExpectedOperation: spec.FindOperation{
+				Mode: spec.QueryModeMany,
+				Query: spec.QuerySpec{Predicates: []spec.Predicate{
+					{Field: "City", Comparator: spec.ComparatorEqual, ParamIndex: 1},
+				}},
 			},
 		},
 		{
@@ -147,18 +114,8 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedOutput: spec.MethodSpec{
-				Name: "FindAll",
-				Params: []code.Param{
-					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-				},
-				Returns: []code.Type{
-					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
-				},
-				Operation: spec.FindOperation{
-					Mode: spec.QueryModeMany,
-				},
+			ExpectedOperation: spec.FindOperation{
+				Mode: spec.QueryModeMany,
 			},
 		},
 		{
@@ -175,25 +132,13 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedOutput: spec.MethodSpec{
-				Name: "FindByCityAndGender",
-				Params: []code.Param{
-					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("string")},
-					{Type: code.SimpleType("Gender")},
-				},
-				Returns: []code.Type{
-					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
-				},
-				Operation: spec.FindOperation{
-					Mode: spec.QueryModeMany,
-					Query: spec.QuerySpec{
-						Operator: spec.OperatorAnd,
-						Predicates: []spec.Predicate{
-							{Field: "City", Comparator: spec.ComparatorEqual},
-							{Field: "Gender", Comparator: spec.ComparatorEqual},
-						},
+			ExpectedOperation: spec.FindOperation{
+				Mode: spec.QueryModeMany,
+				Query: spec.QuerySpec{
+					Operator: spec.OperatorAnd,
+					Predicates: []spec.Predicate{
+						{Field: "City", Comparator: spec.ComparatorEqual, ParamIndex: 1},
+						{Field: "Gender", Comparator: spec.ComparatorEqual, ParamIndex: 2},
 					},
 				},
 			},
@@ -212,25 +157,13 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedOutput: spec.MethodSpec{
-				Name: "FindByCityOrGender",
-				Params: []code.Param{
-					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("string")},
-					{Type: code.SimpleType("Gender")},
-				},
-				Returns: []code.Type{
-					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
-				},
-				Operation: spec.FindOperation{
-					Mode: spec.QueryModeMany,
-					Query: spec.QuerySpec{
-						Operator: spec.OperatorOr,
-						Predicates: []spec.Predicate{
-							{Field: "City", Comparator: spec.ComparatorEqual},
-							{Field: "Gender", Comparator: spec.ComparatorEqual},
-						},
+			ExpectedOperation: spec.FindOperation{
+				Mode: spec.QueryModeMany,
+				Query: spec.QuerySpec{
+					Operator: spec.OperatorOr,
+					Predicates: []spec.Predicate{
+						{Field: "City", Comparator: spec.ComparatorEqual, ParamIndex: 1},
+						{Field: "Gender", Comparator: spec.ComparatorEqual, ParamIndex: 2},
 					},
 				},
 			},
@@ -248,22 +181,11 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedOutput: spec.MethodSpec{
-				Name: "FindByCityNot",
-				Params: []code.Param{
-					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("string")},
-				},
-				Returns: []code.Type{
-					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
-				},
-				Operation: spec.FindOperation{
-					Mode: spec.QueryModeMany,
-					Query: spec.QuerySpec{Predicates: []spec.Predicate{
-						{Field: "City", Comparator: spec.ComparatorNot},
-					}},
-				},
+			ExpectedOperation: spec.FindOperation{
+				Mode: spec.QueryModeMany,
+				Query: spec.QuerySpec{Predicates: []spec.Predicate{
+					{Field: "City", Comparator: spec.ComparatorNot, ParamIndex: 1},
+				}},
 			},
 		},
 		{
@@ -279,22 +201,11 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedOutput: spec.MethodSpec{
-				Name: "FindByAgeLessThan",
-				Params: []code.Param{
-					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("int")},
-				},
-				Returns: []code.Type{
-					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
-				},
-				Operation: spec.FindOperation{
-					Mode: spec.QueryModeMany,
-					Query: spec.QuerySpec{Predicates: []spec.Predicate{
-						{Field: "Age", Comparator: spec.ComparatorLessThan},
-					}},
-				},
+			ExpectedOperation: spec.FindOperation{
+				Mode: spec.QueryModeMany,
+				Query: spec.QuerySpec{Predicates: []spec.Predicate{
+					{Field: "Age", Comparator: spec.ComparatorLessThan, ParamIndex: 1},
+				}},
 			},
 		},
 		{
@@ -310,22 +221,11 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedOutput: spec.MethodSpec{
-				Name: "FindByAgeLessThanEqual",
-				Params: []code.Param{
-					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("int")},
-				},
-				Returns: []code.Type{
-					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
-				},
-				Operation: spec.FindOperation{
-					Mode: spec.QueryModeMany,
-					Query: spec.QuerySpec{Predicates: []spec.Predicate{
-						{Field: "Age", Comparator: spec.ComparatorLessThanEqual},
-					}},
-				},
+			ExpectedOperation: spec.FindOperation{
+				Mode: spec.QueryModeMany,
+				Query: spec.QuerySpec{Predicates: []spec.Predicate{
+					{Field: "Age", Comparator: spec.ComparatorLessThanEqual, ParamIndex: 1},
+				}},
 			},
 		},
 		{
@@ -341,22 +241,11 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedOutput: spec.MethodSpec{
-				Name: "FindByAgeGreaterThan",
-				Params: []code.Param{
-					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("int")},
-				},
-				Returns: []code.Type{
-					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
-				},
-				Operation: spec.FindOperation{
-					Mode: spec.QueryModeMany,
-					Query: spec.QuerySpec{Predicates: []spec.Predicate{
-						{Field: "Age", Comparator: spec.ComparatorGreaterThan},
-					}},
-				},
+			ExpectedOperation: spec.FindOperation{
+				Mode: spec.QueryModeMany,
+				Query: spec.QuerySpec{Predicates: []spec.Predicate{
+					{Field: "Age", Comparator: spec.ComparatorGreaterThan, ParamIndex: 1},
+				}},
 			},
 		},
 		{
@@ -372,22 +261,11 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedOutput: spec.MethodSpec{
-				Name: "FindByAgeGreaterThanEqual",
-				Params: []code.Param{
-					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("int")},
-				},
-				Returns: []code.Type{
-					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
-				},
-				Operation: spec.FindOperation{
-					Mode: spec.QueryModeMany,
-					Query: spec.QuerySpec{Predicates: []spec.Predicate{
-						{Field: "Age", Comparator: spec.ComparatorGreaterThanEqual},
-					}},
-				},
+			ExpectedOperation: spec.FindOperation{
+				Mode: spec.QueryModeMany,
+				Query: spec.QuerySpec{Predicates: []spec.Predicate{
+					{Field: "Age", Comparator: spec.ComparatorGreaterThanEqual, ParamIndex: 1},
+				}},
 			},
 		},
 		{
@@ -404,23 +282,11 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedOutput: spec.MethodSpec{
-				Name: "FindByAgeBetween",
-				Params: []code.Param{
-					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("int")},
-					{Type: code.SimpleType("int")},
-				},
-				Returns: []code.Type{
-					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
-				},
-				Operation: spec.FindOperation{
-					Mode: spec.QueryModeMany,
-					Query: spec.QuerySpec{Predicates: []spec.Predicate{
-						{Field: "Age", Comparator: spec.ComparatorBetween},
-					}},
-				},
+			ExpectedOperation: spec.FindOperation{
+				Mode: spec.QueryModeMany,
+				Query: spec.QuerySpec{Predicates: []spec.Predicate{
+					{Field: "Age", Comparator: spec.ComparatorBetween, ParamIndex: 1},
+				}},
 			},
 		},
 		{
@@ -436,22 +302,11 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedOutput: spec.MethodSpec{
-				Name: "FindByCityIn",
-				Params: []code.Param{
-					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.ArrayType{ContainedType: code.SimpleType("string")}},
-				},
-				Returns: []code.Type{
-					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
-				},
-				Operation: spec.FindOperation{
-					Mode: spec.QueryModeMany,
-					Query: spec.QuerySpec{Predicates: []spec.Predicate{
-						{Field: "City", Comparator: spec.ComparatorIn},
-					}},
-				},
+			ExpectedOperation: spec.FindOperation{
+				Mode: spec.QueryModeMany,
+				Query: spec.QuerySpec{Predicates: []spec.Predicate{
+					{Field: "City", Comparator: spec.ComparatorIn, ParamIndex: 1},
+				}},
 			},
 		},
 	}
@@ -463,8 +318,112 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 			if err != nil {
 				t.Errorf("Error = %s", err)
 			}
-			if !reflect.DeepEqual(actualSpec, testCase.ExpectedOutput) {
-				t.Errorf("Expected = %v\nReceived = %v", testCase.ExpectedOutput, actualSpec)
+			expectedOutput := spec.MethodSpec{
+				Name:      testCase.Method.Name,
+				Params:    testCase.Method.Params,
+				Returns:   testCase.Method.Returns,
+				Operation: testCase.ExpectedOperation,
+			}
+			if !reflect.DeepEqual(actualSpec, expectedOutput) {
+				t.Errorf("Expected = %v\nReceived = %v", expectedOutput, actualSpec)
+			}
+		})
+	}
+}
+
+func TestParseInterfaceMethod_Update(t *testing.T) {
+	testTable := []ParseInterfaceMethodTestCase{
+		{
+			Name: "UpdateArgByArg one method",
+			Method: code.Method{
+				Name: "UpdateGenderByID",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("Gender")},
+					{Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
+				},
+				Returns: []code.Type{
+					code.SimpleType("bool"),
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedOperation: spec.UpdateOperation{
+				Fields: []spec.UpdateField{
+					{Name: "Gender", ParamIndex: 1},
+				},
+				Mode: spec.QueryModeOne,
+				Query: spec.QuerySpec{Predicates: []spec.Predicate{
+					{Field: "ID", Comparator: spec.ComparatorEqual, ParamIndex: 2},
+				}},
+			},
+		},
+		{
+			Name: "UpdateArgByArg many method",
+			Method: code.Method{
+				Name: "UpdateGenderByID",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("Gender")},
+					{Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
+				},
+				Returns: []code.Type{
+					code.SimpleType("int"),
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedOperation: spec.UpdateOperation{
+				Fields: []spec.UpdateField{
+					{Name: "Gender", ParamIndex: 1},
+				},
+				Mode: spec.QueryModeMany,
+				Query: spec.QuerySpec{Predicates: []spec.Predicate{
+					{Field: "ID", Comparator: spec.ComparatorEqual, ParamIndex: 2},
+				}},
+			},
+		},
+		{
+			Name: "UpdateArgAndArgByArg method",
+			Method: code.Method{
+				Name: "UpdateGenderAndCityByID",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("Gender")},
+					{Type: code.SimpleType("string")},
+					{Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
+				},
+				Returns: []code.Type{
+					code.SimpleType("int"),
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedOperation: spec.UpdateOperation{
+				Fields: []spec.UpdateField{
+					{Name: "Gender", ParamIndex: 1},
+					{Name: "City", ParamIndex: 2},
+				},
+				Mode: spec.QueryModeMany,
+				Query: spec.QuerySpec{Predicates: []spec.Predicate{
+					{Field: "ID", Comparator: spec.ComparatorEqual, ParamIndex: 3},
+				}},
+			},
+		},
+	}
+
+	for _, testCase := range testTable {
+		t.Run(testCase.Name, func(t *testing.T) {
+			actualSpec, err := spec.ParseInterfaceMethod(structModel, testCase.Method)
+
+			if err != nil {
+				t.Errorf("Error = %s", err)
+			}
+			expectedOutput := spec.MethodSpec{
+				Name:      testCase.Method.Name,
+				Params:    testCase.Method.Params,
+				Returns:   testCase.Method.Returns,
+				Operation: testCase.ExpectedOperation,
+			}
+			if !reflect.DeepEqual(actualSpec, expectedOutput) {
+				t.Errorf("Expected = %v\nReceived = %v", expectedOutput, actualSpec)
 			}
 		})
 	}
@@ -485,22 +444,11 @@ func TestParseInterfaceMethod_Delete(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedOutput: spec.MethodSpec{
-				Name: "DeleteOneByID",
-				Params: []code.Param{
-					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
-				},
-				Returns: []code.Type{
-					code.SimpleType("bool"),
-					code.SimpleType("error"),
-				},
-				Operation: spec.DeleteOperation{
-					Mode: spec.QueryModeOne,
-					Query: spec.QuerySpec{Predicates: []spec.Predicate{
-						{Field: "ID", Comparator: spec.ComparatorEqual},
-					}},
-				},
+			ExpectedOperation: spec.DeleteOperation{
+				Mode: spec.QueryModeOne,
+				Query: spec.QuerySpec{Predicates: []spec.Predicate{
+					{Field: "ID", Comparator: spec.ComparatorEqual, ParamIndex: 1},
+				}},
 			},
 		},
 		{
@@ -516,22 +464,11 @@ func TestParseInterfaceMethod_Delete(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedOutput: spec.MethodSpec{
-				Name: "DeleteOneByPhoneNumber",
-				Params: []code.Param{
-					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("string")},
-				},
-				Returns: []code.Type{
-					code.SimpleType("bool"),
-					code.SimpleType("error"),
-				},
-				Operation: spec.DeleteOperation{
-					Mode: spec.QueryModeOne,
-					Query: spec.QuerySpec{Predicates: []spec.Predicate{
-						{Field: "PhoneNumber", Comparator: spec.ComparatorEqual},
-					}},
-				},
+			ExpectedOperation: spec.DeleteOperation{
+				Mode: spec.QueryModeOne,
+				Query: spec.QuerySpec{Predicates: []spec.Predicate{
+					{Field: "PhoneNumber", Comparator: spec.ComparatorEqual, ParamIndex: 1},
+				}},
 			},
 		},
 		{
@@ -547,22 +484,11 @@ func TestParseInterfaceMethod_Delete(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedOutput: spec.MethodSpec{
-				Name: "DeleteByCity",
-				Params: []code.Param{
-					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("string")},
-				},
-				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
-				},
-				Operation: spec.DeleteOperation{
-					Mode: spec.QueryModeMany,
-					Query: spec.QuerySpec{Predicates: []spec.Predicate{
-						{Field: "City", Comparator: spec.ComparatorEqual},
-					}},
-				},
+			ExpectedOperation: spec.DeleteOperation{
+				Mode: spec.QueryModeMany,
+				Query: spec.QuerySpec{Predicates: []spec.Predicate{
+					{Field: "City", Comparator: spec.ComparatorEqual, ParamIndex: 1},
+				}},
 			},
 		},
 		{
@@ -577,18 +503,8 @@ func TestParseInterfaceMethod_Delete(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedOutput: spec.MethodSpec{
-				Name: "DeleteAll",
-				Params: []code.Param{
-					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-				},
-				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
-				},
-				Operation: spec.DeleteOperation{
-					Mode: spec.QueryModeMany,
-				},
+			ExpectedOperation: spec.DeleteOperation{
+				Mode: spec.QueryModeMany,
 			},
 		},
 		{
@@ -605,25 +521,13 @@ func TestParseInterfaceMethod_Delete(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedOutput: spec.MethodSpec{
-				Name: "DeleteByCityAndGender",
-				Params: []code.Param{
-					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("string")},
-					{Type: code.SimpleType("Gender")},
-				},
-				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
-				},
-				Operation: spec.DeleteOperation{
-					Mode: spec.QueryModeMany,
-					Query: spec.QuerySpec{
-						Operator: spec.OperatorAnd,
-						Predicates: []spec.Predicate{
-							{Field: "City", Comparator: spec.ComparatorEqual},
-							{Field: "Gender", Comparator: spec.ComparatorEqual},
-						},
+			ExpectedOperation: spec.DeleteOperation{
+				Mode: spec.QueryModeMany,
+				Query: spec.QuerySpec{
+					Operator: spec.OperatorAnd,
+					Predicates: []spec.Predicate{
+						{Field: "City", Comparator: spec.ComparatorEqual, ParamIndex: 1},
+						{Field: "Gender", Comparator: spec.ComparatorEqual, ParamIndex: 2},
 					},
 				},
 			},
@@ -642,25 +546,13 @@ func TestParseInterfaceMethod_Delete(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedOutput: spec.MethodSpec{
-				Name: "DeleteByCityOrGender",
-				Params: []code.Param{
-					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("string")},
-					{Type: code.SimpleType("Gender")},
-				},
-				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
-				},
-				Operation: spec.DeleteOperation{
-					Mode: spec.QueryModeMany,
-					Query: spec.QuerySpec{
-						Operator: spec.OperatorOr,
-						Predicates: []spec.Predicate{
-							{Field: "City", Comparator: spec.ComparatorEqual},
-							{Field: "Gender", Comparator: spec.ComparatorEqual},
-						},
+			ExpectedOperation: spec.DeleteOperation{
+				Mode: spec.QueryModeMany,
+				Query: spec.QuerySpec{
+					Operator: spec.OperatorOr,
+					Predicates: []spec.Predicate{
+						{Field: "City", Comparator: spec.ComparatorEqual, ParamIndex: 1},
+						{Field: "Gender", Comparator: spec.ComparatorEqual, ParamIndex: 2},
 					},
 				},
 			},
@@ -678,22 +570,11 @@ func TestParseInterfaceMethod_Delete(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedOutput: spec.MethodSpec{
-				Name: "DeleteByCityNot",
-				Params: []code.Param{
-					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("string")},
-				},
-				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
-				},
-				Operation: spec.DeleteOperation{
-					Mode: spec.QueryModeMany,
-					Query: spec.QuerySpec{Predicates: []spec.Predicate{
-						{Field: "City", Comparator: spec.ComparatorNot},
-					}},
-				},
+			ExpectedOperation: spec.DeleteOperation{
+				Mode: spec.QueryModeMany,
+				Query: spec.QuerySpec{Predicates: []spec.Predicate{
+					{Field: "City", Comparator: spec.ComparatorNot, ParamIndex: 1},
+				}},
 			},
 		},
 		{
@@ -709,22 +590,11 @@ func TestParseInterfaceMethod_Delete(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedOutput: spec.MethodSpec{
-				Name: "DeleteByAgeLessThan",
-				Params: []code.Param{
-					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("int")},
-				},
-				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
-				},
-				Operation: spec.DeleteOperation{
-					Mode: spec.QueryModeMany,
-					Query: spec.QuerySpec{Predicates: []spec.Predicate{
-						{Field: "Age", Comparator: spec.ComparatorLessThan},
-					}},
-				},
+			ExpectedOperation: spec.DeleteOperation{
+				Mode: spec.QueryModeMany,
+				Query: spec.QuerySpec{Predicates: []spec.Predicate{
+					{Field: "Age", Comparator: spec.ComparatorLessThan, ParamIndex: 1},
+				}},
 			},
 		},
 		{
@@ -740,22 +610,11 @@ func TestParseInterfaceMethod_Delete(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedOutput: spec.MethodSpec{
-				Name: "DeleteByAgeLessThanEqual",
-				Params: []code.Param{
-					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("int")},
-				},
-				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
-				},
-				Operation: spec.DeleteOperation{
-					Mode: spec.QueryModeMany,
-					Query: spec.QuerySpec{Predicates: []spec.Predicate{
-						{Field: "Age", Comparator: spec.ComparatorLessThanEqual},
-					}},
-				},
+			ExpectedOperation: spec.DeleteOperation{
+				Mode: spec.QueryModeMany,
+				Query: spec.QuerySpec{Predicates: []spec.Predicate{
+					{Field: "Age", Comparator: spec.ComparatorLessThanEqual, ParamIndex: 1},
+				}},
 			},
 		},
 		{
@@ -771,22 +630,11 @@ func TestParseInterfaceMethod_Delete(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedOutput: spec.MethodSpec{
-				Name: "DeleteByAgeGreaterThan",
-				Params: []code.Param{
-					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("int")},
-				},
-				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
-				},
-				Operation: spec.DeleteOperation{
-					Mode: spec.QueryModeMany,
-					Query: spec.QuerySpec{Predicates: []spec.Predicate{
-						{Field: "Age", Comparator: spec.ComparatorGreaterThan},
-					}},
-				},
+			ExpectedOperation: spec.DeleteOperation{
+				Mode: spec.QueryModeMany,
+				Query: spec.QuerySpec{Predicates: []spec.Predicate{
+					{Field: "Age", Comparator: spec.ComparatorGreaterThan, ParamIndex: 1},
+				}},
 			},
 		},
 		{
@@ -802,22 +650,11 @@ func TestParseInterfaceMethod_Delete(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedOutput: spec.MethodSpec{
-				Name: "DeleteByAgeGreaterThanEqual",
-				Params: []code.Param{
-					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("int")},
-				},
-				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
-				},
-				Operation: spec.DeleteOperation{
-					Mode: spec.QueryModeMany,
-					Query: spec.QuerySpec{Predicates: []spec.Predicate{
-						{Field: "Age", Comparator: spec.ComparatorGreaterThanEqual},
-					}},
-				},
+			ExpectedOperation: spec.DeleteOperation{
+				Mode: spec.QueryModeMany,
+				Query: spec.QuerySpec{Predicates: []spec.Predicate{
+					{Field: "Age", Comparator: spec.ComparatorGreaterThanEqual, ParamIndex: 1},
+				}},
 			},
 		},
 		{
@@ -834,23 +671,11 @@ func TestParseInterfaceMethod_Delete(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedOutput: spec.MethodSpec{
-				Name: "DeleteByAgeBetween",
-				Params: []code.Param{
-					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("int")},
-					{Type: code.SimpleType("int")},
-				},
-				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
-				},
-				Operation: spec.DeleteOperation{
-					Mode: spec.QueryModeMany,
-					Query: spec.QuerySpec{Predicates: []spec.Predicate{
-						{Field: "Age", Comparator: spec.ComparatorBetween},
-					}},
-				},
+			ExpectedOperation: spec.DeleteOperation{
+				Mode: spec.QueryModeMany,
+				Query: spec.QuerySpec{Predicates: []spec.Predicate{
+					{Field: "Age", Comparator: spec.ComparatorBetween, ParamIndex: 1},
+				}},
 			},
 		},
 		{
@@ -866,22 +691,11 @@ func TestParseInterfaceMethod_Delete(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedOutput: spec.MethodSpec{
-				Name: "DeleteByCityIn",
-				Params: []code.Param{
-					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.ArrayType{ContainedType: code.SimpleType("string")}},
-				},
-				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
-				},
-				Operation: spec.DeleteOperation{
-					Mode: spec.QueryModeMany,
-					Query: spec.QuerySpec{Predicates: []spec.Predicate{
-						{Field: "City", Comparator: spec.ComparatorIn},
-					}},
-				},
+			ExpectedOperation: spec.DeleteOperation{
+				Mode: spec.QueryModeMany,
+				Query: spec.QuerySpec{Predicates: []spec.Predicate{
+					{Field: "City", Comparator: spec.ComparatorIn, ParamIndex: 1},
+				}},
 			},
 		},
 	}
@@ -893,8 +707,14 @@ func TestParseInterfaceMethod_Delete(t *testing.T) {
 			if err != nil {
 				t.Errorf("Error = %s", err)
 			}
-			if !reflect.DeepEqual(actualSpec, testCase.ExpectedOutput) {
-				t.Errorf("Expected = %v\nReceived = %v", testCase.ExpectedOutput, actualSpec)
+			expectedOutput := spec.MethodSpec{
+				Name:      testCase.Method.Name,
+				Params:    testCase.Method.Params,
+				Returns:   testCase.Method.Returns,
+				Operation: testCase.ExpectedOperation,
+			}
+			if !reflect.DeepEqual(actualSpec, expectedOutput) {
+				t.Errorf("Expected = %v\nReceived = %v", expectedOutput, actualSpec)
 			}
 		})
 	}
@@ -1073,6 +893,158 @@ func TestParseInterfaceMethod_Find_Invalid(t *testing.T) {
 				},
 				Returns: []code.Type{
 					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedError: spec.InvalidParamError,
+		},
+	}
+
+	for _, testCase := range testTable {
+		t.Run(testCase.Name, func(t *testing.T) {
+			_, err := spec.ParseInterfaceMethod(structModel, testCase.Method)
+
+			if err != testCase.ExpectedError {
+				t.Errorf("\nExpected = %v\nReceived = %v", testCase.ExpectedError, err)
+			}
+		})
+	}
+}
+
+func TestParseInterfaceMethod_Update_Invalid(t *testing.T) {
+	testTable := []ParseInterfaceMethodInvalidTestCase{
+		{
+			Name: "unsupported update method name",
+			Method: code.Method{
+				Name: "Update",
+			},
+			ExpectedError: spec.UnsupportedNameError,
+		},
+		{
+			Name: "invalid number of returns",
+			Method: code.Method{
+				Name: "UpdateAgeByID",
+				Returns: []code.Type{
+					code.SimpleType("bool"),
+					code.SimpleType("int"),
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedError: spec.UnsupportedReturnError,
+		},
+		{
+			Name: "unsupported return values from find method",
+			Method: code.Method{
+				Name: "UpdateAgeByID",
+				Returns: []code.Type{
+					code.SimpleType("float64"),
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedError: spec.UnsupportedReturnError,
+		},
+		{
+			Name: "error return not provided",
+			Method: code.Method{
+				Name: "UpdateAgeByID",
+				Returns: []code.Type{
+					code.SimpleType("bool"),
+					code.SimpleType("bool"),
+				},
+			},
+			ExpectedError: spec.UnsupportedReturnError,
+		},
+		{
+			Name: "update with no field provided",
+			Method: code.Method{
+				Name: "UpdateByID",
+				Returns: []code.Type{
+					code.SimpleType("bool"),
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedError: spec.InvalidUpdateFieldsError,
+		},
+		{
+			Name: "misplaced And token in update fields",
+			Method: code.Method{
+				Name: "UpdateAgeAndAndGenderByID",
+				Returns: []code.Type{
+					code.SimpleType("bool"),
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedError: spec.InvalidUpdateFieldsError,
+		},
+		{
+			Name: "ambiguous query",
+			Method: code.Method{
+				Name: "UpdateAgeByIDAndUsernameOrGender",
+				Returns: []code.Type{
+					code.SimpleType("int"),
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedError: spec.InvalidQueryError,
+		},
+		{
+			Name: "no context parameter",
+			Method: code.Method{
+				Name: "UpdateAgeByGender",
+				Params: []code.Param{
+					{Type: code.SimpleType("int")},
+					{Type: code.SimpleType("Gender")},
+				},
+				Returns: []code.Type{
+					code.SimpleType("int"),
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedError: spec.ContextParamRequiredError,
+		},
+		{
+			Name: "struct field not found in update fields",
+			Method: code.Method{
+				Name: "UpdateCountryByGender",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("string")},
+					{Type: code.SimpleType("Gender")},
+				},
+				Returns: []code.Type{
+					code.SimpleType("int"),
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedError: spec.StructFieldNotFoundError,
+		},
+		{
+			Name: "struct field does not match parameter in update fields",
+			Method: code.Method{
+				Name: "UpdateAgeByGender",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("float64")},
+					{Type: code.SimpleType("Gender")},
+				},
+				Returns: []code.Type{
+					code.SimpleType("int"),
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedError: spec.InvalidParamError,
+		},
+		{
+			Name: "struct field does not match parameter in query",
+			Method: code.Method{
+				Name: "UpdateAgeByGender",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("int")},
+					{Type: code.SimpleType("string")},
+				},
+				Returns: []code.Type{
+					code.SimpleType("int"),
 					code.SimpleType("error"),
 				},
 			},

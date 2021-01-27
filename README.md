@@ -7,8 +7,12 @@
     <img src="https://codecov.io/gh/sunboyy/repogen/branch/main/graph/badge.svg?token=9BD5Y8X7NO"/>
 </a>
 
-Repogen is a code generator for database repository in Golang. (WIP)
+Repogen is a code generator for database repository in Golang inspired by Spring Data JPA. (WIP)
 
 ## Features
 
 Repogen is a library that generates MongoDB repository implementation from repository interface by using method name pattern.
+
+- Method signature validation
+- Supports single-entity and multiple-entity operations
+- Supports many comparison operators

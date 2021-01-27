@@ -33,7 +33,7 @@ type mongoConstructorTemplateData struct {
 }
 
 const methodTemplate = `
-func (r *{{.StructName}}) {{.MethodName}}(ctx context.Context, {{.Parameters}}){{.Returns}} {
+func (r *{{.StructName}}) {{.MethodName}}({{.Parameters}}){{.Returns}} {
 {{.Implementation}}
 }
 `
@@ -76,30 +76,59 @@ type mongoFindTemplateData struct {
 }
 
 const findOneTemplate = `	var entity {{.EntityType}}
-	if err := r.collection.FindOne(ctx, bson.M{
+	if err := r.collection.FindOne(arg0, bson.M{
 {{.QuerySpec.Code}}
 	}).Decode(&entity); err != nil {
 		return nil, err
 	}
 	return &entity, nil`
 
-const findManyTemplate = `	cursor, err := r.collection.Find(ctx, bson.M{
+const findManyTemplate = `	cursor, err := r.collection.Find(arg0, bson.M{
 {{.QuerySpec.Code}}
 	})
 	if err != nil {
 		return nil, err
 	}
 	var entities []*{{.EntityType}}
-	if err := cursor.All(ctx, &entities); err != nil {
+	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}
 	return entities, nil`
+
+type mongoUpdateTemplateData struct {
+	UpdateFields []updateField
+	QuerySpec    querySpec
+}
+
+const updateOneTemplate = `	result, err := r.collection.UpdateOne(arg0, bson.M{
+{{.QuerySpec.Code}}
+	}, bson.M{
+		"$set": bson.M{
+{{range $index, $element := .UpdateFields}}			"{{$element.BsonTag}}": arg{{$element.ParamIndex}},
+{{end}}		},
+	})
+	if err != nil {
+		return false, err
+	}
+	return result.MatchedCount > 0, err`
+
+const updateManyTemplate = `	result, err := r.collection.UpdateMany(arg0, bson.M{
+{{.QuerySpec.Code}}
+	}, bson.M{
+		"$set": bson.M{
+{{range $index, $element := .UpdateFields}}			"{{$element.BsonTag}}": arg{{$element.ParamIndex}},
+{{end}}		},
+	})
+	if err != nil {
+		return 0, err
+	}
+	return int(result.MatchedCount), err`
 
 type mongoDeleteTemplateData struct {
 	QuerySpec querySpec
 }
 
-const deleteOneTemplate = `	result, err := r.collection.DeleteOne(ctx, bson.M{
+const deleteOneTemplate = `	result, err := r.collection.DeleteOne(arg0, bson.M{
 {{.QuerySpec.Code}}
 	})
 	if err != nil {
@@ -107,7 +136,7 @@ const deleteOneTemplate = `	result, err := r.collection.DeleteOne(ctx, bson.M{
 	}
 	return result.DeletedCount > 0, nil`
 
-const deleteManyTemplate = `	result, err := r.collection.DeleteMany(ctx, bson.M{
+const deleteManyTemplate = `	result, err := r.collection.DeleteMany(arg0, bson.M{
 {{.QuerySpec.Code}}
 	})
 	if err != nil {
