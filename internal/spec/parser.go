@@ -25,6 +25,8 @@ func (p interfaceMethodParser) Parse() (MethodSpec, error) {
 	switch methodNameTokens[0] {
 	case "Find":
 		return p.parseFindMethod(methodNameTokens[1:])
+	case "Delete":
+		return p.parseDeleteMethod(methodNameTokens[1:])
 	}
 	return MethodSpec{}, UnknownOperationError
 }
@@ -86,6 +88,58 @@ func (p interfaceMethodParser) extractFindReturns(returns []code.Type) (QueryMod
 				return QueryModeMany, nil
 			}
 			return "", UnsupportedReturnError
+		}
+	}
+
+	return "", UnsupportedReturnError
+}
+
+func (p interfaceMethodParser) parseDeleteMethod(tokens []string) (MethodSpec, error) {
+	if len(tokens) == 0 {
+		return MethodSpec{}, UnsupportedNameError
+	}
+
+	mode, err := p.extractDeleteReturns(p.Method.Returns)
+	if err != nil {
+		return MethodSpec{}, err
+	}
+
+	querySpec, err := p.parseQuery(tokens)
+	if err != nil {
+		return MethodSpec{}, err
+	}
+
+	if err := p.validateMethodSignature(querySpec); err != nil {
+		return MethodSpec{}, err
+	}
+
+	return MethodSpec{
+		Name:    p.Method.Name,
+		Params:  p.Method.Params,
+		Returns: p.Method.Returns,
+		Operation: DeleteOperation{
+			Mode:  mode,
+			Query: querySpec,
+		},
+	}, nil
+}
+
+func (p interfaceMethodParser) extractDeleteReturns(returns []code.Type) (QueryMode, error) {
+	if len(returns) != 2 {
+		return "", UnsupportedReturnError
+	}
+
+	if returns[1] != code.SimpleType("error") {
+		return "", UnsupportedReturnError
+	}
+
+	simpleType, ok := returns[0].(code.SimpleType)
+	if ok {
+		if simpleType == code.SimpleType("bool") {
+			return QueryModeOne, nil
+		}
+		if simpleType == code.SimpleType("int") {
+			return QueryModeMany, nil
 		}
 	}
 

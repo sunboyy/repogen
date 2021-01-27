@@ -2,7 +2,6 @@ package mongo
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"io"
 	"text/template"
@@ -80,35 +79,24 @@ func (g RepositoryGenerator) generateMethodImplementation(methodSpec spec.Method
 	switch operation := methodSpec.Operation.(type) {
 	case spec.FindOperation:
 		return g.generateFindImplementation(operation)
+	case spec.DeleteOperation:
+		return g.generateDeleteImplementation(operation)
 	}
 
-	return "", errors.New("method spec not supported")
+	return "", OperationNotSupportedError
 }
 
 func (g RepositoryGenerator) generateFindImplementation(operation spec.FindOperation) (string, error) {
 	buffer := new(bytes.Buffer)
 
-	var predicates []predicate
-	for _, predicateSpec := range operation.Query.Predicates {
-		structField, ok := g.StructModel.Fields.ByName(predicateSpec.Field)
-		if !ok {
-			return "", fmt.Errorf("struct field %s not found", predicateSpec.Field)
-		}
-
-		bsonTag, ok := structField.Tags["bson"]
-		if !ok {
-			return "", fmt.Errorf("struct field %s does not have bson tag", predicateSpec.Field)
-		}
-
-		predicates = append(predicates, predicate{Field: bsonTag[0], Comparator: predicateSpec.Comparator})
+	querySpec, err := g.mongoQuerySpec(operation.Query)
+	if err != nil {
+		return "", err
 	}
 
 	tmplData := mongoFindTemplateData{
 		EntityType: g.StructModel.Name,
-		QuerySpec: querySpec{
-			Operator:   operation.Query.Operator,
-			Predicates: predicates,
-		},
+		QuerySpec:  querySpec,
 	}
 
 	if operation.Mode == spec.QueryModeOne {
@@ -132,6 +120,64 @@ func (g RepositoryGenerator) generateFindImplementation(operation spec.FindOpera
 	}
 
 	return buffer.String(), nil
+}
+
+func (g RepositoryGenerator) generateDeleteImplementation(operation spec.DeleteOperation) (string, error) {
+	buffer := new(bytes.Buffer)
+
+	querySpec, err := g.mongoQuerySpec(operation.Query)
+	if err != nil {
+		return "", err
+	}
+
+	tmplData := mongoDeleteTemplateData{
+		QuerySpec: querySpec,
+	}
+
+	if operation.Mode == spec.QueryModeOne {
+		tmpl, err := template.New("mongo_repository_deleteone").Parse(deleteOneTemplate)
+		if err != nil {
+			return "", err
+		}
+
+		if err := tmpl.Execute(buffer, tmplData); err != nil {
+			return "", err
+		}
+	} else {
+		tmpl, err := template.New("mongo_repository_deletemany").Parse(deleteManyTemplate)
+		if err != nil {
+			return "", err
+		}
+
+		if err := tmpl.Execute(buffer, tmplData); err != nil {
+			return "", err
+		}
+	}
+
+	return buffer.String(), nil
+}
+
+func (g RepositoryGenerator) mongoQuerySpec(query spec.QuerySpec) (querySpec, error) {
+	var predicates []predicate
+
+	for _, predicateSpec := range query.Predicates {
+		structField, ok := g.StructModel.Fields.ByName(predicateSpec.Field)
+		if !ok {
+			return querySpec{}, fmt.Errorf("struct field %s not found", predicateSpec.Field)
+		}
+
+		bsonTag, ok := structField.Tags["bson"]
+		if !ok {
+			return querySpec{}, BsonTagNotFoundError
+		}
+
+		predicates = append(predicates, predicate{Field: bsonTag[0], Comparator: predicateSpec.Comparator})
+	}
+
+	return querySpec{
+		Operator:   query.Operator,
+		Predicates: predicates,
+	}, nil
 }
 
 func (g RepositoryGenerator) structName() string {

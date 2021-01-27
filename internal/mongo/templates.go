@@ -70,18 +70,18 @@ func (data mongoMethodTemplateData) Returns() string {
 	return fmt.Sprintf(" (%s)", strings.Join(returns, ", "))
 }
 
-const findOneTemplate = `	var entity {{.EntityType}}
-	if err := r.collection.FindOne(ctx, bson.M{
-{{range $index, $field := .QuerySpec.Predicates}}		{{$field.Code $index}},
-{{end}}	}).Decode(&entity); err != nil {
-		return nil, err
-	}
-	return &entity, nil`
-
 type mongoFindTemplateData struct {
 	EntityType string
 	QuerySpec  querySpec
 }
+
+const findOneTemplate = `	var entity {{.EntityType}}
+	if err := r.collection.FindOne(ctx, bson.M{
+{{.QuerySpec.Code}}
+	}).Decode(&entity); err != nil {
+		return nil, err
+	}
+	return &entity, nil`
 
 const findManyTemplate = `	cursor, err := r.collection.Find(ctx, bson.M{
 {{.QuerySpec.Code}}
@@ -94,3 +94,23 @@ const findManyTemplate = `	cursor, err := r.collection.Find(ctx, bson.M{
 		return nil, err
 	}
 	return entities, nil`
+
+type mongoDeleteTemplateData struct {
+	QuerySpec querySpec
+}
+
+const deleteOneTemplate = `	result, err := r.collection.DeleteOne(ctx, bson.M{
+{{.QuerySpec.Code}}
+	})
+	if err != nil {
+		return false, err
+	}
+	return result.DeletedCount > 0, nil`
+
+const deleteManyTemplate = `	result, err := r.collection.DeleteMany(ctx, bson.M{
+{{.QuerySpec.Code}}
+	})
+	if err != nil {
+		return 0, err
+	}
+	return int(result.DeletedCount), nil`

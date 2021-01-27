@@ -33,6 +33,12 @@ type FindOperation struct {
 	Query QuerySpec
 }
 
+// DeleteOperation is a method specification for delete operations
+type DeleteOperation struct {
+	Mode  QueryMode
+	Query QuerySpec
+}
+
 // QuerySpec is a set of conditions of querying the database
 type QuerySpec struct {
 	Operator   Operator
