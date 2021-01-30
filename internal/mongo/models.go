@@ -7,6 +7,11 @@ import (
 	"github.com/sunboyy/repogen/internal/spec"
 )
 
+type updateField struct {
+	BsonTag    string
+	ParamIndex int
+}
+
 type querySpec struct {
 	Operator   spec.Operator
 	Predicates []predicate
@@ -14,10 +19,8 @@ type querySpec struct {
 
 func (q querySpec) Code() string {
 	var predicateCodes []string
-	var argIndex int
 	for _, predicate := range q.Predicates {
-		predicateCodes = append(predicateCodes, predicate.Code(argIndex))
-		argIndex += predicate.Comparator.NumberOfArguments()
+		predicateCodes = append(predicateCodes, predicate.Code())
 	}
 
 	var lines []string
@@ -39,26 +42,27 @@ func (q querySpec) Code() string {
 type predicate struct {
 	Field      string
 	Comparator spec.Comparator
+	ParamIndex int
 }
 
-func (p predicate) Code(argIndex int) string {
+func (p predicate) Code() string {
 	switch p.Comparator {
 	case spec.ComparatorEqual:
-		return fmt.Sprintf(`"%s": arg%d`, p.Field, argIndex)
+		return fmt.Sprintf(`"%s": arg%d`, p.Field, p.ParamIndex)
 	case spec.ComparatorNot:
-		return fmt.Sprintf(`"%s": bson.M{"$ne": arg%d}`, p.Field, argIndex)
+		return fmt.Sprintf(`"%s": bson.M{"$ne": arg%d}`, p.Field, p.ParamIndex)
 	case spec.ComparatorLessThan:
-		return fmt.Sprintf(`"%s": bson.M{"$lt": arg%d}`, p.Field, argIndex)
+		return fmt.Sprintf(`"%s": bson.M{"$lt": arg%d}`, p.Field, p.ParamIndex)
 	case spec.ComparatorLessThanEqual:
-		return fmt.Sprintf(`"%s": bson.M{"$lte": arg%d}`, p.Field, argIndex)
+		return fmt.Sprintf(`"%s": bson.M{"$lte": arg%d}`, p.Field, p.ParamIndex)
 	case spec.ComparatorGreaterThan:
-		return fmt.Sprintf(`"%s": bson.M{"$gt": arg%d}`, p.Field, argIndex)
+		return fmt.Sprintf(`"%s": bson.M{"$gt": arg%d}`, p.Field, p.ParamIndex)
 	case spec.ComparatorGreaterThanEqual:
-		return fmt.Sprintf(`"%s": bson.M{"$gte": arg%d}`, p.Field, argIndex)
+		return fmt.Sprintf(`"%s": bson.M{"$gte": arg%d}`, p.Field, p.ParamIndex)
 	case spec.ComparatorBetween:
-		return fmt.Sprintf(`"%s": bson.M{"$gte": arg%d, "$lte": arg%d}`, p.Field, argIndex, argIndex+1)
+		return fmt.Sprintf(`"%s": bson.M{"$gte": arg%d, "$lte": arg%d}`, p.Field, p.ParamIndex, p.ParamIndex+1)
 	case spec.ComparatorIn:
-		return fmt.Sprintf(`"%s": bson.M{"$in": arg%d}`, p.Field, argIndex)
+		return fmt.Sprintf(`"%s": bson.M{"$in": arg%d}`, p.Field, p.ParamIndex)
 	}
 	return ""
 }

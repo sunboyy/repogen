@@ -56,7 +56,7 @@ func (g RepositoryGenerator) GenerateMethod(methodSpec spec.MethodSpec, buffer i
 	}
 
 	var paramTypes []code.Type
-	for _, param := range methodSpec.Params[1:] {
+	for _, param := range methodSpec.Params {
 		paramTypes = append(paramTypes, param.Type)
 	}
 
@@ -79,6 +79,8 @@ func (g RepositoryGenerator) generateMethodImplementation(methodSpec spec.Method
 	switch operation := methodSpec.Operation.(type) {
 	case spec.FindOperation:
 		return g.generateFindImplementation(operation)
+	case spec.UpdateOperation:
+		return g.generateUpdateImplementation(operation)
 	case spec.DeleteOperation:
 		return g.generateDeleteImplementation(operation)
 	}
@@ -110,6 +112,51 @@ func (g RepositoryGenerator) generateFindImplementation(operation spec.FindOpera
 		}
 	} else {
 		tmpl, err := template.New("mongo_repository_findmany").Parse(findManyTemplate)
+		if err != nil {
+			return "", err
+		}
+
+		if err := tmpl.Execute(buffer, tmplData); err != nil {
+			return "", err
+		}
+	}
+
+	return buffer.String(), nil
+}
+
+func (g RepositoryGenerator) generateUpdateImplementation(operation spec.UpdateOperation) (string, error) {
+	buffer := new(bytes.Buffer)
+
+	var fields []updateField
+	for _, field := range operation.Fields {
+		bsonTag, err := g.bsonTagFromFieldName(field.Name)
+		if err != nil {
+			return "", err
+		}
+		fields = append(fields, updateField{BsonTag: bsonTag, ParamIndex: field.ParamIndex})
+	}
+
+	querySpec, err := g.mongoQuerySpec(operation.Query)
+	if err != nil {
+		return "", err
+	}
+
+	tmplData := mongoUpdateTemplateData{
+		UpdateFields: fields,
+		QuerySpec:    querySpec,
+	}
+
+	if operation.Mode == spec.QueryModeOne {
+		tmpl, err := template.New("mongo_repository_updateone").Parse(updateOneTemplate)
+		if err != nil {
+			return "", err
+		}
+
+		if err := tmpl.Execute(buffer, tmplData); err != nil {
+			return "", err
+		}
+	} else {
+		tmpl, err := template.New("mongo_repository_updatemany").Parse(updateManyTemplate)
 		if err != nil {
 			return "", err
 		}
@@ -161,23 +208,36 @@ func (g RepositoryGenerator) mongoQuerySpec(query spec.QuerySpec) (querySpec, er
 	var predicates []predicate
 
 	for _, predicateSpec := range query.Predicates {
-		structField, ok := g.StructModel.Fields.ByName(predicateSpec.Field)
-		if !ok {
-			return querySpec{}, fmt.Errorf("struct field %s not found", predicateSpec.Field)
+		bsonTag, err := g.bsonTagFromFieldName(predicateSpec.Field)
+		if err != nil {
+			return querySpec{}, err
 		}
 
-		bsonTag, ok := structField.Tags["bson"]
-		if !ok {
-			return querySpec{}, BsonTagNotFoundError
-		}
-
-		predicates = append(predicates, predicate{Field: bsonTag[0], Comparator: predicateSpec.Comparator})
+		predicates = append(predicates, predicate{
+			Field:      bsonTag,
+			Comparator: predicateSpec.Comparator,
+			ParamIndex: predicateSpec.ParamIndex,
+		})
 	}
 
 	return querySpec{
 		Operator:   query.Operator,
 		Predicates: predicates,
 	}, nil
+}
+
+func (g RepositoryGenerator) bsonTagFromFieldName(fieldName string) (string, error) {
+	structField, ok := g.StructModel.Fields.ByName(fieldName)
+	if !ok {
+		return "", fmt.Errorf("struct field %s not found", fieldName)
+	}
+
+	bsonTag, ok := structField.Tags["bson"]
+	if !ok {
+		return "", BsonTagNotFoundError
+	}
+
+	return bsonTag[0], nil
 }
 
 func (g RepositoryGenerator) structName() string {

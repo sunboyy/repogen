@@ -13,6 +13,8 @@ func (err ParsingError) Error() string {
 		return "invalid query"
 	case InvalidParamError:
 		return "parameters do not match the query"
+	case InvalidUpdateFieldsError:
+		return "update fields is invalid"
 	case UnsupportedReturnError:
 		return "this type of return is not supported"
 	case ContextParamRequiredError:
@@ -29,6 +31,7 @@ const (
 	UnsupportedNameError      ParsingError = "ERROR_UNSUPPORTED"
 	InvalidQueryError         ParsingError = "ERROR_INVALID_QUERY"
 	InvalidParamError         ParsingError = "ERROR_INVALID_PARAM"
+	InvalidUpdateFieldsError  ParsingError = "ERROR_INVALID_UPDATE_FIELDS"
 	UnsupportedReturnError    ParsingError = "ERROR_INVALID_RETURN"
 	ContextParamRequiredError ParsingError = "ERROR_CONTEXT_PARAM_REQUIRED"
 	StructFieldNotFoundError  ParsingError = "ERROR_STRUCT_FIELD_NOT_FOUND"
