@@ -23,6 +23,8 @@ type interfaceMethodParser struct {
 func (p interfaceMethodParser) Parse() (MethodSpec, error) {
 	methodNameTokens := camelcase.Split(p.Method.Name)
 	switch methodNameTokens[0] {
+	case "Insert":
+		return p.parseInsertMethod(methodNameTokens[1:])
 	case "Find":
 		return p.parseFindMethod(methodNameTokens[1:])
 	case "Update":
@@ -31,6 +33,65 @@ func (p interfaceMethodParser) Parse() (MethodSpec, error) {
 		return p.parseDeleteMethod(methodNameTokens[1:])
 	}
 	return MethodSpec{}, UnknownOperationError
+}
+
+func (p interfaceMethodParser) parseInsertMethod(tokens []string) (MethodSpec, error) {
+	mode, err := p.extractInsertReturns(p.Method.Returns)
+	if err != nil {
+		return MethodSpec{}, err
+	}
+
+	if err := p.validateContextParam(); err != nil {
+		return MethodSpec{}, err
+	}
+
+	pointerType := code.PointerType{ContainedType: p.StructModel.ReferencedType()}
+	if mode == QueryModeOne && p.Method.Params[1].Type != pointerType {
+		return MethodSpec{}, InvalidParamError
+	}
+
+	arrayType := code.ArrayType{ContainedType: pointerType}
+	if mode == QueryModeMany && p.Method.Params[1].Type != arrayType {
+		return MethodSpec{}, InvalidParamError
+	}
+
+	return MethodSpec{
+		Name:    p.Method.Name,
+		Params:  p.Method.Params,
+		Returns: p.Method.Returns,
+		Operation: InsertOperation{
+			Mode: mode,
+		},
+	}, nil
+}
+
+func (p interfaceMethodParser) extractInsertReturns(returns []code.Type) (QueryMode, error) {
+	if len(returns) != 2 {
+		return "", UnsupportedReturnError
+	}
+
+	if returns[1] != code.SimpleType("error") {
+		return "", UnsupportedReturnError
+	}
+
+	interfaceType, ok := returns[0].(code.InterfaceType)
+	if ok {
+		if len(interfaceType.Methods) != 0 {
+			return "", UnsupportedReturnError
+		}
+		return QueryModeOne, nil
+	}
+
+	arrayType, ok := returns[0].(code.ArrayType)
+	if ok {
+		interfaceType, ok := arrayType.ContainedType.(code.InterfaceType)
+		if !ok || len(interfaceType.Methods) != 0 {
+			return "", UnsupportedReturnError
+		}
+		return QueryModeMany, nil
+	}
+
+	return "", UnsupportedReturnError
 }
 
 func (p interfaceMethodParser) parseFindMethod(tokens []string) (MethodSpec, error) {

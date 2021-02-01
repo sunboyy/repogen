@@ -38,6 +38,11 @@ type Struct struct {
 	Fields StructFields
 }
 
+// ReferencedType returns a type variable of this struct
+func (str Struct) ReferencedType() Type {
+	return SimpleType(str.Name)
+}
+
 // StructFields is a group of the StructField model
 type StructFields []StructField
 
@@ -59,23 +64,28 @@ type StructField struct {
 }
 
 // Interfaces is a group of Interface model
-type Interfaces []Interface
+type Interfaces []InterfaceType
 
 // ByName return interface by name Another return value shows whether there is an interface
 // with that name exists.
-func (intfs Interfaces) ByName(name string) (Interface, bool) {
+func (intfs Interfaces) ByName(name string) (InterfaceType, bool) {
 	for _, intf := range intfs {
 		if intf.Name == name {
 			return intf, true
 		}
 	}
-	return Interface{}, false
+	return InterfaceType{}, false
 }
 
-// Interface is a definition of the interface
-type Interface struct {
+// InterfaceType is a definition of the interface
+type InterfaceType struct {
 	Name    string
 	Methods []Method
+}
+
+// Code returns token string in code format
+func (intf InterfaceType) Code() string {
+	return `interface{}`
 }
 
 // Method is a definition of the method inside the interface
