@@ -63,7 +63,7 @@ func TestStructFieldsByName(t *testing.T) {
 }
 
 func TestInterfacesByName(t *testing.T) {
-	userRepoIntf := code.Interface{Name: "UserRepository"}
+	userRepoIntf := code.InterfaceType{Name: "UserRepository"}
 	interfaces := code.Interfaces{userRepoIntf}
 
 	t.Run("struct field found", func(t *testing.T) {
@@ -84,4 +84,45 @@ func TestInterfacesByName(t *testing.T) {
 			t.Fail()
 		}
 	})
+}
+
+type TypeCodeTestCase struct {
+	Name         string
+	Type         code.Type
+	ExpectedCode string
+}
+
+func TestArrayTypeCode(t *testing.T) {
+	testTable := []TypeCodeTestCase{
+		{
+			Name:         "simple type",
+			Type:         code.SimpleType("UserModel"),
+			ExpectedCode: "UserModel",
+		},
+		{
+			Name:         "external type",
+			Type:         code.ExternalType{PackageAlias: "context", Name: "Context"},
+			ExpectedCode: "context.Context",
+		},
+		{
+			Name:         "pointer type",
+			Type:         code.PointerType{ContainedType: code.SimpleType("UserModel")},
+			ExpectedCode: "*UserModel",
+		},
+		{
+			Name:         "array type",
+			Type:         code.ArrayType{ContainedType: code.SimpleType("UserModel")},
+			ExpectedCode: "[]UserModel",
+		},
+	}
+
+	for _, testCase := range testTable {
+		t.Run(testCase.Name, func(t *testing.T) {
+			code := testCase.Type.Code()
+
+			if code != testCase.ExpectedCode {
+				t.Errorf("Expected = %v\nReceived = %v", testCase.ExpectedCode, code)
+			}
+		})
+	}
 }

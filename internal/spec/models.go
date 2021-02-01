@@ -27,6 +27,11 @@ type MethodSpec struct {
 type Operation interface {
 }
 
+// InsertOperation is a method specification for insert operations
+type InsertOperation struct {
+	Mode QueryMode
+}
+
 // FindOperation is a method specification for find operations
 type FindOperation struct {
 	Mode  QueryMode

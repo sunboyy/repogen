@@ -77,6 +77,8 @@ func (g RepositoryGenerator) GenerateMethod(methodSpec spec.MethodSpec, buffer i
 
 func (g RepositoryGenerator) generateMethodImplementation(methodSpec spec.MethodSpec) (string, error) {
 	switch operation := methodSpec.Operation.(type) {
+	case spec.InsertOperation:
+		return g.generateInsertImplementation(operation)
 	case spec.FindOperation:
 		return g.generateFindImplementation(operation)
 	case spec.UpdateOperation:
@@ -86,6 +88,13 @@ func (g RepositoryGenerator) generateMethodImplementation(methodSpec spec.Method
 	}
 
 	return "", OperationNotSupportedError
+}
+
+func (g RepositoryGenerator) generateInsertImplementation(operation spec.InsertOperation) (string, error) {
+	if operation.Mode == spec.QueryModeOne {
+		return insertOneTemplate, nil
+	}
+	return insertManyTemplate, nil
 }
 
 func (g RepositoryGenerator) generateFindImplementation(operation spec.FindOperation) (string, error) {

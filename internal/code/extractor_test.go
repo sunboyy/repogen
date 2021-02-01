@@ -97,6 +97,12 @@ type UserRepository interface {
 	FindOneByID(ctx context.Context, id primitive.ObjectID) (*UserModel, error)
 	FindAll(context.Context) ([]*UserModel, error)
 	FindByAgeBetween(ctx context.Context, fromAge, toAge int) ([]*UserModel, error)
+	InsertOne(ctx context.Context, user *UserModel) (interface{}, error)
+	CustomMethod(interface {
+		Run(arg1 int)
+	}) interface {
+		Do(arg2 string)
+	}
 }`,
 			ExpectedOutput: code.File{
 				PackageName: "user",
@@ -135,6 +141,46 @@ type UserRepository interface {
 								Returns: []code.Type{
 									code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
 									code.SimpleType("error"),
+								},
+							},
+							{
+								Name: "InsertOne",
+								Params: []code.Param{
+									{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+									{Name: "user", Type: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+								},
+								Returns: []code.Type{
+									code.InterfaceType{},
+									code.SimpleType("error"),
+								},
+							},
+							{
+								Name: "CustomMethod",
+								Params: []code.Param{
+									{
+										Type: code.InterfaceType{
+											Methods: []code.Method{
+												{
+													Name: "Run",
+													Params: []code.Param{
+														{Name: "arg1", Type: code.SimpleType("int")},
+													},
+												},
+											},
+										},
+									},
+								},
+								Returns: []code.Type{
+									code.InterfaceType{
+										Methods: []code.Method{
+											{
+												Name: "Do",
+												Params: []code.Param{
+													{Name: "arg2", Type: code.SimpleType("string")},
+												},
+											},
+										},
+									},
 								},
 							},
 						},

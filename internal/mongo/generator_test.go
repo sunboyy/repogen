@@ -80,6 +80,85 @@ type GenerateMethodTestCase struct {
 	ExpectedCode string
 }
 
+func TestGenerateMethod_Insert(t *testing.T) {
+	testTable := []GenerateMethodTestCase{
+		{
+			Name: "insert one method",
+			MethodSpec: spec.MethodSpec{
+				Name: "InsertOne",
+				Params: []code.Param{
+					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Name: "userModel", Type: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+				},
+				Returns: []code.Type{
+					code.InterfaceType{},
+					code.SimpleType("error"),
+				},
+				Operation: spec.InsertOperation{
+					Mode: spec.QueryModeOne,
+				},
+			},
+			ExpectedCode: `
+func (r *UserRepositoryMongo) InsertOne(arg0 context.Context, arg1 *UserModel) (interface{}, error) {
+	result, err := r.collection.InsertOne(arg0, arg1)
+	if err != nil {
+		return nil, err
+	}
+	return result.InsertedID, nil
+}
+`,
+		},
+		{
+			Name: "insert many method",
+			MethodSpec: spec.MethodSpec{
+				Name: "Insert",
+				Params: []code.Param{
+					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Name: "userModel", Type: code.ArrayType{
+						ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")},
+					}},
+				},
+				Returns: []code.Type{
+					code.ArrayType{ContainedType: code.InterfaceType{}},
+					code.SimpleType("error"),
+				},
+				Operation: spec.InsertOperation{
+					Mode: spec.QueryModeMany,
+				},
+			},
+			ExpectedCode: `
+func (r *UserRepositoryMongo) Insert(arg0 context.Context, arg1 []*UserModel) ([]interface{}, error) {
+	var entities []interface{}
+	for _, model := range arg1 {
+		entities = append(entities, model)
+	}
+	result, err := r.collection.InsertMany(arg0, entities)
+	if err != nil {
+		return nil, err
+	}
+	return result.InsertedIDs, nil
+}
+`,
+		},
+	}
+
+	for _, testCase := range testTable {
+		t.Run(testCase.Name, func(t *testing.T) {
+			generator := mongo.NewGenerator(userModel, "UserRepository")
+			buffer := new(bytes.Buffer)
+
+			err := generator.GenerateMethod(testCase.MethodSpec, buffer)
+
+			if err != nil {
+				t.Error(err)
+			}
+			if err := testutils.ExpectMultiLineString(testCase.ExpectedCode, buffer.String()); err != nil {
+				t.Error(err)
+			}
+		})
+	}
+}
+
 func TestGenerateMethod_Find(t *testing.T) {
 	testTable := []GenerateMethodTestCase{
 		{
@@ -90,7 +169,10 @@ func TestGenerateMethod_Find(t *testing.T) {
 					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
 					{Name: "id", Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
 				},
-				Returns: []code.Type{code.PointerType{ContainedType: code.SimpleType("UserModel")}, code.SimpleType("error")},
+				Returns: []code.Type{
+					code.PointerType{ContainedType: code.SimpleType("UserModel")},
+					code.SimpleType("error"),
+				},
 				Operation: spec.FindOperation{
 					Mode: spec.QueryModeOne,
 					Query: spec.QuerySpec{

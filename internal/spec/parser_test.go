@@ -40,6 +40,64 @@ type ParseInterfaceMethodTestCase struct {
 	ExpectedOperation spec.Operation
 }
 
+func TestParseInterfaceMethod_Insert(t *testing.T) {
+	testTable := []ParseInterfaceMethodTestCase{
+		{
+			Name: "InsertOne method",
+			Method: code.Method{
+				Name: "InsertOne",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+				},
+				Returns: []code.Type{
+					code.InterfaceType{},
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedOperation: spec.InsertOperation{
+				Mode: spec.QueryModeOne,
+			},
+		},
+		{
+			Name: "InsertMany method",
+			Method: code.Method{
+				Name: "InsertMany",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}}},
+				},
+				Returns: []code.Type{
+					code.ArrayType{ContainedType: code.InterfaceType{}},
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedOperation: spec.InsertOperation{
+				Mode: spec.QueryModeMany,
+			},
+		},
+	}
+
+	for _, testCase := range testTable {
+		t.Run(testCase.Name, func(t *testing.T) {
+			actualSpec, err := spec.ParseInterfaceMethod(structModel, testCase.Method)
+
+			if err != nil {
+				t.Errorf("Error = %s", err)
+			}
+			expectedOutput := spec.MethodSpec{
+				Name:      testCase.Method.Name,
+				Params:    testCase.Method.Params,
+				Returns:   testCase.Method.Returns,
+				Operation: testCase.ExpectedOperation,
+			}
+			if !reflect.DeepEqual(actualSpec, expectedOutput) {
+				t.Errorf("Expected = %v\nReceived = %v", expectedOutput, actualSpec)
+			}
+		})
+	}
+}
+
 func TestParseInterfaceMethod_Find(t *testing.T) {
 	testTable := []ParseInterfaceMethodTestCase{
 		{
@@ -736,6 +794,114 @@ func TestParseInterfaceMethod_Invalid(t *testing.T) {
 	}
 }
 
+func TestParseInterfaceMethod_Insert_Invalid(t *testing.T) {
+	testTable := []ParseInterfaceMethodInvalidTestCase{
+		{
+			Name: "invalid number of returns",
+			Method: code.Method{
+				Name: "Insert",
+				Returns: []code.Type{
+					code.PointerType{ContainedType: code.SimpleType("UserModel")},
+					code.InterfaceType{},
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedError: spec.UnsupportedReturnError,
+		},
+		{
+			Name: "unsupported return types from insert method",
+			Method: code.Method{
+				Name: "Insert",
+				Returns: []code.Type{
+					code.PointerType{ContainedType: code.SimpleType("UserModel")},
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedError: spec.UnsupportedReturnError,
+		},
+		{
+			Name: "unempty interface return from insert method",
+			Method: code.Method{
+				Name: "Insert",
+				Returns: []code.Type{
+					code.InterfaceType{
+						Methods: []code.Method{
+							{Name: "DoSomething"},
+						},
+					},
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedError: spec.UnsupportedReturnError,
+		},
+		{
+			Name: "error return not provided",
+			Method: code.Method{
+				Name: "Insert",
+				Returns: []code.Type{
+					code.PointerType{ContainedType: code.SimpleType("UserModel")},
+					code.InterfaceType{},
+				},
+			},
+			ExpectedError: spec.UnsupportedReturnError,
+		},
+		{
+			Name: "no context parameter",
+			Method: code.Method{
+				Name: "Insert",
+				Params: []code.Param{
+					{Name: "userModel", Type: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+				},
+				Returns: []code.Type{
+					code.InterfaceType{},
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedError: spec.ContextParamRequiredError,
+		},
+		{
+			Name: "mismatched model parameter for one mode",
+			Method: code.Method{
+				Name: "Insert",
+				Params: []code.Param{
+					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Name: "userModel", Type: code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}}},
+				},
+				Returns: []code.Type{
+					code.InterfaceType{},
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedError: spec.InvalidParamError,
+		},
+		{
+			Name: "mismatched model parameter for many mode",
+			Method: code.Method{
+				Name: "Insert",
+				Params: []code.Param{
+					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Name: "userModel", Type: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+				},
+				Returns: []code.Type{
+					code.ArrayType{ContainedType: code.InterfaceType{}},
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedError: spec.InvalidParamError,
+		},
+	}
+
+	for _, testCase := range testTable {
+		t.Run(testCase.Name, func(t *testing.T) {
+			_, err := spec.ParseInterfaceMethod(structModel, testCase.Method)
+
+			if err != testCase.ExpectedError {
+				t.Errorf("\nExpected = %v\nReceived = %v", testCase.ExpectedError, err)
+			}
+		})
+	}
+}
+
 func TestParseInterfaceMethod_Find_Invalid(t *testing.T) {
 	testTable := []ParseInterfaceMethodInvalidTestCase{
 		{
@@ -758,7 +924,7 @@ func TestParseInterfaceMethod_Find_Invalid(t *testing.T) {
 			ExpectedError: spec.UnsupportedReturnError,
 		},
 		{
-			Name: "unsupported return values from find method",
+			Name: "unsupported return types from find method",
 			Method: code.Method{
 				Name: "FindOneByID",
 				Returns: []code.Type{
@@ -933,7 +1099,7 @@ func TestParseInterfaceMethod_Update_Invalid(t *testing.T) {
 			ExpectedError: spec.UnsupportedReturnError,
 		},
 		{
-			Name: "unsupported return values from find method",
+			Name: "unsupported return types from update method",
 			Method: code.Method{
 				Name: "UpdateAgeByID",
 				Returns: []code.Type{
@@ -1085,7 +1251,7 @@ func TestParseInterfaceMethod_Delete_Invalid(t *testing.T) {
 			ExpectedError: spec.UnsupportedReturnError,
 		},
 		{
-			Name: "unsupported return values from find method",
+			Name: "unsupported return types from delete method",
 			Method: code.Method{
 				Name: "DeleteOneByID",
 				Returns: []code.Type{

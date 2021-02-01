@@ -70,6 +70,22 @@ func (data mongoMethodTemplateData) Returns() string {
 	return fmt.Sprintf(" (%s)", strings.Join(returns, ", "))
 }
 
+const insertOneTemplate = `	result, err := r.collection.InsertOne(arg0, arg1)
+	if err != nil {
+		return nil, err
+	}
+	return result.InsertedID, nil`
+
+const insertManyTemplate = `	var entities []interface{}
+	for _, model := range arg1 {
+		entities = append(entities, model)
+	}
+	result, err := r.collection.InsertMany(arg0, entities)
+	if err != nil {
+		return nil, err
+	}
+	return result.InsertedIDs, nil`
+
 type mongoFindTemplateData struct {
 	EntityType string
 	QuerySpec  querySpec

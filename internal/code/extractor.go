@@ -62,41 +62,23 @@ func ExtractComponents(f *ast.File) File {
 
 				interfaceType, ok := typeSpec.Type.(*ast.InterfaceType)
 				if ok {
-					intf := Interface{
+					intf := InterfaceType{
 						Name: typeSpec.Name.Name,
 					}
 
 					for _, method := range interfaceType.Methods.List {
-						var meth Method
-						for _, name := range method.Names {
-							meth.Name = name.Name
-							break
-						}
-
 						funcType, ok := method.Type.(*ast.FuncType)
 						if !ok {
 							continue
 						}
 
-						for _, param := range funcType.Params.List {
-							paramType := getType(param.Type)
-
-							if len(param.Names) == 0 {
-								meth.Params = append(meth.Params, Param{Type: paramType})
-								continue
-							}
-
-							for _, name := range param.Names {
-								meth.Params = append(meth.Params, Param{
-									Name: name.Name,
-									Type: paramType,
-								})
-							}
+						var name string
+						for _, n := range method.Names {
+							name = n.Name
+							break
 						}
 
-						for _, result := range funcType.Results.List {
-							meth.Returns = append(meth.Returns, getType(result.Type))
-						}
+						meth := extractFunction(name, funcType)
 
 						intf.Methods = append(intf.Methods, meth)
 					}
@@ -131,6 +113,35 @@ func extractStructTag(tagValue string) map[string][]string {
 	return tags
 }
 
+func extractFunction(name string, funcType *ast.FuncType) Method {
+	meth := Method{
+		Name: name,
+	}
+	for _, param := range funcType.Params.List {
+		paramType := getType(param.Type)
+
+		if len(param.Names) == 0 {
+			meth.Params = append(meth.Params, Param{Type: paramType})
+			continue
+		}
+
+		for _, name := range param.Names {
+			meth.Params = append(meth.Params, Param{
+				Name: name.Name,
+				Type: paramType,
+			})
+		}
+	}
+
+	if funcType.Results != nil {
+		for _, result := range funcType.Results.List {
+			meth.Returns = append(meth.Returns, getType(result.Type))
+		}
+	}
+
+	return meth
+}
+
 func getType(expr ast.Expr) Type {
 	identExpr, ok := expr.(*ast.Ident)
 	if ok {
@@ -156,6 +167,29 @@ func getType(expr ast.Expr) Type {
 	if ok {
 		containedType := getType(arrayType.Elt)
 		return ArrayType{containedType}
+	}
+
+	intfType, ok := expr.(*ast.InterfaceType)
+	if ok {
+		var methods []Method
+		for _, method := range intfType.Methods.List {
+			funcType, ok := method.Type.(*ast.FuncType)
+			if !ok {
+				continue
+			}
+
+			var name string
+			for _, n := range method.Names {
+				name = n.Name
+				break
+			}
+
+			methods = append(methods, extractFunction(name, funcType))
+		}
+
+		return InterfaceType{
+			Methods: methods,
+		}
 	}
 
 	return nil
