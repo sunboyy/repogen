@@ -778,6 +778,67 @@ func TestParseInterfaceMethod_Delete(t *testing.T) {
 	}
 }
 
+func TestParseInterfaceMethod_Count(t *testing.T) {
+	testTable := []ParseInterfaceMethodTestCase{
+		{
+			Name: "CountAll method",
+			Method: code.Method{
+				Name: "CountAll",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+				},
+				Returns: []code.Type{
+					code.SimpleType("int"),
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedOperation: spec.CountOperation{
+				Query: spec.QuerySpec{},
+			},
+		},
+		{
+			Name: "CountByArg method",
+			Method: code.Method{
+				Name: "CountByGender",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("Gender")},
+				},
+				Returns: []code.Type{
+					code.SimpleType("int"),
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedOperation: spec.CountOperation{
+				Query: spec.QuerySpec{
+					Predicates: []spec.Predicate{
+						{Field: "Gender", Comparator: spec.ComparatorEqual, ParamIndex: 1},
+					},
+				},
+			},
+		},
+	}
+
+	for _, testCase := range testTable {
+		t.Run(testCase.Name, func(t *testing.T) {
+			actualSpec, err := spec.ParseInterfaceMethod(structModel, testCase.Method)
+
+			if err != nil {
+				t.Errorf("Error = %s", err)
+			}
+			expectedOutput := spec.MethodSpec{
+				Name:      testCase.Method.Name,
+				Params:    testCase.Method.Params,
+				Returns:   testCase.Method.Returns,
+				Operation: testCase.ExpectedOperation,
+			}
+			if !reflect.DeepEqual(actualSpec, expectedOutput) {
+				t.Errorf("Expected = %v\nReceived = %v", expectedOutput, actualSpec)
+			}
+		})
+	}
+}
+
 type ParseInterfaceMethodInvalidTestCase struct {
 	Name          string
 	Method        code.Method
@@ -1390,6 +1451,145 @@ func TestParseInterfaceMethod_Delete_Invalid(t *testing.T) {
 				},
 			},
 			ExpectedError: spec.InvalidParamError,
+		},
+	}
+
+	for _, testCase := range testTable {
+		t.Run(testCase.Name, func(t *testing.T) {
+			_, err := spec.ParseInterfaceMethod(structModel, testCase.Method)
+
+			if err != testCase.ExpectedError {
+				t.Errorf("\nExpected = %v\nReceived = %v", testCase.ExpectedError, err)
+			}
+		})
+	}
+}
+
+func TestParseInterfaceMethod_Count_Invalid(t *testing.T) {
+	testTable := []ParseInterfaceMethodInvalidTestCase{
+		{
+			Name: "unsupported count method name",
+			Method: code.Method{
+				Name: "Count",
+			},
+			ExpectedError: spec.UnsupportedNameError,
+		},
+		{
+			Name: "invalid number of returns",
+			Method: code.Method{
+				Name: "CountAll",
+				Returns: []code.Type{
+					code.SimpleType("int"),
+					code.SimpleType("error"),
+					code.SimpleType("bool"),
+				},
+			},
+			ExpectedError: spec.UnsupportedReturnError,
+		},
+		{
+			Name: "invalid number of returns",
+			Method: code.Method{
+				Name: "CountAll",
+				Returns: []code.Type{
+					code.SimpleType("int"),
+					code.SimpleType("error"),
+					code.SimpleType("bool"),
+				},
+			},
+			ExpectedError: spec.UnsupportedReturnError,
+		},
+		{
+			Name: "invalid integer return",
+			Method: code.Method{
+				Name: "CountAll",
+				Returns: []code.Type{
+					code.SimpleType("int64"),
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedError: spec.UnsupportedReturnError,
+		},
+		{
+			Name: "error return not provided",
+			Method: code.Method{
+				Name: "CountAll",
+				Returns: []code.Type{
+					code.SimpleType("int"),
+					code.SimpleType("bool"),
+				},
+			},
+			ExpectedError: spec.UnsupportedReturnError,
+		},
+		{
+			Name: "invalid query",
+			Method: code.Method{
+				Name: "CountBy",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+				},
+				Returns: []code.Type{
+					code.SimpleType("int"),
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedError: spec.InvalidQueryError,
+		},
+		{
+			Name: "context parameter not provided",
+			Method: code.Method{
+				Name: "CountAll",
+				Returns: []code.Type{
+					code.SimpleType("int"),
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedError: spec.ContextParamRequiredError,
+		},
+		{
+			Name: "mismatched number of parameter",
+			Method: code.Method{
+				Name: "CountByGender",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("Gender")},
+					{Type: code.SimpleType("int")},
+				},
+				Returns: []code.Type{
+					code.SimpleType("int"),
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedError: spec.InvalidParamError,
+		},
+		{
+			Name: "mismatched method parameter type",
+			Method: code.Method{
+				Name: "CountByGender",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("string")},
+				},
+				Returns: []code.Type{
+					code.SimpleType("int"),
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedError: spec.InvalidParamError,
+		},
+		{
+			Name: "struct field not found",
+			Method: code.Method{
+				Name: "CountByCountry",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("string")},
+				},
+				Returns: []code.Type{
+					code.SimpleType("int"),
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedError: spec.StructFieldNotFoundError,
 		},
 	}
 

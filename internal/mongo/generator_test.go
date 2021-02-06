@@ -1089,6 +1089,358 @@ func (r *UserRepositoryMongo) DeleteByGenderIn(arg0 context.Context, arg1 []Gend
 	}
 }
 
+func TestGenerateMethod_Count(t *testing.T) {
+	testTable := []GenerateMethodTestCase{
+		{
+			Name: "simple count method",
+			MethodSpec: spec.MethodSpec{
+				Name: "CountByGender",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("Gender")},
+				},
+				Returns: []code.Type{
+					code.SimpleType("int"),
+					code.SimpleType("error"),
+				},
+				Operation: spec.CountOperation{
+					Query: spec.QuerySpec{
+						Predicates: []spec.Predicate{
+							{Field: "Gender", Comparator: spec.ComparatorEqual, ParamIndex: 1},
+						},
+					},
+				},
+			},
+			ExpectedCode: `
+func (r *UserRepositoryMongo) CountByGender(arg0 context.Context, arg1 Gender) (int, error) {
+	count, err := r.collection.CountDocuments(arg0, bson.M{
+		"gender": arg1,
+	})
+	if err != nil {
+		return 0, err
+	}
+	return int(count), nil
+}
+`,
+		},
+		{
+			Name: "count with And operator",
+			MethodSpec: spec.MethodSpec{
+				Name: "CountByGenderAndCity",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("Gender")},
+					{Type: code.SimpleType("int")},
+				},
+				Returns: []code.Type{
+					code.SimpleType("int"),
+					code.SimpleType("error"),
+				},
+				Operation: spec.CountOperation{
+					Query: spec.QuerySpec{
+						Operator: spec.OperatorAnd,
+						Predicates: []spec.Predicate{
+							{Field: "Gender", Comparator: spec.ComparatorEqual, ParamIndex: 1},
+							{Field: "Age", Comparator: spec.ComparatorEqual, ParamIndex: 2},
+						},
+					},
+				},
+			},
+			ExpectedCode: `
+func (r *UserRepositoryMongo) CountByGenderAndCity(arg0 context.Context, arg1 Gender, arg2 int) (int, error) {
+	count, err := r.collection.CountDocuments(arg0, bson.M{
+		"gender": arg1,
+		"age": arg2,
+	})
+	if err != nil {
+		return 0, err
+	}
+	return int(count), nil
+}
+`,
+		},
+		{
+			Name: "count with Or operator",
+			MethodSpec: spec.MethodSpec{
+				Name: "CountByGenderOrCity",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("Gender")},
+					{Type: code.SimpleType("int")},
+				},
+				Returns: []code.Type{
+					code.SimpleType("int"),
+					code.SimpleType("error"),
+				},
+				Operation: spec.CountOperation{
+					Query: spec.QuerySpec{
+						Operator: spec.OperatorOr,
+						Predicates: []spec.Predicate{
+							{Field: "Gender", Comparator: spec.ComparatorEqual, ParamIndex: 1},
+							{Field: "Age", Comparator: spec.ComparatorEqual, ParamIndex: 2},
+						},
+					},
+				},
+			},
+			ExpectedCode: `
+func (r *UserRepositoryMongo) CountByGenderOrCity(arg0 context.Context, arg1 Gender, arg2 int) (int, error) {
+	count, err := r.collection.CountDocuments(arg0, bson.M{
+		"$or": []bson.M{
+			{"gender": arg1},
+			{"age": arg2},
+		},
+	})
+	if err != nil {
+		return 0, err
+	}
+	return int(count), nil
+}
+`,
+		},
+		{
+			Name: "count with Not comparator",
+			MethodSpec: spec.MethodSpec{
+				Name: "CountByGenderNot",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("Gender")},
+				},
+				Returns: []code.Type{
+					code.SimpleType("int"),
+					code.SimpleType("error"),
+				},
+				Operation: spec.CountOperation{
+					Query: spec.QuerySpec{
+						Predicates: []spec.Predicate{
+							{Field: "Gender", Comparator: spec.ComparatorNot, ParamIndex: 1},
+						},
+					},
+				},
+			},
+			ExpectedCode: `
+func (r *UserRepositoryMongo) CountByGenderNot(arg0 context.Context, arg1 Gender) (int, error) {
+	count, err := r.collection.CountDocuments(arg0, bson.M{
+		"gender": bson.M{"$ne": arg1},
+	})
+	if err != nil {
+		return 0, err
+	}
+	return int(count), nil
+}
+`,
+		},
+		{
+			Name: "count with LessThan comparator",
+			MethodSpec: spec.MethodSpec{
+				Name: "CountByAgeLessThan",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("int")},
+				},
+				Returns: []code.Type{
+					code.SimpleType("int"),
+					code.SimpleType("error"),
+				},
+				Operation: spec.CountOperation{
+					Query: spec.QuerySpec{
+						Predicates: []spec.Predicate{
+							{Field: "Age", Comparator: spec.ComparatorLessThan, ParamIndex: 1},
+						},
+					},
+				},
+			},
+			ExpectedCode: `
+func (r *UserRepositoryMongo) CountByAgeLessThan(arg0 context.Context, arg1 int) (int, error) {
+	count, err := r.collection.CountDocuments(arg0, bson.M{
+		"age": bson.M{"$lt": arg1},
+	})
+	if err != nil {
+		return 0, err
+	}
+	return int(count), nil
+}
+`,
+		},
+		{
+			Name: "count with LessThanEqual comparator",
+			MethodSpec: spec.MethodSpec{
+				Name: "CountByAgeLessThanEqual",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("int")},
+				},
+				Returns: []code.Type{
+					code.SimpleType("int"),
+					code.SimpleType("error"),
+				},
+				Operation: spec.CountOperation{
+					Query: spec.QuerySpec{
+						Predicates: []spec.Predicate{
+							{Field: "Age", Comparator: spec.ComparatorLessThanEqual, ParamIndex: 1},
+						},
+					},
+				},
+			},
+			ExpectedCode: `
+func (r *UserRepositoryMongo) CountByAgeLessThanEqual(arg0 context.Context, arg1 int) (int, error) {
+	count, err := r.collection.CountDocuments(arg0, bson.M{
+		"age": bson.M{"$lte": arg1},
+	})
+	if err != nil {
+		return 0, err
+	}
+	return int(count), nil
+}
+`,
+		},
+		{
+			Name: "count with GreaterThan comparator",
+			MethodSpec: spec.MethodSpec{
+				Name: "CountByAgeGreaterThan",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("int")},
+				},
+				Returns: []code.Type{
+					code.SimpleType("int"),
+					code.SimpleType("error"),
+				},
+				Operation: spec.CountOperation{
+					Query: spec.QuerySpec{
+						Predicates: []spec.Predicate{
+							{Field: "Age", Comparator: spec.ComparatorGreaterThan, ParamIndex: 1},
+						},
+					},
+				},
+			},
+			ExpectedCode: `
+func (r *UserRepositoryMongo) CountByAgeGreaterThan(arg0 context.Context, arg1 int) (int, error) {
+	count, err := r.collection.CountDocuments(arg0, bson.M{
+		"age": bson.M{"$gt": arg1},
+	})
+	if err != nil {
+		return 0, err
+	}
+	return int(count), nil
+}
+`,
+		},
+		{
+			Name: "count with GreaterThanEqual comparator",
+			MethodSpec: spec.MethodSpec{
+				Name: "CountByAgeGreaterThanEqual",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("int")},
+				},
+				Returns: []code.Type{
+					code.SimpleType("int"),
+					code.SimpleType("error"),
+				},
+				Operation: spec.CountOperation{
+					Query: spec.QuerySpec{
+						Predicates: []spec.Predicate{
+							{Field: "Age", Comparator: spec.ComparatorGreaterThanEqual, ParamIndex: 1},
+						},
+					},
+				},
+			},
+			ExpectedCode: `
+func (r *UserRepositoryMongo) CountByAgeGreaterThanEqual(arg0 context.Context, arg1 int) (int, error) {
+	count, err := r.collection.CountDocuments(arg0, bson.M{
+		"age": bson.M{"$gte": arg1},
+	})
+	if err != nil {
+		return 0, err
+	}
+	return int(count), nil
+}
+`,
+		},
+		{
+			Name: "count with Between comparator",
+			MethodSpec: spec.MethodSpec{
+				Name: "CountByAgeBetween",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("int")},
+					{Type: code.SimpleType("int")},
+				},
+				Returns: []code.Type{
+					code.SimpleType("int"),
+					code.SimpleType("error"),
+				},
+				Operation: spec.CountOperation{
+					Query: spec.QuerySpec{
+						Predicates: []spec.Predicate{
+							{Field: "Age", Comparator: spec.ComparatorBetween, ParamIndex: 1},
+						},
+					},
+				},
+			},
+			ExpectedCode: `
+func (r *UserRepositoryMongo) CountByAgeBetween(arg0 context.Context, arg1 int, arg2 int) (int, error) {
+	count, err := r.collection.CountDocuments(arg0, bson.M{
+		"age": bson.M{"$gte": arg1, "$lte": arg2},
+	})
+	if err != nil {
+		return 0, err
+	}
+	return int(count), nil
+}
+`,
+		},
+		{
+			Name: "count with In comparator",
+			MethodSpec: spec.MethodSpec{
+				Name: "CountByAgeIn",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.ArrayType{ContainedType: code.SimpleType("int")}},
+				},
+				Returns: []code.Type{
+					code.SimpleType("int"),
+					code.SimpleType("error"),
+				},
+				Operation: spec.CountOperation{
+					Query: spec.QuerySpec{
+						Predicates: []spec.Predicate{
+							{Field: "Age", Comparator: spec.ComparatorIn, ParamIndex: 1},
+						},
+					},
+				},
+			},
+			ExpectedCode: `
+func (r *UserRepositoryMongo) CountByAgeIn(arg0 context.Context, arg1 []int) (int, error) {
+	count, err := r.collection.CountDocuments(arg0, bson.M{
+		"age": bson.M{"$in": arg1},
+	})
+	if err != nil {
+		return 0, err
+	}
+	return int(count), nil
+}
+`,
+		},
+	}
+
+	for _, testCase := range testTable {
+		t.Run(testCase.Name, func(t *testing.T) {
+			generator := mongo.NewGenerator(userModel, "UserRepository")
+			buffer := new(bytes.Buffer)
+
+			err := generator.GenerateMethod(testCase.MethodSpec, buffer)
+
+			if err != nil {
+				t.Error(err)
+			}
+			if err := testutils.ExpectMultiLineString(testCase.ExpectedCode, buffer.String()); err != nil {
+				t.Error(err)
+			}
+		})
+	}
+}
+
 type GenerateMethodInvalidTestCase struct {
 	Name          string
 	Method        spec.MethodSpec

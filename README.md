@@ -32,7 +32,7 @@ $ go get github.com/sunboyy/repogen
 
 ### Step 2: Write a repository specification
 
-Write repository specification as an interface in the same file as the model struct. There are 4 types of operations that are currently supported and are determined by the first word of the method name. Single-entity and multiple-entity modes are determined be the first return value. More complex queries can also be written.
+Write repository specification as an interface in the same file as the model struct. There are 5 types of operations that are currently supported and are determined by the first word of the method name. Single-entity and multiple-entity modes are determined be the first return value. More complex queries can also be written.
 
 ```go
 // You write this interface specification (comment is optional)
@@ -54,6 +54,10 @@ type UserRepository interface {
 	// the match count. The error will be returned only when error occurs while accessing
 	// the database. This is a MANY mode because the first return type is an integer.
 	DeleteByCity(ctx context.Context, city string) (int, error)
+
+	// CountByCity returns the number of rows that match the given city parameter. If an error occurs while
+	// accessing the database, error value will be returned.
+	CountByCity(ctx context.Context, city string) (int, error)
 }
 ```
 
@@ -77,3 +81,7 @@ $ repogen -src=examples/getting-started/user.go -dest=examples/getting-started/u
 ```
 
 You can also write the above command in the `go:generate` format inside Go files in order to generate the implementation when `go generate` command is executed.
+
+## License
+
+Licensed under [MIT](https://github.com/sunboyy/repogen/blob/main/LICENSE)

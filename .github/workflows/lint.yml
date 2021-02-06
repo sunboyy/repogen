@@ -7,23 +7,10 @@ on:
     branches: [ main ]
 
 jobs:
-  lint:
+  golangci-lint:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-
-    - name: Set up Go
-      uses: actions/setup-go@v2
-      with:
-        go-version: 1.15
-
-    - name: Install dependencies
-      run: go get -u golang.org/x/lint/golint
-
-    - name: Vet & Lint
-      run: |
-        go vet ./...
-        golint ./...
 
     - name: golangci-lint
       uses: golangci/golangci-lint-action@v2
