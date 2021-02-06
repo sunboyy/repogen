@@ -35,4 +35,8 @@ type UserRepository interface {
 	// The error will be returned only when error occurs while accessing the database. This is a MANY mode
 	// because the first return type is an integer.
 	DeleteByCity(ctx context.Context, city string) (int, error)
+
+	// CountByCity returns the number of rows that match the given city parameter. If an error occurs while
+	// accessing the database, error value will be returned.
+	CountByCity(ctx context.Context, city string) (int, error)
 }

@@ -159,3 +159,15 @@ const deleteManyTemplate = `	result, err := r.collection.DeleteMany(arg0, bson.M
 		return 0, err
 	}
 	return int(result.DeletedCount), nil`
+
+type mongoCountTemplateData struct {
+	QuerySpec querySpec
+}
+
+const countTemplate = `	count, err := r.collection.CountDocuments(arg0, bson.M{
+{{.QuerySpec.Code}}
+	})
+	if err != nil {
+		return 0, err
+	}
+	return int(count), nil`

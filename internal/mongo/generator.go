@@ -85,6 +85,8 @@ func (g RepositoryGenerator) generateMethodImplementation(methodSpec spec.Method
 		return g.generateUpdateImplementation(operation)
 	case spec.DeleteOperation:
 		return g.generateDeleteImplementation(operation)
+	case spec.CountOperation:
+		return g.generateCountImplementation(operation)
 	}
 
 	return "", OperationNotSupportedError
@@ -98,8 +100,6 @@ func (g RepositoryGenerator) generateInsertImplementation(operation spec.InsertO
 }
 
 func (g RepositoryGenerator) generateFindImplementation(operation spec.FindOperation) (string, error) {
-	buffer := new(bytes.Buffer)
-
 	querySpec, err := g.mongoQuerySpec(operation.Query)
 	if err != nil {
 		return "", err
@@ -111,31 +111,12 @@ func (g RepositoryGenerator) generateFindImplementation(operation spec.FindOpera
 	}
 
 	if operation.Mode == spec.QueryModeOne {
-		tmpl, err := template.New("mongo_repository_findone").Parse(findOneTemplate)
-		if err != nil {
-			return "", err
-		}
-
-		if err := tmpl.Execute(buffer, tmplData); err != nil {
-			return "", err
-		}
-	} else {
-		tmpl, err := template.New("mongo_repository_findmany").Parse(findManyTemplate)
-		if err != nil {
-			return "", err
-		}
-
-		if err := tmpl.Execute(buffer, tmplData); err != nil {
-			return "", err
-		}
+		return generateFromTemplate("mongo_repository_findone", findOneTemplate, tmplData)
 	}
-
-	return buffer.String(), nil
+	return generateFromTemplate("mongo_repository_findmany", findManyTemplate, tmplData)
 }
 
 func (g RepositoryGenerator) generateUpdateImplementation(operation spec.UpdateOperation) (string, error) {
-	buffer := new(bytes.Buffer)
-
 	var fields []updateField
 	for _, field := range operation.Fields {
 		bsonTag, err := g.bsonTagFromFieldName(field.Name)
@@ -156,31 +137,12 @@ func (g RepositoryGenerator) generateUpdateImplementation(operation spec.UpdateO
 	}
 
 	if operation.Mode == spec.QueryModeOne {
-		tmpl, err := template.New("mongo_repository_updateone").Parse(updateOneTemplate)
-		if err != nil {
-			return "", err
-		}
-
-		if err := tmpl.Execute(buffer, tmplData); err != nil {
-			return "", err
-		}
-	} else {
-		tmpl, err := template.New("mongo_repository_updatemany").Parse(updateManyTemplate)
-		if err != nil {
-			return "", err
-		}
-
-		if err := tmpl.Execute(buffer, tmplData); err != nil {
-			return "", err
-		}
+		return generateFromTemplate("mongo_repository_updateone", updateOneTemplate, tmplData)
 	}
-
-	return buffer.String(), nil
+	return generateFromTemplate("mongo_repository_updatemany", updateManyTemplate, tmplData)
 }
 
 func (g RepositoryGenerator) generateDeleteImplementation(operation spec.DeleteOperation) (string, error) {
-	buffer := new(bytes.Buffer)
-
 	querySpec, err := g.mongoQuerySpec(operation.Query)
 	if err != nil {
 		return "", err
@@ -191,26 +153,22 @@ func (g RepositoryGenerator) generateDeleteImplementation(operation spec.DeleteO
 	}
 
 	if operation.Mode == spec.QueryModeOne {
-		tmpl, err := template.New("mongo_repository_deleteone").Parse(deleteOneTemplate)
-		if err != nil {
-			return "", err
-		}
+		return generateFromTemplate("mongo_repository_deleteone", deleteOneTemplate, tmplData)
+	}
+	return generateFromTemplate("mongo_repository_deletemany", deleteManyTemplate, tmplData)
+}
 
-		if err := tmpl.Execute(buffer, tmplData); err != nil {
-			return "", err
-		}
-	} else {
-		tmpl, err := template.New("mongo_repository_deletemany").Parse(deleteManyTemplate)
-		if err != nil {
-			return "", err
-		}
-
-		if err := tmpl.Execute(buffer, tmplData); err != nil {
-			return "", err
-		}
+func (g RepositoryGenerator) generateCountImplementation(operation spec.CountOperation) (string, error) {
+	querySpec, err := g.mongoQuerySpec(operation.Query)
+	if err != nil {
+		return "", err
 	}
 
-	return buffer.String(), nil
+	tmplData := mongoCountTemplateData{
+		QuerySpec: querySpec,
+	}
+
+	return generateFromTemplate("mongo_repository_count", countTemplate, tmplData)
 }
 
 func (g RepositoryGenerator) mongoQuerySpec(query spec.QuerySpec) (querySpec, error) {
@@ -251,4 +209,18 @@ func (g RepositoryGenerator) bsonTagFromFieldName(fieldName string) (string, err
 
 func (g RepositoryGenerator) structName() string {
 	return g.InterfaceName + "Mongo"
+}
+
+func generateFromTemplate(name string, templateString string, tmplData interface{}) (string, error) {
+	tmpl, err := template.New(name).Parse(templateString)
+	if err != nil {
+		return "", err
+	}
+
+	buffer := new(bytes.Buffer)
+	if err := tmpl.Execute(buffer, tmplData); err != nil {
+		return "", err
+	}
+
+	return buffer.String(), nil
 }

@@ -60,3 +60,13 @@ func (r *UserRepositoryMongo) DeleteByCity(arg0 context.Context, arg1 string) (i
 	}
 	return int(result.DeletedCount), nil
 }
+
+func (r *UserRepositoryMongo) CountByCity(arg0 context.Context, arg1 string) (int, error) {
+	count, err := r.collection.CountDocuments(arg0, bson.M{
+		"city": arg1,
+	})
+	if err != nil {
+		return 0, err
+	}
+	return int(count), nil
+}
