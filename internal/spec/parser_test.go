@@ -966,13 +966,6 @@ func TestParseInterfaceMethod_Insert_Invalid(t *testing.T) {
 func TestParseInterfaceMethod_Find_Invalid(t *testing.T) {
 	testTable := []ParseInterfaceMethodInvalidTestCase{
 		{
-			Name: "unsupported find method name",
-			Method: code.Method{
-				Name: "Find",
-			},
-			ExpectedError: spec.UnsupportedNameError,
-		},
-		{
 			Name: "invalid number of returns",
 			Method: code.Method{
 				Name: "FindOneByID",
@@ -1005,6 +998,17 @@ func TestParseInterfaceMethod_Find_Invalid(t *testing.T) {
 				},
 			},
 			ExpectedError: spec.UnsupportedReturnError,
+		},
+		{
+			Name: "find method without query",
+			Method: code.Method{
+				Name: "Find",
+				Returns: []code.Type{
+					code.PointerType{ContainedType: code.SimpleType("UserModel")},
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedError: spec.InvalidQueryError,
 		},
 		{
 			Name: "misplaced operator token (leftmost)",
@@ -1141,13 +1145,6 @@ func TestParseInterfaceMethod_Find_Invalid(t *testing.T) {
 func TestParseInterfaceMethod_Update_Invalid(t *testing.T) {
 	testTable := []ParseInterfaceMethodInvalidTestCase{
 		{
-			Name: "unsupported update method name",
-			Method: code.Method{
-				Name: "Update",
-			},
-			ExpectedError: spec.UnsupportedNameError,
-		},
-		{
 			Name: "invalid number of returns",
 			Method: code.Method{
 				Name: "UpdateAgeByID",
@@ -1202,6 +1199,17 @@ func TestParseInterfaceMethod_Update_Invalid(t *testing.T) {
 				},
 			},
 			ExpectedError: spec.InvalidUpdateFieldsError,
+		},
+		{
+			Name: "update method without query",
+			Method: code.Method{
+				Name: "UpdateCity",
+				Returns: []code.Type{
+					code.SimpleType("bool"),
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedError: spec.InvalidQueryError,
 		},
 		{
 			Name: "ambiguous query",
@@ -1293,13 +1301,6 @@ func TestParseInterfaceMethod_Update_Invalid(t *testing.T) {
 func TestParseInterfaceMethod_Delete_Invalid(t *testing.T) {
 	testTable := []ParseInterfaceMethodInvalidTestCase{
 		{
-			Name: "unsupported delete method name",
-			Method: code.Method{
-				Name: "Delete",
-			},
-			ExpectedError: spec.UnsupportedNameError,
-		},
-		{
 			Name: "invalid number of returns",
 			Method: code.Method{
 				Name: "DeleteOneByID",
@@ -1332,6 +1333,17 @@ func TestParseInterfaceMethod_Delete_Invalid(t *testing.T) {
 				},
 			},
 			ExpectedError: spec.UnsupportedReturnError,
+		},
+		{
+			Name: "delete method without query",
+			Method: code.Method{
+				Name: "Delete",
+				Returns: []code.Type{
+					code.SimpleType("int"),
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedError: spec.InvalidQueryError,
 		},
 		{
 			Name: "misplaced operator token (leftmost)",
@@ -1468,25 +1480,6 @@ func TestParseInterfaceMethod_Delete_Invalid(t *testing.T) {
 func TestParseInterfaceMethod_Count_Invalid(t *testing.T) {
 	testTable := []ParseInterfaceMethodInvalidTestCase{
 		{
-			Name: "unsupported count method name",
-			Method: code.Method{
-				Name: "Count",
-			},
-			ExpectedError: spec.UnsupportedNameError,
-		},
-		{
-			Name: "invalid number of returns",
-			Method: code.Method{
-				Name: "CountAll",
-				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
-					code.SimpleType("bool"),
-				},
-			},
-			ExpectedError: spec.UnsupportedReturnError,
-		},
-		{
 			Name: "invalid number of returns",
 			Method: code.Method{
 				Name: "CountAll",
@@ -1519,6 +1512,17 @@ func TestParseInterfaceMethod_Count_Invalid(t *testing.T) {
 				},
 			},
 			ExpectedError: spec.UnsupportedReturnError,
+		},
+		{
+			Name: "count method without query",
+			Method: code.Method{
+				Name: "Count",
+				Returns: []code.Type{
+					code.SimpleType("int"),
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedError: spec.InvalidQueryError,
 		},
 		{
 			Name: "invalid query",

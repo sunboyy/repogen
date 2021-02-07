@@ -55,8 +55,8 @@ type UserRepository interface {
 	// the database. This is a MANY mode because the first return type is an integer.
 	DeleteByCity(ctx context.Context, city string) (int, error)
 
-	// CountByCity returns the number of rows that match the given city parameter. If an error occurs while
-	// accessing the database, error value will be returned.
+	// CountByCity returns the number of rows that match the given city parameter. If an
+	// error occurs while accessing the database, error value will be returned.
 	CountByCity(ctx context.Context, city string) (int, error)
 }
 ```
@@ -81,6 +81,97 @@ $ repogen -src=examples/getting-started/user.go -dest=examples/getting-started/u
 ```
 
 You can also write the above command in the `go:generate` format inside Go files in order to generate the implementation when `go generate` command is executed.
+
+## Usage
+
+### Method Definition
+
+To begin, your method name must be in pascal-case (camel-case with beginning uppercase letter). Repogen determines an operation for a method by getting the **first word** of the method name. There are 5 supported words which refer to 5 supported operations.
+
+1. `Insert` - Stores new data to the database
+2. `Find` - Retrives data from the database
+3. `Update` - Changes some fields of the data in the database
+4. `Delete` - Removes data from the database
+5. `Count` - Retrieves number of matched documents in the database
+
+Each of the operations has their own requirements for the method name, parameters and return values. Please consult the documentation for each operation for its requirements.
+
+#### Insert operation
+
+An `Insert` operation has a very limited use case, i.e. inserting a single document or multiple documents. So, it is quite limited in method parameters and method returns. An insert method can only have one of these signatures.
+
+```go
+// InsertOne inserts a single document
+InsertOne(ctx context.Context, model *Model) (interface{}, error)
+
+// InsertMany inserts multiple documents
+InsertMany(ctx context.Context, models []*Model) ([]interface{}, error)
+```
+
+Repogen determines a single-entity operation or a multiple-entity by checking the second parameter and the first return value. However, the operation requires the first parameter to be of type `context.Context` and the second return value to be of type `error`.
+
+As the `Insert` operation has a limited use case, we do not want to limit you on how you name your method. Any method that has the name starting with the word `Insert` is always valid. For example, you can name your method `InsertAWholeBunchOfDocuments` and it will work as long as you specify method parameters and returns correctly.
+
+#### Find operation
+
+A `Find` operation also has two modes like `Insert` operation: single-entity and multiple-entity. However `Find` operation can be very simple or complex depending on how complex the query is. In this section, we will show you how to write single-modes and multiple-entity modes of find method with a simple query. For more information about more complex queries, please consult the query specification section in this document.
+
+```go
+// FindByID gets a single document by ID
+FindByID(ctx context.Context, id primitive.ObjectID) (*Model, error)
+
+// FindByCity gets all documents that match city parameter
+FindByCity(ctx context.Context, city string) ([]*Model, error)
+
+// FindAll gets all documents
+FindAll(ctx context.Context) ([]*Model, error)
+```
+
+Repogen determines a single-entity operation or a multiple-entity by checking the first return value. If it is a pointer of a model, the method will be single-entity operation. If it is a slice of pointers of a model, the method will be multiple-entity operation.
+
+The requirement of the `Find` operation method is that there must be only two return values, the second return value must be of type `error` and the first method parameter must be of type `context.Context`. The requirement of number of method parameters depends on the query which will be described in the query specification section.
+
+#### Update operation
+
+An `Update` operation also has two modes like `Insert` and `Find` operations: single-entity and multiple-entity. An `Update` operation also supports querying like `Find` operation. However, an `Update` operation requires more parameters than `Find` method, i.e. new values of updating fields. Specifying the query is the same as in `Find` method but specifying the updating fields are a little different.
+
+```go
+// UpdateDisplayNameAndCityByID updates a single document with a new display name and
+// city by ID
+UpdateDisplayNameAndCityByID(ctx context.Context, displayName string, city string,
+	id primitive.ObjectID) (bool, error)
+
+// UpdateGenderByCity updates Gender field of documents with matching city parameter
+UpdateGenderByCity(ctx context.Context, gender Gender, city string) (int, error)
+```
+
+Repogen determines a single-entity operation or a multiple-entity by checking the first return value. If it is of type `bool`, the method will be single-entity operation. If it is of type `int`, the method will be multiple-entity operation. For single-entity operation, the method returns true if there is a matching document. For multiple-entity operation, the integer return shows the number of matched documents.
+
+The requirement of the `Update` operation method is that there must be only two return values, the second return value must be of type `error` and the first method parameter must be of type `context.Context`. The requirement of number of method parameters depends on the number of updating fields and the query. Updating fields must be directly after context parameter and query fields must be directly after updating fields.
+
+#### Delete operation
+
+A `Delete` operation is the very similar to `Find` operation. It has two modes. The method name pattern is the same. The method parameters and returns are also almost the same except that `Delete` operation has different first return value of the method. For single-entity operation, the method returns true if there is a matching document. For multiple-entity operation, the integer return shows the number of matched documents.
+
+```go
+// DeleteByID deletes a single document by ID
+DeleteByID(ctx context.Context, id primitive.ObjectID) (bool, error)
+
+// DeleteByCity deletes all documents that match city parameter
+DeleteByCity(ctx context.Context, city string) (int, error)
+
+// DeleteAll deletes all documents
+DeleteAll(ctx context.Context) (int, error)
+```
+
+#### Count operation
+
+A `Count` operation is also similar to `Find` operation except it has only multiple-entity mode. This means that the method returns are always the same for any count operations. The method name pattern and the parameters are the same as `Find` operation.
+
+```go
+// CountByGender returns number of documents that match gender parameter
+CountByGender(ctx context.Context, gender Gender) (int, error)
+```
 
 ## License
 
