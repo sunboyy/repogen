@@ -21,45 +21,59 @@ type interfaceMethodParser struct {
 }
 
 func (p interfaceMethodParser) Parse() (MethodSpec, error) {
-	methodNameTokens := camelcase.Split(p.Method.Name)
-	switch methodNameTokens[0] {
-	case "Insert":
-		return p.parseInsertMethod(methodNameTokens[1:])
-	case "Find":
-		return p.parseFindMethod(methodNameTokens[1:])
-	case "Update":
-		return p.parseUpdateMethod(methodNameTokens[1:])
-	case "Delete":
-		return p.parseDeleteMethod(methodNameTokens[1:])
-	case "Count":
-		return p.parseCountMethod(methodNameTokens[1:])
-	}
-	return MethodSpec{}, UnknownOperationError
-}
-
-func (p interfaceMethodParser) parseInsertMethod(tokens []string) (MethodSpec, error) {
-	mode, err := p.extractInsertReturns(p.Method.Returns)
+	operation, err := p.parseMethod()
 	if err != nil {
 		return MethodSpec{}, err
 	}
 
+	return MethodSpec{
+		Name:      p.Method.Name,
+		Params:    p.Method.Params,
+		Returns:   p.Method.Returns,
+		Operation: operation,
+	}, nil
+}
+
+func (p interfaceMethodParser) parseMethod() (Operation, error) {
+	methodNameTokens := camelcase.Split(p.Method.Name)
+	switch methodNameTokens[0] {
+	case "Insert":
+		return p.parseInsertOperation(methodNameTokens[1:])
+	case "Find":
+		return p.parseFindOperation(methodNameTokens[1:])
+	case "Update":
+		return p.parseUpdateOperation(methodNameTokens[1:])
+	case "Delete":
+		return p.parseDeleteOperation(methodNameTokens[1:])
+	case "Count":
+		return p.parseCountOperation(methodNameTokens[1:])
+	}
+	return nil, UnknownOperationError
+}
+
+func (p interfaceMethodParser) parseInsertOperation(tokens []string) (Operation, error) {
+	mode, err := p.extractInsertReturns(p.Method.Returns)
+	if err != nil {
+		return nil, err
+	}
+
 	if err := p.validateContextParam(); err != nil {
-		return MethodSpec{}, err
+		return nil, err
 	}
 
 	pointerType := code.PointerType{ContainedType: p.StructModel.ReferencedType()}
 	if mode == QueryModeOne && p.Method.Params[1].Type != pointerType {
-		return MethodSpec{}, InvalidParamError
+		return nil, InvalidParamError
 	}
 
 	arrayType := code.ArrayType{ContainedType: pointerType}
 	if mode == QueryModeMany && p.Method.Params[1].Type != arrayType {
-		return MethodSpec{}, InvalidParamError
+		return nil, InvalidParamError
 	}
 
-	return p.createMethodSpec(InsertOperation{
+	return InsertOperation{
 		Mode: mode,
-	}), nil
+	}, nil
 }
 
 func (p interfaceMethodParser) extractInsertReturns(returns []code.Type) (QueryMode, error) {
@@ -91,33 +105,29 @@ func (p interfaceMethodParser) extractInsertReturns(returns []code.Type) (QueryM
 	return "", UnsupportedReturnError
 }
 
-func (p interfaceMethodParser) parseFindMethod(tokens []string) (MethodSpec, error) {
-	if len(tokens) == 0 {
-		return MethodSpec{}, UnsupportedNameError
-	}
-
+func (p interfaceMethodParser) parseFindOperation(tokens []string) (Operation, error) {
 	mode, err := p.extractModelOrSliceReturns(p.Method.Returns)
 	if err != nil {
-		return MethodSpec{}, err
+		return nil, err
 	}
 
 	querySpec, err := parseQuery(tokens, 1)
 	if err != nil {
-		return MethodSpec{}, err
+		return nil, err
 	}
 
 	if err := p.validateContextParam(); err != nil {
-		return MethodSpec{}, err
+		return nil, err
 	}
 
 	if err := p.validateQueryFromParams(p.Method.Params[1:], querySpec); err != nil {
-		return MethodSpec{}, err
+		return nil, err
 	}
 
-	return p.createMethodSpec(FindOperation{
+	return FindOperation{
 		Mode:  mode,
 		Query: querySpec,
-	}), nil
+	}, nil
 }
 
 func (p interfaceMethodParser) extractModelOrSliceReturns(returns []code.Type) (QueryMode, error) {
@@ -153,27 +163,22 @@ func (p interfaceMethodParser) extractModelOrSliceReturns(returns []code.Type) (
 	return "", UnsupportedReturnError
 }
 
-func (p interfaceMethodParser) parseUpdateMethod(tokens []string) (MethodSpec, error) {
-	if len(tokens) == 0 {
-		return MethodSpec{}, UnsupportedNameError
-	}
-
+func (p interfaceMethodParser) parseUpdateOperation(tokens []string) (Operation, error) {
 	mode, err := p.extractIntOrBoolReturns(p.Method.Returns)
 	if err != nil {
-		return MethodSpec{}, err
+		return nil, err
 	}
+
+	updateFieldTokens, queryTokens := p.splitUpdateFieldAndQueryTokens(tokens)
 
 	paramIndex := 1
 	var fields []UpdateField
 	var aggregatedToken string
-	for i, token := range tokens {
-		if token == "By" || token == "All" {
-			tokens = tokens[i:]
-			break
-		} else if token != "And" {
+	for _, token := range updateFieldTokens {
+		if token != "And" {
 			aggregatedToken += token
 		} else if len(aggregatedToken) == 0 {
-			return MethodSpec{}, InvalidUpdateFieldsError
+			return nil, InvalidUpdateFieldsError
 		} else {
 			fields = append(fields, UpdateField{Name: aggregatedToken, ParamIndex: paramIndex})
 			paramIndex++
@@ -181,95 +186,103 @@ func (p interfaceMethodParser) parseUpdateMethod(tokens []string) (MethodSpec, e
 		}
 	}
 	if len(aggregatedToken) == 0 {
-		return MethodSpec{}, InvalidUpdateFieldsError
+		return nil, InvalidUpdateFieldsError
 	}
 	fields = append(fields, UpdateField{Name: aggregatedToken, ParamIndex: paramIndex})
 
-	querySpec, err := parseQuery(tokens, 1+len(fields))
+	querySpec, err := parseQuery(queryTokens, 1+len(fields))
 	if err != nil {
-		return MethodSpec{}, err
+		return nil, err
 	}
 
 	if err := p.validateContextParam(); err != nil {
-		return MethodSpec{}, err
+		return nil, err
 	}
 
 	for _, field := range fields {
 		structField, ok := p.StructModel.Fields.ByName(field.Name)
 		if !ok {
-			return MethodSpec{}, StructFieldNotFoundError
+			return nil, StructFieldNotFoundError
 		}
 
 		if structField.Type != p.Method.Params[field.ParamIndex].Type {
-			return MethodSpec{}, InvalidParamError
+			return nil, InvalidParamError
 		}
 	}
 
 	if err := p.validateQueryFromParams(p.Method.Params[len(fields)+1:], querySpec); err != nil {
-		return MethodSpec{}, err
+		return nil, err
 	}
 
-	return p.createMethodSpec(UpdateOperation{
+	return UpdateOperation{
 		Fields: fields,
 		Mode:   mode,
 		Query:  querySpec,
-	}), nil
+	}, nil
 }
 
-func (p interfaceMethodParser) parseDeleteMethod(tokens []string) (MethodSpec, error) {
-	if len(tokens) == 0 {
-		return MethodSpec{}, UnsupportedNameError
+func (p interfaceMethodParser) splitUpdateFieldAndQueryTokens(tokens []string) ([]string, []string) {
+	var updateFieldTokens []string
+	var queryTokens []string
+
+	for i, token := range tokens {
+		if token == "By" || token == "All" {
+			queryTokens = tokens[i:]
+			break
+		} else {
+			updateFieldTokens = append(updateFieldTokens, token)
+		}
 	}
 
+	return updateFieldTokens, queryTokens
+}
+
+func (p interfaceMethodParser) parseDeleteOperation(tokens []string) (Operation, error) {
 	mode, err := p.extractIntOrBoolReturns(p.Method.Returns)
 	if err != nil {
-		return MethodSpec{}, err
+		return nil, err
 	}
 
 	querySpec, err := parseQuery(tokens, 1)
 	if err != nil {
-		return MethodSpec{}, err
+		return nil, err
 	}
 
 	if err := p.validateContextParam(); err != nil {
-		return MethodSpec{}, err
+		return nil, err
 	}
 
 	if err := p.validateQueryFromParams(p.Method.Params[1:], querySpec); err != nil {
-		return MethodSpec{}, err
+		return nil, err
 	}
 
-	return p.createMethodSpec(DeleteOperation{
+	return DeleteOperation{
 		Mode:  mode,
 		Query: querySpec,
-	}), nil
+	}, nil
 }
 
-func (p interfaceMethodParser) parseCountMethod(tokens []string) (MethodSpec, error) {
-	if len(tokens) == 0 {
-		return MethodSpec{}, UnsupportedNameError
-	}
-
+func (p interfaceMethodParser) parseCountOperation(tokens []string) (Operation, error) {
 	if err := p.validateCountReturns(p.Method.Returns); err != nil {
-		return MethodSpec{}, err
+		return nil, err
 	}
 
 	querySpec, err := parseQuery(tokens, 1)
 	if err != nil {
-		return MethodSpec{}, err
+		return nil, err
 	}
 
 	if err := p.validateContextParam(); err != nil {
-		return MethodSpec{}, err
+		return nil, err
 	}
 
 	if err := p.validateQueryFromParams(p.Method.Params[1:], querySpec); err != nil {
-		return MethodSpec{}, err
+		return nil, err
 	}
 
-	return p.createMethodSpec(CountOperation{
+	return CountOperation{
 		Query: querySpec,
-	}), nil
+	}, nil
 }
 
 func (p interfaceMethodParser) validateCountReturns(returns []code.Type) error {
@@ -340,13 +353,4 @@ func (p interfaceMethodParser) validateQueryFromParams(params []code.Param, quer
 	}
 
 	return nil
-}
-
-func (p interfaceMethodParser) createMethodSpec(operation Operation) MethodSpec {
-	return MethodSpec{
-		Name:      p.Method.Name,
-		Params:    p.Method.Params,
-		Returns:   p.Method.Returns,
-		Operation: operation,
-	}
 }
