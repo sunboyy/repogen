@@ -37,58 +37,63 @@ func ExtractComponents(f *ast.File) File {
 
 			typeSpec, ok := spec.(*ast.TypeSpec)
 			if ok {
-				structType, ok := typeSpec.Type.(*ast.StructType)
-				if ok {
-					str := Struct{
-						Name: typeSpec.Name.Name,
-					}
-
-					for _, field := range structType.Fields.List {
-						var strField StructField
-						for _, name := range field.Names {
-							strField.Name = name.Name
-							break
-						}
-						strField.Type = getType(field.Type)
-						if field.Tag != nil {
-							strField.Tags = extractStructTag(field.Tag.Value)
-						}
-
-						str.Fields = append(str.Fields, strField)
-					}
-
-					file.Structs = append(file.Structs, str)
-				}
-
-				interfaceType, ok := typeSpec.Type.(*ast.InterfaceType)
-				if ok {
-					intf := InterfaceType{
-						Name: typeSpec.Name.Name,
-					}
-
-					for _, method := range interfaceType.Methods.List {
-						funcType, ok := method.Type.(*ast.FuncType)
-						if !ok {
-							continue
-						}
-
-						var name string
-						for _, n := range method.Names {
-							name = n.Name
-							break
-						}
-
-						meth := extractFunction(name, funcType)
-
-						intf.Methods = append(intf.Methods, meth)
-					}
-
-					file.Interfaces = append(file.Interfaces, intf)
+				switch t := typeSpec.Type.(type) {
+				case *ast.StructType:
+					file.Structs = append(file.Structs, extractStructType(typeSpec.Name.Name, t))
+				case *ast.InterfaceType:
+					file.Interfaces = append(file.Interfaces, extractInterfaceType(typeSpec.Name.Name, t))
 				}
 			}
 		}
 	}
 	return file
+}
+
+func extractStructType(name string, structType *ast.StructType) Struct {
+	str := Struct{
+		Name: name,
+	}
+
+	for _, field := range structType.Fields.List {
+		var strField StructField
+		for _, name := range field.Names {
+			strField.Name = name.Name
+			break
+		}
+		strField.Type = getType(field.Type)
+		if field.Tag != nil {
+			strField.Tags = extractStructTag(field.Tag.Value)
+		}
+
+		str.Fields = append(str.Fields, strField)
+	}
+
+	return str
+}
+
+func extractInterfaceType(name string, interfaceType *ast.InterfaceType) InterfaceType {
+	intf := InterfaceType{
+		Name: name,
+	}
+
+	for _, method := range interfaceType.Methods.List {
+		funcType, ok := method.Type.(*ast.FuncType)
+		if !ok {
+			continue
+		}
+
+		var name string
+		for _, n := range method.Names {
+			name = n.Name
+			break
+		}
+
+		meth := extractFunction(name, funcType)
+
+		intf.Methods = append(intf.Methods, meth)
+	}
+
+	return intf
 }
 
 func extractStructTag(tagValue string) map[string][]string {
@@ -143,36 +148,28 @@ func extractFunction(name string, funcType *ast.FuncType) Method {
 }
 
 func getType(expr ast.Expr) Type {
-	identExpr, ok := expr.(*ast.Ident)
-	if ok {
-		return SimpleType(identExpr.Name)
-	}
+	switch expr := expr.(type) {
+	case *ast.Ident:
+		return SimpleType(expr.Name)
 
-	selectorExpr, ok := expr.(*ast.SelectorExpr)
-	if ok {
-		xExpr, ok := selectorExpr.X.(*ast.Ident)
+	case *ast.SelectorExpr:
+		xExpr, ok := expr.X.(*ast.Ident)
 		if !ok {
-			return ExternalType{Name: selectorExpr.Sel.Name}
+			return ExternalType{Name: expr.Sel.Name}
 		}
-		return ExternalType{PackageAlias: xExpr.Name, Name: selectorExpr.Sel.Name}
-	}
+		return ExternalType{PackageAlias: xExpr.Name, Name: expr.Sel.Name}
 
-	starExpr, ok := expr.(*ast.StarExpr)
-	if ok {
-		containedType := getType(starExpr.X)
+	case *ast.StarExpr:
+		containedType := getType(expr.X)
 		return PointerType{ContainedType: containedType}
-	}
 
-	arrayType, ok := expr.(*ast.ArrayType)
-	if ok {
-		containedType := getType(arrayType.Elt)
+	case *ast.ArrayType:
+		containedType := getType(expr.Elt)
 		return ArrayType{containedType}
-	}
 
-	intfType, ok := expr.(*ast.InterfaceType)
-	if ok {
+	case *ast.InterfaceType:
 		var methods []Method
-		for _, method := range intfType.Methods.List {
+		for _, method := range expr.Methods.List {
 			funcType, ok := method.Type.(*ast.FuncType)
 			if !ok {
 				continue
