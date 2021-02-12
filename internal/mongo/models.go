@@ -31,6 +31,12 @@ func (q querySpec) Code() string {
 			lines = append(lines, fmt.Sprintf(`			{%s},`, predicateCode))
 		}
 		lines = append(lines, `		},`)
+	case spec.OperatorAnd:
+		lines = append(lines, `		"$and": []bson.M{`)
+		for _, predicateCode := range predicateCodes {
+			lines = append(lines, fmt.Sprintf(`			{%s},`, predicateCode))
+		}
+		lines = append(lines, `		},`)
 	default:
 		for _, predicateCode := range predicateCodes {
 			lines = append(lines, fmt.Sprintf(`		%s,`, predicateCode))

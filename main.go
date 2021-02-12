@@ -31,6 +31,11 @@ func main() {
 		panic("-repo flag required")
 	}
 
+	code, err := generateFromRequest(*sourcePtr, *modelPtr, *repoPtr)
+	if err != nil {
+		panic(err)
+	}
+
 	dest := os.Stdout
 	if *destPtr != "" {
 		if err := os.MkdirAll(filepath.Dir(*destPtr), os.ModePerm); err != nil {
@@ -42,11 +47,6 @@ func main() {
 		}
 		defer file.Close()
 		dest = file
-	}
-
-	code, err := generateFromRequest(*sourcePtr, *modelPtr, *repoPtr)
-	if err != nil {
-		panic(err)
 	}
 
 	if _, err := dest.WriteString(code); err != nil {

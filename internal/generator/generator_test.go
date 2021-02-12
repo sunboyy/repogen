@@ -215,8 +215,10 @@ func (r *UserRepositoryMongo) FindByID(arg0 context.Context, arg1 primitive.Obje
 
 func (r *UserRepositoryMongo) FindByGenderNotAndAgeLessThan(arg0 context.Context, arg1 Gender, arg2 int) (*UserModel, error) {
 	cursor, err := r.collection.Find(arg0, bson.M{
-		"gender": bson.M{"$ne": arg1},
-		"age":    bson.M{"$lt": arg2},
+		"$and": []bson.M{
+			{"gender": bson.M{"$ne": arg1}},
+			{"age": bson.M{"$lt": arg2}},
+		},
 	})
 	if err != nil {
 		return nil, err
