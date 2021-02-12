@@ -258,8 +258,10 @@ func (r *UserRepositoryMongo) FindByGender(arg0 context.Context, arg1 Gender) ([
 			ExpectedCode: `
 func (r *UserRepositoryMongo) FindByGenderAndAge(arg0 context.Context, arg1 Gender, arg2 int) ([]*UserModel, error) {
 	cursor, err := r.collection.Find(arg0, bson.M{
-		"gender": arg1,
-		"age": arg2,
+		"$and": []bson.M{
+			{"gender": arg1},
+			{"age": arg2},
+		},
 	})
 	if err != nil {
 		return nil, err
@@ -789,8 +791,10 @@ func (r *UserRepositoryMongo) DeleteByGender(arg0 context.Context, arg1 Gender) 
 			ExpectedCode: `
 func (r *UserRepositoryMongo) DeleteByGenderAndAge(arg0 context.Context, arg1 Gender, arg2 int) (int, error) {
 	result, err := r.collection.DeleteMany(arg0, bson.M{
-		"gender": arg1,
-		"age": arg2,
+		"$and": []bson.M{
+			{"gender": arg1},
+			{"age": arg2},
+		},
 	})
 	if err != nil {
 		return 0, err
@@ -1149,8 +1153,10 @@ func (r *UserRepositoryMongo) CountByGender(arg0 context.Context, arg1 Gender) (
 			ExpectedCode: `
 func (r *UserRepositoryMongo) CountByGenderAndCity(arg0 context.Context, arg1 Gender, arg2 int) (int, error) {
 	count, err := r.collection.CountDocuments(arg0, bson.M{
-		"gender": arg1,
-		"age": arg2,
+		"$and": []bson.M{
+			{"gender": arg1},
+			{"age": arg2},
+		},
 	})
 	if err != nil {
 		return 0, err

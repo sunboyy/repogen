@@ -10,7 +10,7 @@
 	<img src="https://api.codeclimate.com/v1/badges/d0270245c28814200c5f/maintainability" />
 </a>
 
-Repogen is a code generator for database repository in Golang inspired by Spring Data JPA. (WIP)
+Repogen is a code generator for database repository in Golang inspired by Spring Data JPA.
 
 ## Features
 
@@ -80,7 +80,8 @@ $ repogen -src=<src_file> -dest=<dest_file> -model=<model_struct> -repo=<repo_in
 For example:
 
 ```
-$ repogen -src=examples/getting-started/user.go -dest=examples/getting-started/user_repo.go -model=UserModel -repo=UserRepository
+$ repogen -src=examples/getting-started/user.go -dest=examples/getting-started/user_repo.go \
+        -model=UserModel -repo=UserRepository
 ```
 
 You can also write the above command in the `go:generate` format inside Go files in order to generate the implementation when `go generate` command is executed.
@@ -175,6 +176,49 @@ A `Count` operation is also similar to `Find` operation except it has only multi
 // CountByGender returns number of documents that match gender parameter
 CountByGender(ctx context.Context, gender Gender) (int, error)
 ```
+
+### Query Specification
+
+A query can be applied on `Find`, `Update`, `Delete` and `Count` operations. The query specification starts with `By` or `All` word in the method name.
+
+- `All` is used for querying all documents of the given type in the database. It is simple because only one word `All` is enough for repogen to understand. For example, `FindAll`, `UpdateCityAll` and `DeleteAll`.
+- `By` is used for querying by a set of fields with specific operators. It is more complicated than `All` query but not be too difficult to understand. For example, `FindByGenderAndCity` and `DeleteByAgeGreaterThan`.
+
+#### Specifying fields to query
+
+You can write a query by specifying field name after `By` such as `ByID`. In case that you have multiple fields to query, you can connect field names with `And` or `Or` word such as `ByCityAndGender` and `ByCityOrGender`. `And` and `Or` operators are different in their meaning so the query result will be also different.
+
+After specifying query to the method name, you also need to provide method parameters that match the given query fields. The example is given below:
+
+```go
+FindByCityAndGender(ctx context.Context, city string, gender Gender) ([]*UserModel, error)
+```
+
+Assuming that the `City` field in the `UserModel` struct is of type `string` and the `Gender` field in the `UserModel` struct is of custom type `Gender`, you have to provide `string` and `Gender` type parameters in the method.
+
+#### Comparators to each field
+
+When you specify the query like `ByAge`, it finds documents that contains age value **equal to** the provided parameter value. However, there are other types of comparators provided for you to use as follows.
+
+- `Not`: The value in the document is not equal to the provided parameter value.
+- `LessThan`: The value in the document is less than the provided parameter value.
+- `LessThanEqual`: The value in the document is less than or equal to the provided parameter value.
+- `GreaterThan`: The value in the document is greater than the provided parameter value.
+- `GreaterThanEqual`: The value in the document is greater than of equal to the provided parameter value.
+- `Between`: The value in the document is between two provided parameter values (inclusive).
+- `In`: The value in the document is in the provided parameter value (which is a slice).
+
+To apply these comparators to the query, place these words after the field name such as `ByAgeGreaterThan`. You can also use comparators along with `And` and `Or` operators. For example, `ByGenderNotOrAgeLessThan` will apply `Not` comparator to the `Gender` field and `LessThan` comparator to the `Age` field.
+
+`Between` and `In` comparators are special in terms of parameter requirements. `Between` needs two parameters to perform the query and `In` needs a slice instead of its raw type. The example is provided below:
+
+```go
+FindByAgeBetween(ctx context.Context, fromAge int, toAge int) ([]*UserModel, error)
+
+FindByCityIn(ctx context.Context, cities []string) ([]*UserModel, error)
+```
+
+Assuming that the `Age` field in the `UserModel` struct is of type `int`, it requires that there must be two `int` parameters provided for `Age` field in the method. And assuming that the `City` field in the `UserModel` struct is of type `string`, it requires that the parameter that is provided to the query must be of slice type.
 
 ## License
 
