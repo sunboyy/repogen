@@ -87,9 +87,9 @@ func (g RepositoryGenerator) generateMethodImplementation(methodSpec spec.Method
 		return g.generateDeleteImplementation(operation)
 	case spec.CountOperation:
 		return g.generateCountImplementation(operation)
+	default:
+		return "", NewOperationNotSupportedError(operation.Name())
 	}
-
-	return "", OperationNotSupportedError
 }
 
 func (g RepositoryGenerator) generateInsertImplementation(operation spec.InsertOperation) (string, error) {
@@ -201,7 +201,7 @@ func (g RepositoryGenerator) bsonTagFromFieldName(fieldName string) (string, err
 
 	bsonTag, ok := structField.Tags["bson"]
 	if !ok {
-		return "", BsonTagNotFoundError
+		return "", NewBsonTagNotFoundError(fieldName)
 	}
 
 	return bsonTag[0], nil

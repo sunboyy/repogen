@@ -850,8 +850,9 @@ func TestParseInterfaceMethod_Invalid(t *testing.T) {
 		Name: "SearchByID",
 	})
 
-	if err != spec.UnknownOperationError {
-		t.Errorf("\nExpected = %v\nReceived = %v", spec.UnknownOperationError, err)
+	expectedError := spec.NewUnknownOperationError("Search")
+	if err != expectedError {
+		t.Errorf("\nExpected = %v\nReceived = %v", expectedError, err)
 	}
 }
 
@@ -1008,7 +1009,7 @@ func TestParseInterfaceMethod_Find_Invalid(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedError: spec.InvalidQueryError,
+			ExpectedError: spec.QueryRequiredError,
 		},
 		{
 			Name: "misplaced operator token (leftmost)",
@@ -1019,7 +1020,7 @@ func TestParseInterfaceMethod_Find_Invalid(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedError: spec.InvalidQueryError,
+			ExpectedError: spec.NewInvalidQueryError([]string{"By", "And", "Gender"}),
 		},
 		{
 			Name: "misplaced operator token (rightmost)",
@@ -1030,7 +1031,7 @@ func TestParseInterfaceMethod_Find_Invalid(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedError: spec.InvalidQueryError,
+			ExpectedError: spec.NewInvalidQueryError([]string{"By", "Gender", "And"}),
 		},
 		{
 			Name: "misplaced operator token (double operator)",
@@ -1041,7 +1042,7 @@ func TestParseInterfaceMethod_Find_Invalid(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedError: spec.InvalidQueryError,
+			ExpectedError: spec.NewInvalidQueryError([]string{"By", "Gender", "And", "And", "City"}),
 		},
 		{
 			Name: "ambiguous query",
@@ -1052,7 +1053,7 @@ func TestParseInterfaceMethod_Find_Invalid(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedError: spec.InvalidQueryError,
+			ExpectedError: spec.NewInvalidQueryError([]string{"By", "Gender", "And", "City", "Or", "Age"}),
 		},
 		{
 			Name: "no context parameter",
@@ -1097,7 +1098,7 @@ func TestParseInterfaceMethod_Find_Invalid(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedError: spec.StructFieldNotFoundError,
+			ExpectedError: spec.NewStructFieldNotFoundError("Country"),
 		},
 		{
 			Name: "mismatched method parameter type",
@@ -1209,7 +1210,7 @@ func TestParseInterfaceMethod_Update_Invalid(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedError: spec.InvalidQueryError,
+			ExpectedError: spec.QueryRequiredError,
 		},
 		{
 			Name: "ambiguous query",
@@ -1220,7 +1221,7 @@ func TestParseInterfaceMethod_Update_Invalid(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedError: spec.InvalidQueryError,
+			ExpectedError: spec.NewInvalidQueryError([]string{"By", "ID", "And", "Username", "Or", "Gender"}),
 		},
 		{
 			Name: "no context parameter",
@@ -1251,7 +1252,7 @@ func TestParseInterfaceMethod_Update_Invalid(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedError: spec.StructFieldNotFoundError,
+			ExpectedError: spec.NewStructFieldNotFoundError("Country"),
 		},
 		{
 			Name: "struct field does not match parameter in update fields",
@@ -1343,7 +1344,7 @@ func TestParseInterfaceMethod_Delete_Invalid(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedError: spec.InvalidQueryError,
+			ExpectedError: spec.QueryRequiredError,
 		},
 		{
 			Name: "misplaced operator token (leftmost)",
@@ -1354,7 +1355,7 @@ func TestParseInterfaceMethod_Delete_Invalid(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedError: spec.InvalidQueryError,
+			ExpectedError: spec.NewInvalidQueryError([]string{"By", "And", "Gender"}),
 		},
 		{
 			Name: "misplaced operator token (rightmost)",
@@ -1365,7 +1366,7 @@ func TestParseInterfaceMethod_Delete_Invalid(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedError: spec.InvalidQueryError,
+			ExpectedError: spec.NewInvalidQueryError([]string{"By", "Gender", "And"}),
 		},
 		{
 			Name: "misplaced operator token (double operator)",
@@ -1376,7 +1377,7 @@ func TestParseInterfaceMethod_Delete_Invalid(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedError: spec.InvalidQueryError,
+			ExpectedError: spec.NewInvalidQueryError([]string{"By", "Gender", "And", "And", "City"}),
 		},
 		{
 			Name: "ambiguous query",
@@ -1387,7 +1388,7 @@ func TestParseInterfaceMethod_Delete_Invalid(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedError: spec.InvalidQueryError,
+			ExpectedError: spec.NewInvalidQueryError([]string{"By", "Gender", "And", "City", "Or", "Age"}),
 		},
 		{
 			Name: "no context parameter",
@@ -1432,7 +1433,7 @@ func TestParseInterfaceMethod_Delete_Invalid(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedError: spec.StructFieldNotFoundError,
+			ExpectedError: spec.NewStructFieldNotFoundError("Country"),
 		},
 		{
 			Name: "mismatched method parameter type",
@@ -1522,7 +1523,7 @@ func TestParseInterfaceMethod_Count_Invalid(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedError: spec.InvalidQueryError,
+			ExpectedError: spec.QueryRequiredError,
 		},
 		{
 			Name: "invalid query",
@@ -1536,7 +1537,7 @@ func TestParseInterfaceMethod_Count_Invalid(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedError: spec.InvalidQueryError,
+			ExpectedError: spec.NewInvalidQueryError([]string{"By"}),
 		},
 		{
 			Name: "context parameter not provided",
@@ -1593,7 +1594,7 @@ func TestParseInterfaceMethod_Count_Invalid(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedError: spec.StructFieldNotFoundError,
+			ExpectedError: spec.NewStructFieldNotFoundError("Country"),
 		},
 	}
 

@@ -95,11 +95,12 @@ func (t predicateToken) ToPredicate(paramIndex int) Predicate {
 	return Predicate{Field: strings.Join(t, ""), Comparator: ComparatorEqual, ParamIndex: paramIndex}
 }
 
-func parseQuery(tokens []string, paramIndex int) (QuerySpec, error) {
-	if len(tokens) == 0 {
-		return QuerySpec{}, InvalidQueryError
+func parseQuery(rawTokens []string, paramIndex int) (QuerySpec, error) {
+	if len(rawTokens) == 0 {
+		return QuerySpec{}, QueryRequiredError
 	}
 
+	tokens := rawTokens
 	if len(tokens) == 1 && tokens[0] == "All" {
 		return QuerySpec{}, nil
 	}
@@ -112,7 +113,7 @@ func parseQuery(tokens []string, paramIndex int) (QuerySpec, error) {
 	}
 
 	if len(tokens) == 0 || tokens[0] == "And" || tokens[0] == "Or" {
-		return QuerySpec{}, InvalidQueryError
+		return QuerySpec{}, NewInvalidQueryError(rawTokens)
 	}
 
 	var operator Operator
@@ -122,7 +123,7 @@ func parseQuery(tokens []string, paramIndex int) (QuerySpec, error) {
 		if token != "And" && token != "Or" {
 			aggregatedToken = append(aggregatedToken, token)
 		} else if len(aggregatedToken) == 0 {
-			return QuerySpec{}, InvalidQueryError
+			return QuerySpec{}, NewInvalidQueryError(rawTokens)
 		} else if token == "And" && operator != OperatorOr {
 			operator = OperatorAnd
 			predicate := aggregatedToken.ToPredicate(paramIndex)
@@ -136,11 +137,11 @@ func parseQuery(tokens []string, paramIndex int) (QuerySpec, error) {
 			paramIndex += predicate.Comparator.NumberOfArguments()
 			aggregatedToken = predicateToken{}
 		} else {
-			return QuerySpec{}, InvalidQueryError
+			return QuerySpec{}, NewInvalidQueryError(rawTokens)
 		}
 	}
 	if len(aggregatedToken) == 0 {
-		return QuerySpec{}, InvalidQueryError
+		return QuerySpec{}, NewInvalidQueryError(rawTokens)
 	}
 	predicates = append(predicates, aggregatedToken.ToPredicate(paramIndex))
 

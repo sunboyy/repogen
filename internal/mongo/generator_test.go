@@ -1453,6 +1453,13 @@ type GenerateMethodInvalidTestCase struct {
 	ExpectedError error
 }
 
+type StubOperation struct {
+}
+
+func (o StubOperation) Name() string {
+	return "Stub"
+}
+
 func TestGenerateMethod_Invalid(t *testing.T) {
 	testTable := []GenerateMethodInvalidTestCase{
 		{
@@ -1467,9 +1474,9 @@ func TestGenerateMethod_Invalid(t *testing.T) {
 					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
 					code.SimpleType("error"),
 				},
-				Operation: "search",
+				Operation: StubOperation{},
 			},
-			ExpectedError: mongo.OperationNotSupportedError,
+			ExpectedError: mongo.NewOperationNotSupportedError("Stub"),
 		},
 		{
 			Name: "bson tag not found in query",
@@ -1492,7 +1499,7 @@ func TestGenerateMethod_Invalid(t *testing.T) {
 					},
 				},
 			},
-			ExpectedError: mongo.BsonTagNotFoundError,
+			ExpectedError: mongo.NewBsonTagNotFoundError("AccessToken"),
 		},
 		{
 			Name: "bson tag not found in update field",
@@ -1519,7 +1526,7 @@ func TestGenerateMethod_Invalid(t *testing.T) {
 					},
 				},
 			},
-			ExpectedError: mongo.BsonTagNotFoundError,
+			ExpectedError: mongo.NewBsonTagNotFoundError("AccessToken"),
 		},
 	}
 
