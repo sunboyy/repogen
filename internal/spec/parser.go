@@ -48,7 +48,7 @@ func (p interfaceMethodParser) parseMethod() (Operation, error) {
 	case "Count":
 		return p.parseCountOperation(methodNameTokens[1:])
 	}
-	return nil, UnknownOperationError
+	return nil, NewUnknownOperationError(methodNameTokens[0])
 }
 
 func (p interfaceMethodParser) parseInsertOperation(tokens []string) (Operation, error) {
@@ -202,7 +202,7 @@ func (p interfaceMethodParser) parseUpdateOperation(tokens []string) (Operation,
 	for _, field := range fields {
 		structField, ok := p.StructModel.Fields.ByName(field.Name)
 		if !ok {
-			return nil, StructFieldNotFoundError
+			return nil, NewStructFieldNotFoundError(field.Name)
 		}
 
 		if structField.Type != p.Method.Params[field.ParamIndex].Type {
@@ -340,7 +340,7 @@ func (p interfaceMethodParser) validateQueryFromParams(params []code.Param, quer
 	for _, predicate := range querySpec.Predicates {
 		structField, ok := p.StructModel.Fields.ByName(predicate.Field)
 		if !ok {
-			return StructFieldNotFoundError
+			return NewStructFieldNotFoundError(predicate.Field)
 		}
 
 		for i := 0; i < predicate.Comparator.NumberOfArguments(); i++ {

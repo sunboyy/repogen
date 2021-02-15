@@ -1,38 +1,73 @@
 package spec
 
+import (
+	"fmt"
+	"strings"
+)
+
 // ParsingError is an error from parsing interface methods
 type ParsingError string
 
 func (err ParsingError) Error() string {
 	switch err {
-	case UnknownOperationError:
-		return "unknown operation"
-	case UnsupportedNameError:
-		return "method name is not supported"
 	case UnsupportedReturnError:
 		return "this type of return is not supported"
-	case InvalidQueryError:
-		return "invalid query"
+	case QueryRequiredError:
+		return "query is required"
 	case InvalidParamError:
 		return "parameters do not match the query"
 	case InvalidUpdateFieldsError:
 		return "update fields is invalid"
 	case ContextParamRequiredError:
 		return "context parameter is required"
-	case StructFieldNotFoundError:
-		return "struct field not found"
 	}
 	return string(err)
 }
 
 // parsing error constants
 const (
-	UnknownOperationError     ParsingError = "ERROR_UNKNOWN_OPERATION"
-	UnsupportedNameError      ParsingError = "ERROR_UNSUPPORTED"
 	UnsupportedReturnError    ParsingError = "ERROR_UNSUPPORTED_RETURN"
-	InvalidQueryError         ParsingError = "ERROR_INVALID_QUERY"
+	QueryRequiredError        ParsingError = "ERROR_QUERY_REQUIRED"
 	InvalidParamError         ParsingError = "ERROR_INVALID_PARAM"
 	InvalidUpdateFieldsError  ParsingError = "ERROR_INVALID_UPDATE_FIELDS"
 	ContextParamRequiredError ParsingError = "ERROR_CONTEXT_PARAM_REQUIRED"
-	StructFieldNotFoundError  ParsingError = "ERROR_STRUCT_FIELD_NOT_FOUND"
 )
+
+// NewInvalidQueryError creates invalidQueryError
+func NewInvalidQueryError(queryTokens []string) error {
+	return invalidQueryError{QueryString: strings.Join(queryTokens, "")}
+}
+
+type invalidQueryError struct {
+	QueryString string
+}
+
+func (err invalidQueryError) Error() string {
+	return fmt.Sprintf("invalid query '%s'", err.QueryString)
+}
+
+// NewUnknownOperationError creates unknownOperationError
+func NewUnknownOperationError(operationName string) error {
+	return unknownOperationError{OperationName: operationName}
+}
+
+type unknownOperationError struct {
+	OperationName string
+}
+
+func (err unknownOperationError) Error() string {
+	return fmt.Sprintf("unknown operation '%s'", err.OperationName)
+}
+
+// NewStructFieldNotFoundError creates structFieldNotFoundError
+func NewStructFieldNotFoundError(fieldName string) error {
+	return structFieldNotFoundError{FieldName: fieldName}
+}
+
+type structFieldNotFoundError struct {
+	FieldName string
+}
+
+func (err structFieldNotFoundError) Error() string {
+	return fmt.Sprintf("struct field '%s' not found", err.FieldName)
+}

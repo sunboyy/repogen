@@ -1,20 +1,31 @@
 package mongo
 
-// GenerationError is an error from generating MongoDB repository
-type GenerationError string
+import (
+	"fmt"
+)
 
-func (err GenerationError) Error() string {
-	switch err {
-	case OperationNotSupportedError:
-		return "operation not supported"
-	case BsonTagNotFoundError:
-		return "bson tag not found"
-	}
-	return string(err)
+// NewOperationNotSupportedError creates operationNotSupportedError
+func NewOperationNotSupportedError(operationName string) error {
+	return operationNotSupportedError{OperationName: operationName}
 }
 
-// generation error constants
-const (
-	OperationNotSupportedError GenerationError = "ERROR_OPERATION_NOT_SUPPORTED"
-	BsonTagNotFoundError       GenerationError = "ERROR_BSON_TAG_NOT_FOUND"
-)
+type operationNotSupportedError struct {
+	OperationName string
+}
+
+func (err operationNotSupportedError) Error() string {
+	return fmt.Sprintf("operation '%s' not supported", err.OperationName)
+}
+
+// NewBsonTagNotFoundError creates bsonTagNotFoundError
+func NewBsonTagNotFoundError(fieldName string) error {
+	return bsonTagNotFoundError{FieldName: fieldName}
+}
+
+type bsonTagNotFoundError struct {
+	FieldName string
+}
+
+func (err bsonTagNotFoundError) Error() string {
+	return fmt.Sprintf("bson tag of field '%s' not found", err.FieldName)
+}
