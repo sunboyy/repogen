@@ -3,6 +3,7 @@ package spec_test
 import (
 	"testing"
 
+	"github.com/sunboyy/repogen/internal/code"
 	"github.com/sunboyy/repogen/internal/spec"
 )
 
@@ -28,6 +29,14 @@ func TestError(t *testing.T) {
 			Name:           "InvalidQueryError",
 			Error:          spec.NewInvalidQueryError([]string{"By", "And"}),
 			ExpectedString: "invalid query 'ByAnd'",
+		},
+		{
+			Name: "IncompatibleComparatorError",
+			Error: spec.NewIncompatibleComparatorError(spec.ComparatorTrue, code.StructField{
+				Name: "Age",
+				Type: code.SimpleType("int"),
+			}),
+			ExpectedString: "cannot use comparator EQUAL_TRUE with struct field 'Age' of type 'int'",
 		},
 	}
 

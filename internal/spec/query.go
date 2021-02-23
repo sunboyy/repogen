@@ -43,22 +43,31 @@ const (
 	ComparatorGreaterThanEqual Comparator = "GREATER_THAN_EQUAL"
 	ComparatorBetween          Comparator = "BETWEEN"
 	ComparatorIn               Comparator = "IN"
+	ComparatorNotIn            Comparator = "NOT_IN"
+	ComparatorTrue             Comparator = "EQUAL_TRUE"
+	ComparatorFalse            Comparator = "EQUAL_FALSE"
 )
 
 // ArgumentTypeFromFieldType returns a type of required argument from the given struct field type
 func (c Comparator) ArgumentTypeFromFieldType(t code.Type) code.Type {
-	if c == ComparatorIn {
+	switch c {
+	case ComparatorIn, ComparatorNotIn:
 		return code.ArrayType{ContainedType: t}
+	default:
+		return t
 	}
-	return t
 }
 
 // NumberOfArguments returns the number of arguments required to perform the comparison
 func (c Comparator) NumberOfArguments() int {
-	if c == ComparatorBetween {
+	switch c {
+	case ComparatorBetween:
 		return 2
+	case ComparatorTrue, ComparatorFalse:
+		return 0
+	default:
+		return 1
 	}
-	return 1
 }
 
 // Predicate is a criteria for querying a field
@@ -86,11 +95,20 @@ func (t predicateToken) ToPredicate(paramIndex int) Predicate {
 	if len(t) > 3 && t[len(t)-3] == "Greater" && t[len(t)-2] == "Than" && t[len(t)-1] == "Equal" {
 		return Predicate{Field: strings.Join(t[:len(t)-3], ""), Comparator: ComparatorGreaterThanEqual, ParamIndex: paramIndex}
 	}
+	if len(t) > 2 && t[len(t)-2] == "Not" && t[len(t)-1] == "In" {
+		return Predicate{Field: strings.Join(t[:len(t)-2], ""), Comparator: ComparatorNotIn, ParamIndex: paramIndex}
+	}
 	if len(t) > 1 && t[len(t)-1] == "In" {
 		return Predicate{Field: strings.Join(t[:len(t)-1], ""), Comparator: ComparatorIn, ParamIndex: paramIndex}
 	}
 	if len(t) > 1 && t[len(t)-1] == "Between" {
 		return Predicate{Field: strings.Join(t[:len(t)-1], ""), Comparator: ComparatorBetween, ParamIndex: paramIndex}
+	}
+	if len(t) > 1 && t[len(t)-1] == "True" {
+		return Predicate{Field: strings.Join(t[:len(t)-1], ""), Comparator: ComparatorTrue, ParamIndex: paramIndex}
+	}
+	if len(t) > 1 && t[len(t)-1] == "False" {
+		return Predicate{Field: strings.Join(t[:len(t)-1], ""), Comparator: ComparatorFalse, ParamIndex: paramIndex}
 	}
 	return Predicate{Field: strings.Join(t, ""), Comparator: ComparatorEqual, ParamIndex: paramIndex}
 }

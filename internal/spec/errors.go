@@ -3,6 +3,8 @@ package spec
 import (
 	"fmt"
 	"strings"
+
+	"github.com/sunboyy/repogen/internal/code"
 )
 
 // ParsingError is an error from parsing interface methods
@@ -70,4 +72,22 @@ type structFieldNotFoundError struct {
 
 func (err structFieldNotFoundError) Error() string {
 	return fmt.Sprintf("struct field '%s' not found", err.FieldName)
+}
+
+// NewIncompatibleComparatorError creates incompatibleComparatorError
+func NewIncompatibleComparatorError(comparator Comparator, field code.StructField) error {
+	return incompatibleComparatorError{
+		Comparator: comparator,
+		Field:      field,
+	}
+}
+
+type incompatibleComparatorError struct {
+	Comparator Comparator
+	Field      code.StructField
+}
+
+func (err incompatibleComparatorError) Error() string {
+	return fmt.Sprintf("cannot use comparator %s with struct field '%s' of type '%s'",
+		err.Comparator, err.Field.Name, err.Field.Type.Code())
 }

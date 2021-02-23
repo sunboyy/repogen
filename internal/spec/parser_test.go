@@ -31,6 +31,10 @@ var structModel = code.Struct{
 			Name: "Age",
 			Type: code.SimpleType("int"),
 		},
+		{
+			Name: "Enabled",
+			Type: code.SimpleType("bool"),
+		},
 	},
 }
 
@@ -364,6 +368,64 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 				Mode: spec.QueryModeMany,
 				Query: spec.QuerySpec{Predicates: []spec.Predicate{
 					{Field: "City", Comparator: spec.ComparatorIn, ParamIndex: 1},
+				}},
+			},
+		},
+		{
+			Name: "FindByArgNotIn method",
+			Method: code.Method{
+				Name: "FindByCityNotIn",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.ArrayType{ContainedType: code.SimpleType("string")}},
+				},
+				Returns: []code.Type{
+					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedOperation: spec.FindOperation{
+				Mode: spec.QueryModeMany,
+				Query: spec.QuerySpec{Predicates: []spec.Predicate{
+					{Field: "City", Comparator: spec.ComparatorNotIn, ParamIndex: 1},
+				}},
+			},
+		},
+		{
+			Name: "FindByArgTrue method",
+			Method: code.Method{
+				Name: "FindByEnabledTrue",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+				},
+				Returns: []code.Type{
+					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedOperation: spec.FindOperation{
+				Mode: spec.QueryModeMany,
+				Query: spec.QuerySpec{Predicates: []spec.Predicate{
+					{Field: "Enabled", Comparator: spec.ComparatorTrue, ParamIndex: 1},
+				}},
+			},
+		},
+		{
+			Name: "FindByArgFalse method",
+			Method: code.Method{
+				Name: "FindByEnabledFalse",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+				},
+				Returns: []code.Type{
+					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedOperation: spec.FindOperation{
+				Mode: spec.QueryModeMany,
+				Query: spec.QuerySpec{Predicates: []spec.Predicate{
+					{Field: "Enabled", Comparator: spec.ComparatorFalse, ParamIndex: 1},
 				}},
 			},
 		},
@@ -1101,6 +1163,40 @@ func TestParseInterfaceMethod_Find_Invalid(t *testing.T) {
 			ExpectedError: spec.NewStructFieldNotFoundError("Country"),
 		},
 		{
+			Name: "incompatible struct field for True comparator",
+			Method: code.Method{
+				Name: "FindByGenderTrue",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+				},
+				Returns: []code.Type{
+					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedError: spec.NewIncompatibleComparatorError(spec.ComparatorTrue, code.StructField{
+				Name: "Gender",
+				Type: code.SimpleType("Gender"),
+			}),
+		},
+		{
+			Name: "incompatible struct field for False comparator",
+			Method: code.Method{
+				Name: "FindByGenderFalse",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+				},
+				Returns: []code.Type{
+					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedError: spec.NewIncompatibleComparatorError(spec.ComparatorFalse, code.StructField{
+				Name: "Gender",
+				Type: code.SimpleType("Gender"),
+			}),
+		},
+		{
 			Name: "mismatched method parameter type",
 			Method: code.Method{
 				Name: "FindByGender",
@@ -1136,8 +1232,8 @@ func TestParseInterfaceMethod_Find_Invalid(t *testing.T) {
 		t.Run(testCase.Name, func(t *testing.T) {
 			_, err := spec.ParseInterfaceMethod(structModel, testCase.Method)
 
-			if err != testCase.ExpectedError {
-				t.Errorf("\nExpected = %v\nReceived = %v", testCase.ExpectedError, err)
+			if err.Error() != testCase.ExpectedError.Error() {
+				t.Errorf("\nExpected = %v\nReceived = %v", testCase.ExpectedError.Error(), err.Error())
 			}
 		})
 	}
