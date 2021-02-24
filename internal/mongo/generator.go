@@ -117,13 +117,9 @@ func (g RepositoryGenerator) generateFindImplementation(operation spec.FindOpera
 }
 
 func (g RepositoryGenerator) generateUpdateImplementation(operation spec.UpdateOperation) (string, error) {
-	var fields []updateField
-	for _, field := range operation.Fields {
-		bsonTag, err := g.bsonTagFromFieldName(field.Name)
-		if err != nil {
-			return "", err
-		}
-		fields = append(fields, updateField{BsonTag: bsonTag, ParamIndex: field.ParamIndex})
+	update, err := g.getMongoUpdate(operation.Update)
+	if err != nil {
+		return "", err
 	}
 
 	querySpec, err := g.mongoQuerySpec(operation.Query)
@@ -132,14 +128,33 @@ func (g RepositoryGenerator) generateUpdateImplementation(operation spec.UpdateO
 	}
 
 	tmplData := mongoUpdateTemplateData{
-		UpdateFields: fields,
-		QuerySpec:    querySpec,
+		Update:    update,
+		QuerySpec: querySpec,
 	}
 
 	if operation.Mode == spec.QueryModeOne {
 		return generateFromTemplate("mongo_repository_updateone", updateOneTemplate, tmplData)
 	}
 	return generateFromTemplate("mongo_repository_updatemany", updateManyTemplate, tmplData)
+}
+
+func (g RepositoryGenerator) getMongoUpdate(updateSpec spec.Update) (update, error) {
+	switch updateSpec := updateSpec.(type) {
+	case spec.UpdateModel:
+		return updateModel{}, nil
+	case spec.UpdateFields:
+		var update updateFields
+		for _, field := range updateSpec {
+			bsonTag, err := g.bsonTagFromFieldName(field.Name)
+			if err != nil {
+				return nil, err
+			}
+			update.Fields = append(update.Fields, updateField{BsonTag: bsonTag, ParamIndex: field.ParamIndex})
+		}
+		return update, nil
+	default:
+		return nil, NewUpdateTypeNotSupportedError(updateSpec)
+	}
 }
 
 func (g RepositoryGenerator) generateDeleteImplementation(operation spec.DeleteOperation) (string, error) {

@@ -112,16 +112,14 @@ const findManyTemplate = `	cursor, err := r.collection.Find(arg0, bson.M{
 	return entities, nil`
 
 type mongoUpdateTemplateData struct {
-	UpdateFields []updateField
-	QuerySpec    querySpec
+	Update    update
+	QuerySpec querySpec
 }
 
 const updateOneTemplate = `	result, err := r.collection.UpdateOne(arg0, bson.M{
 {{.QuerySpec.Code}}
 	}, bson.M{
-		"$set": bson.M{
-{{range $index, $element := .UpdateFields}}			"{{$element.BsonTag}}": arg{{$element.ParamIndex}},
-{{end}}		},
+{{.Update.Code}}
 	})
 	if err != nil {
 		return false, err
@@ -131,9 +129,7 @@ const updateOneTemplate = `	result, err := r.collection.UpdateOne(arg0, bson.M{
 const updateManyTemplate = `	result, err := r.collection.UpdateMany(arg0, bson.M{
 {{.QuerySpec.Code}}
 	}, bson.M{
-		"$set": bson.M{
-{{range $index, $element := .UpdateFields}}			"{{$element.BsonTag}}": arg{{$element.ParamIndex}},
-{{end}}		},
+{{.Update.Code}}
 	})
 	if err != nil {
 		return 0, err

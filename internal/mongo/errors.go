@@ -2,6 +2,8 @@ package mongo
 
 import (
 	"fmt"
+
+	"github.com/sunboyy/repogen/internal/spec"
 )
 
 // NewOperationNotSupportedError creates operationNotSupportedError
@@ -28,4 +30,17 @@ type bsonTagNotFoundError struct {
 
 func (err bsonTagNotFoundError) Error() string {
 	return fmt.Sprintf("bson tag of field '%s' not found", err.FieldName)
+}
+
+// NewUpdateTypeNotSupportedError creates updateTypeNotSupportedError
+func NewUpdateTypeNotSupportedError(update spec.Update) error {
+	return updateTypeNotSupportedError{Update: update}
+}
+
+type updateTypeNotSupportedError struct {
+	Update spec.Update
+}
+
+func (err updateTypeNotSupportedError) Error() string {
+	return fmt.Sprintf("update type %s not supported", err.Update.Name())
 }

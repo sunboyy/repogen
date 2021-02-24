@@ -713,6 +713,43 @@ func (r *UserRepositoryMongo) FindByEnabledFalse(arg0 context.Context) ([]*UserM
 func TestGenerateMethod_Update(t *testing.T) {
 	testTable := []GenerateMethodTestCase{
 		{
+			Name: "update model method",
+			MethodSpec: spec.MethodSpec{
+				Name: "UpdateByID",
+				Params: []code.Param{
+					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Name: "model", Type: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+					{Name: "id", Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
+				},
+				Returns: []code.Type{
+					code.SimpleType("bool"),
+					code.SimpleType("error"),
+				},
+				Operation: spec.UpdateOperation{
+					Update: spec.UpdateModel{},
+					Mode:   spec.QueryModeOne,
+					Query: spec.QuerySpec{
+						Predicates: []spec.Predicate{
+							{Field: "ID", Comparator: spec.ComparatorEqual, ParamIndex: 2},
+						},
+					},
+				},
+			},
+			ExpectedCode: `
+func (r *UserRepositoryMongo) UpdateByID(arg0 context.Context, arg1 *UserModel, arg2 primitive.ObjectID) (bool, error) {
+	result, err := r.collection.UpdateOne(arg0, bson.M{
+		"_id": arg2,
+	}, bson.M{
+		"$set": arg1,
+	})
+	if err != nil {
+		return false, err
+	}
+	return result.MatchedCount > 0, err
+}
+`,
+		},
+		{
 			Name: "simple update one method",
 			MethodSpec: spec.MethodSpec{
 				Name: "UpdateAgeByID",
@@ -726,7 +763,7 @@ func TestGenerateMethod_Update(t *testing.T) {
 					code.SimpleType("error"),
 				},
 				Operation: spec.UpdateOperation{
-					Fields: []spec.UpdateField{
+					Update: spec.UpdateFields{
 						{Name: "Age", ParamIndex: 1},
 					},
 					Mode: spec.QueryModeOne,
@@ -767,7 +804,7 @@ func (r *UserRepositoryMongo) UpdateAgeByID(arg0 context.Context, arg1 int, arg2
 					code.SimpleType("error"),
 				},
 				Operation: spec.UpdateOperation{
-					Fields: []spec.UpdateField{
+					Update: spec.UpdateFields{
 						{Name: "Age", ParamIndex: 1},
 					},
 					Mode: spec.QueryModeMany,
@@ -1629,7 +1666,7 @@ func TestGenerateMethod_Invalid(t *testing.T) {
 					code.SimpleType("error"),
 				},
 				Operation: spec.UpdateOperation{
-					Fields: []spec.UpdateField{
+					Update: spec.UpdateFields{
 						{Name: "AccessToken", ParamIndex: 1},
 					},
 					Mode: spec.QueryModeOne,
@@ -1641,6 +1678,31 @@ func TestGenerateMethod_Invalid(t *testing.T) {
 				},
 			},
 			ExpectedError: mongo.NewBsonTagNotFoundError("AccessToken"),
+		},
+		{
+			Name: "update type not supported",
+			Method: spec.MethodSpec{
+				Name: "UpdateAgeByID",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("int")},
+					{Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
+				},
+				Returns: []code.Type{
+					code.SimpleType("bool"),
+					code.SimpleType("error"),
+				},
+				Operation: spec.UpdateOperation{
+					Update: StubUpdate{},
+					Mode:   spec.QueryModeOne,
+					Query: spec.QuerySpec{
+						Predicates: []spec.Predicate{
+							{Field: "ID", Comparator: spec.ComparatorEqual, ParamIndex: 2},
+						},
+					},
+				},
+			},
+			ExpectedError: mongo.NewUpdateTypeNotSupportedError(StubUpdate{}),
 		},
 	}
 

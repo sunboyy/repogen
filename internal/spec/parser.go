@@ -169,18 +169,52 @@ func (p interfaceMethodParser) parseUpdateOperation(tokens []string) (Operation,
 		return nil, err
 	}
 
-	updateFieldTokens, queryTokens := p.splitUpdateFieldAndQueryTokens(tokens)
+	if err := p.validateContextParam(); err != nil {
+		return nil, err
+	}
+
+	updateTokens, queryTokens := p.splitUpdateAndQueryTokens(tokens)
+
+	update, err := p.parseUpdate(updateTokens)
+	if err != nil {
+		return nil, err
+	}
+
+	querySpec, err := parseQuery(queryTokens, 1+update.NumberOfArguments())
+	if err != nil {
+		return nil, err
+	}
+
+	if err := p.validateQueryFromParams(p.Method.Params[update.NumberOfArguments()+1:], querySpec); err != nil {
+		return nil, err
+	}
+
+	return UpdateOperation{
+		Update: update,
+		Mode:   mode,
+		Query:  querySpec,
+	}, nil
+}
+
+func (p interfaceMethodParser) parseUpdate(tokens []string) (Update, error) {
+	if len(tokens) == 0 {
+		requiredType := code.PointerType{ContainedType: p.StructModel.ReferencedType()}
+		if len(p.Method.Params) <= 1 || p.Method.Params[1].Type != requiredType {
+			return nil, InvalidUpdateFieldsError
+		}
+		return UpdateModel{}, nil
+	}
 
 	paramIndex := 1
-	var fields []UpdateField
+	var update UpdateFields
 	var aggregatedToken string
-	for _, token := range updateFieldTokens {
+	for _, token := range tokens {
 		if token != "And" {
 			aggregatedToken += token
 		} else if len(aggregatedToken) == 0 {
 			return nil, InvalidUpdateFieldsError
 		} else {
-			fields = append(fields, UpdateField{Name: aggregatedToken, ParamIndex: paramIndex})
+			update = append(update, UpdateField{Name: aggregatedToken, ParamIndex: paramIndex})
 			paramIndex++
 			aggregatedToken = ""
 		}
@@ -188,41 +222,24 @@ func (p interfaceMethodParser) parseUpdateOperation(tokens []string) (Operation,
 	if len(aggregatedToken) == 0 {
 		return nil, InvalidUpdateFieldsError
 	}
-	fields = append(fields, UpdateField{Name: aggregatedToken, ParamIndex: paramIndex})
+	update = append(update, UpdateField{Name: aggregatedToken, ParamIndex: paramIndex})
 
-	querySpec, err := parseQuery(queryTokens, 1+len(fields))
-	if err != nil {
-		return nil, err
-	}
-
-	if err := p.validateContextParam(); err != nil {
-		return nil, err
-	}
-
-	for _, field := range fields {
+	for _, field := range update {
 		structField, ok := p.StructModel.Fields.ByName(field.Name)
 		if !ok {
 			return nil, NewStructFieldNotFoundError(field.Name)
 		}
 
-		if structField.Type != p.Method.Params[field.ParamIndex].Type {
-			return nil, InvalidParamError
+		if len(p.Method.Params) <= field.ParamIndex || structField.Type != p.Method.Params[field.ParamIndex].Type {
+			return nil, InvalidUpdateFieldsError
 		}
 	}
 
-	if err := p.validateQueryFromParams(p.Method.Params[len(fields)+1:], querySpec); err != nil {
-		return nil, err
-	}
-
-	return UpdateOperation{
-		Fields: fields,
-		Mode:   mode,
-		Query:  querySpec,
-	}, nil
+	return update, nil
 }
 
-func (p interfaceMethodParser) splitUpdateFieldAndQueryTokens(tokens []string) ([]string, []string) {
-	var updateFieldTokens []string
+func (p interfaceMethodParser) splitUpdateAndQueryTokens(tokens []string) ([]string, []string) {
+	var updateTokens []string
 	var queryTokens []string
 
 	for i, token := range tokens {
@@ -230,11 +247,11 @@ func (p interfaceMethodParser) splitUpdateFieldAndQueryTokens(tokens []string) (
 			queryTokens = tokens[i:]
 			break
 		} else {
-			updateFieldTokens = append(updateFieldTokens, token)
+			updateTokens = append(updateTokens, token)
 		}
 	}
 
-	return updateFieldTokens, queryTokens
+	return updateTokens, queryTokens
 }
 
 func (p interfaceMethodParser) parseDeleteOperation(tokens []string) (Operation, error) {

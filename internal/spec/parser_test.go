@@ -454,6 +454,28 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 func TestParseInterfaceMethod_Update(t *testing.T) {
 	testTable := []ParseInterfaceMethodTestCase{
 		{
+			Name: "UpdateByArg",
+			Method: code.Method{
+				Name: "UpdateByID",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+					{Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
+				},
+				Returns: []code.Type{
+					code.SimpleType("bool"),
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedOperation: spec.UpdateOperation{
+				Update: spec.UpdateModel{},
+				Mode:   spec.QueryModeOne,
+				Query: spec.QuerySpec{Predicates: []spec.Predicate{
+					{Field: "ID", Comparator: spec.ComparatorEqual, ParamIndex: 2},
+				}},
+			},
+		},
+		{
 			Name: "UpdateArgByArg one method",
 			Method: code.Method{
 				Name: "UpdateGenderByID",
@@ -468,7 +490,7 @@ func TestParseInterfaceMethod_Update(t *testing.T) {
 				},
 			},
 			ExpectedOperation: spec.UpdateOperation{
-				Fields: []spec.UpdateField{
+				Update: spec.UpdateFields{
 					{Name: "Gender", ParamIndex: 1},
 				},
 				Mode: spec.QueryModeOne,
@@ -492,7 +514,7 @@ func TestParseInterfaceMethod_Update(t *testing.T) {
 				},
 			},
 			ExpectedOperation: spec.UpdateOperation{
-				Fields: []spec.UpdateField{
+				Update: spec.UpdateFields{
 					{Name: "Gender", ParamIndex: 1},
 				},
 				Mode: spec.QueryModeMany,
@@ -517,7 +539,7 @@ func TestParseInterfaceMethod_Update(t *testing.T) {
 				},
 			},
 			ExpectedOperation: spec.UpdateOperation{
-				Fields: []spec.UpdateField{
+				Update: spec.UpdateFields{
 					{Name: "Gender", ParamIndex: 1},
 					{Name: "City", ParamIndex: 2},
 				},
@@ -1279,6 +1301,9 @@ func TestParseInterfaceMethod_Update_Invalid(t *testing.T) {
 			Name: "update with no field provided",
 			Method: code.Method{
 				Name: "UpdateByID",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+				},
 				Returns: []code.Type{
 					code.SimpleType("bool"),
 					code.SimpleType("error"),
@@ -1290,6 +1315,9 @@ func TestParseInterfaceMethod_Update_Invalid(t *testing.T) {
 			Name: "misplaced And token in update fields",
 			Method: code.Method{
 				Name: "UpdateAgeAndAndGenderByID",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+				},
 				Returns: []code.Type{
 					code.SimpleType("bool"),
 					code.SimpleType("error"),
@@ -1301,6 +1329,10 @@ func TestParseInterfaceMethod_Update_Invalid(t *testing.T) {
 			Name: "update method without query",
 			Method: code.Method{
 				Name: "UpdateCity",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("string")},
+				},
 				Returns: []code.Type{
 					code.SimpleType("bool"),
 					code.SimpleType("error"),
@@ -1312,12 +1344,31 @@ func TestParseInterfaceMethod_Update_Invalid(t *testing.T) {
 			Name: "ambiguous query",
 			Method: code.Method{
 				Name: "UpdateAgeByIDAndUsernameOrGender",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("int")},
+				},
 				Returns: []code.Type{
 					code.SimpleType("int"),
 					code.SimpleType("error"),
 				},
 			},
 			ExpectedError: spec.NewInvalidQueryError([]string{"By", "ID", "And", "Username", "Or", "Gender"}),
+		},
+		{
+			Name: "update model with invalid parameter",
+			Method: code.Method{
+				Name: "UpdateByID",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("string")},
+				},
+				Returns: []code.Type{
+					code.SimpleType("bool"),
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedError: spec.InvalidUpdateFieldsError,
 		},
 		{
 			Name: "no context parameter",
@@ -1364,7 +1415,7 @@ func TestParseInterfaceMethod_Update_Invalid(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedError: spec.InvalidParamError,
+			ExpectedError: spec.InvalidUpdateFieldsError,
 		},
 		{
 			Name: "struct field does not match parameter in query",
