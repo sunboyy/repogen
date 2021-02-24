@@ -34,6 +34,11 @@ var userModel = code.Struct{
 			Tags: map[string][]string{"bson": {"age"}},
 		},
 		{
+			Name: "Enabled",
+			Type: code.SimpleType("bool"),
+			Tags: map[string][]string{"bson": {"enabled"}},
+		},
+		{
 			Name: "AccessToken",
 			Type: code.SimpleType("string"),
 		},
@@ -565,6 +570,115 @@ func (r *UserRepositoryMongo) FindByAgeBetween(arg0 context.Context, arg1 int, a
 func (r *UserRepositoryMongo) FindByGenderIn(arg0 context.Context, arg1 []Gender) ([]*UserModel, error) {
 	cursor, err := r.collection.Find(arg0, bson.M{
 		"gender": bson.M{"$in": arg1},
+	})
+	if err != nil {
+		return nil, err
+	}
+	var entities []*UserModel
+	if err := cursor.All(arg0, &entities); err != nil {
+		return nil, err
+	}
+	return entities, nil
+}
+`,
+		},
+		{
+			Name: "find with NotIn comparator",
+			MethodSpec: spec.MethodSpec{
+				Name: "FindByGenderNotIn",
+				Params: []code.Param{
+					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Name: "gender", Type: code.ArrayType{ContainedType: code.SimpleType("Gender")}},
+				},
+				Returns: []code.Type{
+					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+					code.SimpleType("error"),
+				},
+				Operation: spec.FindOperation{
+					Mode: spec.QueryModeMany,
+					Query: spec.QuerySpec{
+						Predicates: []spec.Predicate{
+							{Comparator: spec.ComparatorNotIn, Field: "Gender", ParamIndex: 1},
+						},
+					},
+				},
+			},
+			ExpectedCode: `
+func (r *UserRepositoryMongo) FindByGenderNotIn(arg0 context.Context, arg1 []Gender) ([]*UserModel, error) {
+	cursor, err := r.collection.Find(arg0, bson.M{
+		"gender": bson.M{"$nin": arg1},
+	})
+	if err != nil {
+		return nil, err
+	}
+	var entities []*UserModel
+	if err := cursor.All(arg0, &entities); err != nil {
+		return nil, err
+	}
+	return entities, nil
+}
+`,
+		},
+		{
+			Name: "find with True comparator",
+			MethodSpec: spec.MethodSpec{
+				Name: "FindByEnabledTrue",
+				Params: []code.Param{
+					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+				},
+				Returns: []code.Type{
+					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+					code.SimpleType("error"),
+				},
+				Operation: spec.FindOperation{
+					Mode: spec.QueryModeMany,
+					Query: spec.QuerySpec{
+						Predicates: []spec.Predicate{
+							{Comparator: spec.ComparatorTrue, Field: "Enabled", ParamIndex: 1},
+						},
+					},
+				},
+			},
+			ExpectedCode: `
+func (r *UserRepositoryMongo) FindByEnabledTrue(arg0 context.Context) ([]*UserModel, error) {
+	cursor, err := r.collection.Find(arg0, bson.M{
+		"enabled": true,
+	})
+	if err != nil {
+		return nil, err
+	}
+	var entities []*UserModel
+	if err := cursor.All(arg0, &entities); err != nil {
+		return nil, err
+	}
+	return entities, nil
+}
+`,
+		},
+		{
+			Name: "find with False comparator",
+			MethodSpec: spec.MethodSpec{
+				Name: "FindByEnabledFalse",
+				Params: []code.Param{
+					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+				},
+				Returns: []code.Type{
+					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+					code.SimpleType("error"),
+				},
+				Operation: spec.FindOperation{
+					Mode: spec.QueryModeMany,
+					Query: spec.QuerySpec{
+						Predicates: []spec.Predicate{
+							{Comparator: spec.ComparatorFalse, Field: "Enabled", ParamIndex: 1},
+						},
+					},
+				},
+			},
+			ExpectedCode: `
+func (r *UserRepositoryMongo) FindByEnabledFalse(arg0 context.Context) ([]*UserModel, error) {
+	cursor, err := r.collection.Find(arg0, bson.M{
+		"enabled": false,
 	})
 	if err != nil {
 		return nil, err

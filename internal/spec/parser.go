@@ -343,6 +343,11 @@ func (p interfaceMethodParser) validateQueryFromParams(params []code.Param, quer
 			return NewStructFieldNotFoundError(predicate.Field)
 		}
 
+		if (predicate.Comparator == ComparatorTrue || predicate.Comparator == ComparatorFalse) &&
+			structField.Type != code.SimpleType("bool") {
+			return NewIncompatibleComparatorError(predicate.Comparator, structField)
+		}
+
 		for i := 0; i < predicate.Comparator.NumberOfArguments(); i++ {
 			if params[currentParamIndex].Type != predicate.Comparator.ArgumentTypeFromFieldType(
 				structField.Type) {
