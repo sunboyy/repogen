@@ -49,9 +49,42 @@ func (o FindOperation) Name() string {
 
 // UpdateOperation is a method specification for update operations
 type UpdateOperation struct {
-	Fields []UpdateField
+	Update Update
 	Mode   QueryMode
 	Query  QuerySpec
+}
+
+// Update is an interface of update operation type
+type Update interface {
+	Name() string
+	NumberOfArguments() int
+}
+
+// UpdateFields is a type of update operation that update specific fields
+type UpdateFields []UpdateField
+
+// Name returns UpdateFields name 'Fields'
+func (u UpdateFields) Name() string {
+	return "Fields"
+}
+
+// NumberOfArguments returns number of update fields
+func (u UpdateFields) NumberOfArguments() int {
+	return len(u)
+}
+
+// UpdateModel is a type of update operation that update the whole model
+type UpdateModel struct {
+}
+
+// Name returns UpdateModel name 'Model'
+func (u UpdateModel) Name() string {
+	return "Model"
+}
+
+// NumberOfArguments returns 1
+func (u UpdateModel) NumberOfArguments() int {
+	return 1
 }
 
 // Name returns "Update" operation name

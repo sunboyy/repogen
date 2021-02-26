@@ -12,6 +12,17 @@ type ErrorTestCase struct {
 	ExpectedString string
 }
 
+type StubUpdate struct {
+}
+
+func (update StubUpdate) Name() string {
+	return "Stub"
+}
+
+func (update StubUpdate) NumberOfArguments() int {
+	return 1
+}
+
 func TestError(t *testing.T) {
 	testTable := []ErrorTestCase{
 		{
@@ -23,6 +34,11 @@ func TestError(t *testing.T) {
 			Name:           "BsonTagNotFoundError",
 			Error:          mongo.NewBsonTagNotFoundError("AccessToken"),
 			ExpectedString: "bson tag of field 'AccessToken' not found",
+		},
+		{
+			Name:           "UpdateTypeNotSupportedError",
+			Error:          mongo.NewUpdateTypeNotSupportedError(StubUpdate{}),
+			ExpectedString: "update type Stub not supported",
 		},
 	}
 

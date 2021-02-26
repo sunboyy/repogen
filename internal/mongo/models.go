@@ -12,6 +12,30 @@ type updateField struct {
 	ParamIndex int
 }
 
+type update interface {
+	Code() string
+}
+
+type updateModel struct {
+}
+
+func (u updateModel) Code() string {
+	return `		"$set": arg1,`
+}
+
+type updateFields struct {
+	Fields []updateField
+}
+
+func (u updateFields) Code() string {
+	lines := []string{`		"$set": bson.M{`}
+	for _, field := range u.Fields {
+		lines = append(lines, fmt.Sprintf(`			"%s": arg%d,`, field.BsonTag, field.ParamIndex))
+	}
+	lines = append(lines, `		},`)
+	return strings.Join(lines, "\n")
+}
+
 type querySpec struct {
 	Operator   spec.Operator
 	Predicates []predicate
