@@ -1,6 +1,8 @@
 package spec
 
 import (
+	"strings"
+
 	"github.com/fatih/camelcase"
 	"github.com/sunboyy/repogen/internal/code"
 )
@@ -111,7 +113,14 @@ func (p interfaceMethodParser) parseFindOperation(tokens []string) (Operation, e
 		return nil, err
 	}
 
-	querySpec, err := parseQuery(tokens, 1)
+	queryTokens, sortTokens := p.splitQueryAndSortTokens(tokens)
+
+	querySpec, err := parseQuery(queryTokens, 1)
+	if err != nil {
+		return nil, err
+	}
+
+	sorts, err := p.parseSort(sortTokens)
 	if err != nil {
 		return nil, err
 	}
@@ -127,7 +136,63 @@ func (p interfaceMethodParser) parseFindOperation(tokens []string) (Operation, e
 	return FindOperation{
 		Mode:  mode,
 		Query: querySpec,
+		Sorts: sorts,
 	}, nil
+}
+
+func (p interfaceMethodParser) parseSort(rawTokens []string) ([]Sort, error) {
+	if len(rawTokens) == 0 {
+		return nil, nil
+	}
+
+	sortTokens := rawTokens[2:]
+
+	var sorts []Sort
+	var aggregatedToken sortToken
+	for _, token := range sortTokens {
+		if token != "And" {
+			aggregatedToken = append(aggregatedToken, token)
+		} else if len(aggregatedToken) == 0 {
+			return nil, NewInvalidSortError(rawTokens)
+		} else {
+			sorts = append(sorts, aggregatedToken.ToSort())
+			aggregatedToken = sortToken{}
+		}
+	}
+	if len(aggregatedToken) == 0 {
+		return nil, NewInvalidSortError(rawTokens)
+	}
+	sorts = append(sorts, aggregatedToken.ToSort())
+
+	return sorts, nil
+}
+
+type sortToken []string
+
+func (t sortToken) ToSort() Sort {
+	if len(t) > 1 && t[len(t)-1] == "Asc" {
+		return Sort{FieldName: strings.Join(t[:len(t)-1], ""), Ordering: OrderingAscending}
+	}
+	if len(t) > 1 && t[len(t)-1] == "Desc" {
+		return Sort{FieldName: strings.Join(t[:len(t)-1], ""), Ordering: OrderingDescending}
+	}
+	return Sort{FieldName: strings.Join(t, ""), Ordering: OrderingAscending}
+}
+
+func (p interfaceMethodParser) splitQueryAndSortTokens(tokens []string) ([]string, []string) {
+	var queryTokens []string
+	var sortTokens []string
+
+	for i, token := range tokens {
+		if len(tokens) > i && token == "Order" && tokens[i+1] == "By" {
+			sortTokens = tokens[i:]
+			break
+		} else {
+			queryTokens = append(queryTokens, token)
+		}
+	}
+
+	return queryTokens, sortTokens
 }
 
 func (p interfaceMethodParser) extractModelOrSliceReturns(returns []code.Type) (QueryMode, error) {

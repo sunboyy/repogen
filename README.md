@@ -131,7 +131,7 @@ FindByCity(ctx context.Context, city string) ([]*Model, error)
 FindAll(ctx context.Context) ([]*Model, error)
 ```
 
-Repogen determines a single-entity operation or a multiple-entity by checking the first return value. If it is a pointer of a model, the method will be single-entity operation. If it is a slice of pointers of a model, the method will be multiple-entity operation.
+Repogen determines a single-entity or a multiple-entity operation by checking the first return value. If it is a pointer of a model, the method will be single-entity operation. If it is a slice of pointers of a model, the method will be multiple-entity operation.
 
 The requirement of the `Find` operation method is that there must be only two return values, the second return value must be of type `error` and the first method parameter must be of type `context.Context`. The requirement of number of method parameters depends on the query which will be described in the query specification section.
 

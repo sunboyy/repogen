@@ -40,12 +40,28 @@ func (o InsertOperation) Name() string {
 type FindOperation struct {
 	Mode  QueryMode
 	Query QuerySpec
+	Sorts []Sort
 }
 
 // Name returns "Find" operation name
 func (o FindOperation) Name() string {
 	return "Find"
 }
+
+// Sort is a detail of sorting find result
+type Sort struct {
+	FieldName string
+	Ordering  Ordering
+}
+
+// Ordering is a sort order
+type Ordering string
+
+// Ordering constants
+const (
+	OrderingAscending  = "ASC"
+	OrderingDescending = "DESC"
+)
 
 // UpdateOperation is a method specification for update operations
 type UpdateOperation struct {

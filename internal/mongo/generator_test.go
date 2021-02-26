@@ -52,6 +52,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func NewUserRepository(collection *mongo.Collection) UserRepository {
@@ -192,7 +193,8 @@ func (r *UserRepositoryMongo) FindByID(arg0 context.Context, arg1 primitive.Obje
 	var entity UserModel
 	if err := r.collection.FindOne(arg0, bson.M{
 		"_id": arg1,
-	}).Decode(&entity); err != nil {
+	}, options.FindOne().SetSort(bson.M{
+	})).Decode(&entity); err != nil {
 		return nil, err
 	}
 	return &entity, nil
@@ -224,7 +226,8 @@ func (r *UserRepositoryMongo) FindByID(arg0 context.Context, arg1 primitive.Obje
 func (r *UserRepositoryMongo) FindByGender(arg0 context.Context, arg1 Gender) ([]*UserModel, error) {
 	cursor, err := r.collection.Find(arg0, bson.M{
 		"gender": arg1,
-	})
+	}, options.Find().SetSort(bson.M{
+	}))
 	if err != nil {
 		return nil, err
 	}
@@ -267,7 +270,8 @@ func (r *UserRepositoryMongo) FindByGenderAndAge(arg0 context.Context, arg1 Gend
 			{"gender": arg1},
 			{"age": arg2},
 		},
-	})
+	}, options.Find().SetSort(bson.M{
+	}))
 	if err != nil {
 		return nil, err
 	}
@@ -310,7 +314,8 @@ func (r *UserRepositoryMongo) FindByGenderOrAge(arg0 context.Context, arg1 Gende
 			{"gender": arg1},
 			{"age": arg2},
 		},
-	})
+	}, options.Find().SetSort(bson.M{
+	}))
 	if err != nil {
 		return nil, err
 	}
@@ -347,7 +352,8 @@ func (r *UserRepositoryMongo) FindByGenderOrAge(arg0 context.Context, arg1 Gende
 func (r *UserRepositoryMongo) FindByGenderNot(arg0 context.Context, arg1 Gender) ([]*UserModel, error) {
 	cursor, err := r.collection.Find(arg0, bson.M{
 		"gender": bson.M{"$ne": arg1},
-	})
+	}, options.Find().SetSort(bson.M{
+	}))
 	if err != nil {
 		return nil, err
 	}
@@ -384,7 +390,8 @@ func (r *UserRepositoryMongo) FindByGenderNot(arg0 context.Context, arg1 Gender)
 func (r *UserRepositoryMongo) FindByAgeLessThan(arg0 context.Context, arg1 int) ([]*UserModel, error) {
 	cursor, err := r.collection.Find(arg0, bson.M{
 		"age": bson.M{"$lt": arg1},
-	})
+	}, options.Find().SetSort(bson.M{
+	}))
 	if err != nil {
 		return nil, err
 	}
@@ -421,7 +428,8 @@ func (r *UserRepositoryMongo) FindByAgeLessThan(arg0 context.Context, arg1 int) 
 func (r *UserRepositoryMongo) FindByAgeLessThanEqual(arg0 context.Context, arg1 int) ([]*UserModel, error) {
 	cursor, err := r.collection.Find(arg0, bson.M{
 		"age": bson.M{"$lte": arg1},
-	})
+	}, options.Find().SetSort(bson.M{
+	}))
 	if err != nil {
 		return nil, err
 	}
@@ -458,7 +466,8 @@ func (r *UserRepositoryMongo) FindByAgeLessThanEqual(arg0 context.Context, arg1 
 func (r *UserRepositoryMongo) FindByAgeGreaterThan(arg0 context.Context, arg1 int) ([]*UserModel, error) {
 	cursor, err := r.collection.Find(arg0, bson.M{
 		"age": bson.M{"$gt": arg1},
-	})
+	}, options.Find().SetSort(bson.M{
+	}))
 	if err != nil {
 		return nil, err
 	}
@@ -495,7 +504,8 @@ func (r *UserRepositoryMongo) FindByAgeGreaterThan(arg0 context.Context, arg1 in
 func (r *UserRepositoryMongo) FindByAgeGreaterThanEqual(arg0 context.Context, arg1 int) ([]*UserModel, error) {
 	cursor, err := r.collection.Find(arg0, bson.M{
 		"age": bson.M{"$gte": arg1},
-	})
+	}, options.Find().SetSort(bson.M{
+	}))
 	if err != nil {
 		return nil, err
 	}
@@ -533,7 +543,8 @@ func (r *UserRepositoryMongo) FindByAgeGreaterThanEqual(arg0 context.Context, ar
 func (r *UserRepositoryMongo) FindByAgeBetween(arg0 context.Context, arg1 int, arg2 int) ([]*UserModel, error) {
 	cursor, err := r.collection.Find(arg0, bson.M{
 		"age": bson.M{"$gte": arg1, "$lte": arg2},
-	})
+	}, options.Find().SetSort(bson.M{
+	}))
 	if err != nil {
 		return nil, err
 	}
@@ -570,7 +581,8 @@ func (r *UserRepositoryMongo) FindByAgeBetween(arg0 context.Context, arg1 int, a
 func (r *UserRepositoryMongo) FindByGenderIn(arg0 context.Context, arg1 []Gender) ([]*UserModel, error) {
 	cursor, err := r.collection.Find(arg0, bson.M{
 		"gender": bson.M{"$in": arg1},
-	})
+	}, options.Find().SetSort(bson.M{
+	}))
 	if err != nil {
 		return nil, err
 	}
@@ -607,7 +619,8 @@ func (r *UserRepositoryMongo) FindByGenderIn(arg0 context.Context, arg1 []Gender
 func (r *UserRepositoryMongo) FindByGenderNotIn(arg0 context.Context, arg1 []Gender) ([]*UserModel, error) {
 	cursor, err := r.collection.Find(arg0, bson.M{
 		"gender": bson.M{"$nin": arg1},
-	})
+	}, options.Find().SetSort(bson.M{
+	}))
 	if err != nil {
 		return nil, err
 	}
@@ -643,7 +656,8 @@ func (r *UserRepositoryMongo) FindByGenderNotIn(arg0 context.Context, arg1 []Gen
 func (r *UserRepositoryMongo) FindByEnabledTrue(arg0 context.Context) ([]*UserModel, error) {
 	cursor, err := r.collection.Find(arg0, bson.M{
 		"enabled": true,
-	})
+	}, options.Find().SetSort(bson.M{
+	}))
 	if err != nil {
 		return nil, err
 	}
@@ -679,7 +693,118 @@ func (r *UserRepositoryMongo) FindByEnabledTrue(arg0 context.Context) ([]*UserMo
 func (r *UserRepositoryMongo) FindByEnabledFalse(arg0 context.Context) ([]*UserModel, error) {
 	cursor, err := r.collection.Find(arg0, bson.M{
 		"enabled": false,
-	})
+	}, options.Find().SetSort(bson.M{
+	}))
+	if err != nil {
+		return nil, err
+	}
+	var entities []*UserModel
+	if err := cursor.All(arg0, &entities); err != nil {
+		return nil, err
+	}
+	return entities, nil
+}
+`,
+		},
+		{
+			Name: "find with sort ascending",
+			MethodSpec: spec.MethodSpec{
+				Name: "FindAllOrderByAge",
+				Params: []code.Param{
+					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+				},
+				Returns: []code.Type{
+					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+					code.SimpleType("error"),
+				},
+				Operation: spec.FindOperation{
+					Mode: spec.QueryModeMany,
+					Sorts: []spec.Sort{
+						{FieldName: "Age", Ordering: spec.OrderingAscending},
+					},
+				},
+			},
+			ExpectedCode: `
+func (r *UserRepositoryMongo) FindAllOrderByAge(arg0 context.Context) ([]*UserModel, error) {
+	cursor, err := r.collection.Find(arg0, bson.M{
+
+	}, options.Find().SetSort(bson.M{
+		"age": 1,
+	}))
+	if err != nil {
+		return nil, err
+	}
+	var entities []*UserModel
+	if err := cursor.All(arg0, &entities); err != nil {
+		return nil, err
+	}
+	return entities, nil
+}
+`,
+		},
+		{
+			Name: "find with sort descending",
+			MethodSpec: spec.MethodSpec{
+				Name: "FindAllOrderByAge",
+				Params: []code.Param{
+					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+				},
+				Returns: []code.Type{
+					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+					code.SimpleType("error"),
+				},
+				Operation: spec.FindOperation{
+					Mode: spec.QueryModeMany,
+					Sorts: []spec.Sort{
+						{FieldName: "Age", Ordering: spec.OrderingDescending},
+					},
+				},
+			},
+			ExpectedCode: `
+func (r *UserRepositoryMongo) FindAllOrderByAge(arg0 context.Context) ([]*UserModel, error) {
+	cursor, err := r.collection.Find(arg0, bson.M{
+
+	}, options.Find().SetSort(bson.M{
+		"age": -1,
+	}))
+	if err != nil {
+		return nil, err
+	}
+	var entities []*UserModel
+	if err := cursor.All(arg0, &entities); err != nil {
+		return nil, err
+	}
+	return entities, nil
+}
+`,
+		},
+		{
+			Name: "find with multiple sorts",
+			MethodSpec: spec.MethodSpec{
+				Name: "FindAllOrderByGenderAndAgeDesc",
+				Params: []code.Param{
+					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+				},
+				Returns: []code.Type{
+					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+					code.SimpleType("error"),
+				},
+				Operation: spec.FindOperation{
+					Mode: spec.QueryModeMany,
+					Sorts: []spec.Sort{
+						{FieldName: "Gender", Ordering: spec.OrderingAscending},
+						{FieldName: "Age", Ordering: spec.OrderingDescending},
+					},
+				},
+			},
+			ExpectedCode: `
+func (r *UserRepositoryMongo) FindAllOrderByGenderAndAgeDesc(arg0 context.Context) ([]*UserModel, error) {
+	cursor, err := r.collection.Find(arg0, bson.M{
+
+	}, options.Find().SetSort(bson.M{
+		"gender": 1,
+		"age": -1,
+	}))
 	if err != nil {
 		return nil, err
 	}
@@ -1647,6 +1772,26 @@ func TestGenerateMethod_Invalid(t *testing.T) {
 						Predicates: []spec.Predicate{
 							{Field: "AccessToken", Comparator: spec.ComparatorEqual, ParamIndex: 1},
 						},
+					},
+				},
+			},
+			ExpectedError: mongo.NewBsonTagNotFoundError("AccessToken"),
+		},
+		{
+			Name: "bson tag not found in sort",
+			Method: spec.MethodSpec{
+				Name: "FindAllOrderByAccessToken",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+				},
+				Returns: []code.Type{
+					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+					code.SimpleType("error"),
+				},
+				Operation: spec.FindOperation{
+					Mode: spec.QueryModeOne,
+					Sorts: []spec.Sort{
+						{FieldName: "AccessToken", Ordering: spec.OrderingAscending},
 					},
 				},
 			},
