@@ -105,15 +105,39 @@ func (g RepositoryGenerator) generateFindImplementation(operation spec.FindOpera
 		return "", err
 	}
 
+	sorts, err := g.mongoSorts(operation.Sorts)
+	if err != nil {
+		return "", err
+	}
+
 	tmplData := mongoFindTemplateData{
 		EntityType: g.StructModel.Name,
 		QuerySpec:  querySpec,
+		Sorts:      sorts,
 	}
 
 	if operation.Mode == spec.QueryModeOne {
 		return generateFromTemplate("mongo_repository_findone", findOneTemplate, tmplData)
 	}
 	return generateFromTemplate("mongo_repository_findmany", findManyTemplate, tmplData)
+}
+
+func (g RepositoryGenerator) mongoSorts(sortSpec []spec.Sort) ([]sort, error) {
+	var sorts []sort
+
+	for _, s := range sortSpec {
+		bsonTag, err := g.bsonTagFromFieldName(s.FieldName)
+		if err != nil {
+			return nil, err
+		}
+
+		sorts = append(sorts, sort{
+			BsonTag:  bsonTag,
+			Ordering: s.Ordering,
+		})
+	}
+
+	return sorts, nil
 }
 
 func (g RepositoryGenerator) generateUpdateImplementation(operation spec.UpdateOperation) (string, error) {

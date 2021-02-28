@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/sunboyy/repogen/internal/code"
+	"github.com/sunboyy/repogen/internal/spec"
 )
 
 const constructorTemplate = `
@@ -14,6 +15,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func New{{.InterfaceName}}(collection *mongo.Collection) {{.InterfaceName}} {
@@ -89,19 +91,36 @@ const insertManyTemplate = `	var entities []interface{}
 type mongoFindTemplateData struct {
 	EntityType string
 	QuerySpec  querySpec
+	Sorts      []sort
+}
+
+type sort struct {
+	BsonTag  string
+	Ordering spec.Ordering
+}
+
+func (s sort) OrderNum() int {
+	if s.Ordering == spec.OrderingAscending {
+		return 1
+	}
+	return -1
 }
 
 const findOneTemplate = `	var entity {{.EntityType}}
 	if err := r.collection.FindOne(arg0, bson.M{
 {{.QuerySpec.Code}}
-	}).Decode(&entity); err != nil {
+	}, options.FindOne().SetSort(bson.M{
+{{range $index, $element := .Sorts}}		"{{$element.BsonTag}}": {{$element.OrderNum}},
+{{end}}	})).Decode(&entity); err != nil {
 		return nil, err
 	}
 	return &entity, nil`
 
 const findManyTemplate = `	cursor, err := r.collection.Find(arg0, bson.M{
 {{.QuerySpec.Code}}
-	})
+	}, options.Find().SetSort(bson.M{
+{{range $index, $element := .Sorts}}		"{{$element.BsonTag}}": {{$element.OrderNum}},
+{{end}}	}))
 	if err != nil {
 		return nil, err
 	}

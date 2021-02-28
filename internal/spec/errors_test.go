@@ -38,6 +38,11 @@ func TestError(t *testing.T) {
 			}),
 			ExpectedString: "cannot use comparator EQUAL_TRUE with struct field 'Age' of type 'int'",
 		},
+		{
+			Name:           "InvalidSortError",
+			Error:          spec.NewInvalidSortError([]string{"Order", "By"}),
+			ExpectedString: "invalid sort 'OrderBy'",
+		},
 	}
 
 	for _, testCase := range testTable {

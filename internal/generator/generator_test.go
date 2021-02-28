@@ -77,7 +77,7 @@ func TestGenerateMongoRepository(t *testing.T) {
 			},
 		},
 		{
-			Name: "FindByAgeLessThanEqual",
+			Name: "FindByAgeLessThanEqualOrderByAge",
 			Params: []code.Param{
 				{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
 				{Name: "age", Type: code.SimpleType("int")},
@@ -93,10 +93,13 @@ func TestGenerateMongoRepository(t *testing.T) {
 						{Field: "Age", Comparator: spec.ComparatorLessThanEqual, ParamIndex: 1},
 					},
 				},
+				Sorts: []spec.Sort{
+					{FieldName: "Age", Ordering: spec.OrderingAscending},
+				},
 			},
 		},
 		{
-			Name: "FindByAgeGreaterThan",
+			Name: "FindByAgeGreaterThanOrderByAgeAsc",
 			Params: []code.Param{
 				{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
 				{Name: "age", Type: code.SimpleType("int")},
@@ -112,10 +115,13 @@ func TestGenerateMongoRepository(t *testing.T) {
 						{Field: "Age", Comparator: spec.ComparatorGreaterThan, ParamIndex: 1},
 					},
 				},
+				Sorts: []spec.Sort{
+					{FieldName: "Age", Ordering: spec.OrderingAscending},
+				},
 			},
 		},
 		{
-			Name: "FindByAgeGreaterThanEqual",
+			Name: "FindByAgeGreaterThanEqualOrderByAgeDesc",
 			Params: []code.Param{
 				{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
 				{Name: "age", Type: code.SimpleType("int")},
@@ -130,6 +136,9 @@ func TestGenerateMongoRepository(t *testing.T) {
 					Predicates: []spec.Predicate{
 						{Field: "Age", Comparator: spec.ComparatorGreaterThanEqual, ParamIndex: 1},
 					},
+				},
+				Sorts: []spec.Sort{
+					{FieldName: "Age", Ordering: spec.OrderingDescending},
 				},
 			},
 		},
@@ -191,6 +200,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func NewUserRepository(collection *mongo.Collection) UserRepository {
@@ -207,7 +217,7 @@ func (r *UserRepositoryMongo) FindByID(arg0 context.Context, arg1 primitive.Obje
 	var entity UserModel
 	if err := r.collection.FindOne(arg0, bson.M{
 		"_id": arg1,
-	}).Decode(&entity); err != nil {
+	}, options.FindOne().SetSort(bson.M{})).Decode(&entity); err != nil {
 		return nil, err
 	}
 	return &entity, nil
@@ -219,7 +229,7 @@ func (r *UserRepositoryMongo) FindByGenderNotAndAgeLessThan(arg0 context.Context
 			{"gender": bson.M{"$ne": arg1}},
 			{"age": bson.M{"$lt": arg2}},
 		},
-	})
+	}, options.Find().SetSort(bson.M{}))
 	if err != nil {
 		return nil, err
 	}
@@ -230,10 +240,12 @@ func (r *UserRepositoryMongo) FindByGenderNotAndAgeLessThan(arg0 context.Context
 	return entities, nil
 }
 
-func (r *UserRepositoryMongo) FindByAgeLessThanEqual(arg0 context.Context, arg1 int) ([]*UserModel, error) {
+func (r *UserRepositoryMongo) FindByAgeLessThanEqualOrderByAge(arg0 context.Context, arg1 int) ([]*UserModel, error) {
 	cursor, err := r.collection.Find(arg0, bson.M{
 		"age": bson.M{"$lte": arg1},
-	})
+	}, options.Find().SetSort(bson.M{
+		"age": 1,
+	}))
 	if err != nil {
 		return nil, err
 	}
@@ -244,10 +256,12 @@ func (r *UserRepositoryMongo) FindByAgeLessThanEqual(arg0 context.Context, arg1 
 	return entities, nil
 }
 
-func (r *UserRepositoryMongo) FindByAgeGreaterThan(arg0 context.Context, arg1 int) ([]*UserModel, error) {
+func (r *UserRepositoryMongo) FindByAgeGreaterThanOrderByAgeAsc(arg0 context.Context, arg1 int) ([]*UserModel, error) {
 	cursor, err := r.collection.Find(arg0, bson.M{
 		"age": bson.M{"$gt": arg1},
-	})
+	}, options.Find().SetSort(bson.M{
+		"age": 1,
+	}))
 	if err != nil {
 		return nil, err
 	}
@@ -258,10 +272,12 @@ func (r *UserRepositoryMongo) FindByAgeGreaterThan(arg0 context.Context, arg1 in
 	return entities, nil
 }
 
-func (r *UserRepositoryMongo) FindByAgeGreaterThanEqual(arg0 context.Context, arg1 int) ([]*UserModel, error) {
+func (r *UserRepositoryMongo) FindByAgeGreaterThanEqualOrderByAgeDesc(arg0 context.Context, arg1 int) ([]*UserModel, error) {
 	cursor, err := r.collection.Find(arg0, bson.M{
 		"age": bson.M{"$gte": arg1},
-	})
+	}, options.Find().SetSort(bson.M{
+		"age": -1,
+	}))
 	if err != nil {
 		return nil, err
 	}
@@ -275,7 +291,7 @@ func (r *UserRepositoryMongo) FindByAgeGreaterThanEqual(arg0 context.Context, ar
 func (r *UserRepositoryMongo) FindByAgeBetween(arg0 context.Context, arg1 int, arg2 int) ([]*UserModel, error) {
 	cursor, err := r.collection.Find(arg0, bson.M{
 		"age": bson.M{"$gte": arg1, "$lte": arg2},
-	})
+	}, options.Find().SetSort(bson.M{}))
 	if err != nil {
 		return nil, err
 	}
@@ -292,7 +308,7 @@ func (r *UserRepositoryMongo) FindByGenderOrAge(arg0 context.Context, arg1 Gende
 			{"gender": arg1},
 			{"age": arg2},
 		},
-	})
+	}, options.Find().SetSort(bson.M{}))
 	if err != nil {
 		return nil, err
 	}

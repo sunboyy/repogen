@@ -48,6 +48,19 @@ func (err invalidQueryError) Error() string {
 	return fmt.Sprintf("invalid query '%s'", err.QueryString)
 }
 
+// NewInvalidSortError creates invalidSortError
+func NewInvalidSortError(sortTokens []string) error {
+	return invalidSortError{SortString: strings.Join(sortTokens, "")}
+}
+
+type invalidSortError struct {
+	SortString string
+}
+
+func (err invalidSortError) Error() string {
+	return fmt.Sprintf("invalid sort '%s'", err.SortString)
+}
+
 // NewUnknownOperationError creates unknownOperationError
 func NewUnknownOperationError(operationName string) error {
 	return unknownOperationError{OperationName: operationName}

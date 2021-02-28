@@ -429,6 +429,99 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 				}},
 			},
 		},
+		{
+			Name: "FindByArgOrderByArg method",
+			Method: code.Method{
+				Name: "FindByCityOrderByAge",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("string")},
+				},
+				Returns: []code.Type{
+					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedOperation: spec.FindOperation{
+				Mode: spec.QueryModeMany,
+				Query: spec.QuerySpec{Predicates: []spec.Predicate{
+					{Field: "City", Comparator: spec.ComparatorEqual, ParamIndex: 1},
+				}},
+				Sorts: []spec.Sort{
+					{FieldName: "Age", Ordering: spec.OrderingAscending},
+				},
+			},
+		},
+		{
+			Name: "FindByArgOrderByArgAsc method",
+			Method: code.Method{
+				Name: "FindByCityOrderByAgeAsc",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("string")},
+				},
+				Returns: []code.Type{
+					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedOperation: spec.FindOperation{
+				Mode: spec.QueryModeMany,
+				Query: spec.QuerySpec{Predicates: []spec.Predicate{
+					{Field: "City", Comparator: spec.ComparatorEqual, ParamIndex: 1},
+				}},
+				Sorts: []spec.Sort{
+					{FieldName: "Age", Ordering: spec.OrderingAscending},
+				},
+			},
+		},
+		{
+			Name: "FindByArgOrderByArgDesc method",
+			Method: code.Method{
+				Name: "FindByCityOrderByAgeDesc",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("string")},
+				},
+				Returns: []code.Type{
+					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedOperation: spec.FindOperation{
+				Mode: spec.QueryModeMany,
+				Query: spec.QuerySpec{Predicates: []spec.Predicate{
+					{Field: "City", Comparator: spec.ComparatorEqual, ParamIndex: 1},
+				}},
+				Sorts: []spec.Sort{
+					{FieldName: "Age", Ordering: spec.OrderingDescending},
+				},
+			},
+		},
+		{
+			Name: "FindByArgOrderByArgAndArg method",
+			Method: code.Method{
+				Name: "FindByCityOrderByCityAndAgeDesc",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("string")},
+				},
+				Returns: []code.Type{
+					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedOperation: spec.FindOperation{
+				Mode: spec.QueryModeMany,
+				Query: spec.QuerySpec{Predicates: []spec.Predicate{
+					{Field: "City", Comparator: spec.ComparatorEqual, ParamIndex: 1},
+				}},
+				Sorts: []spec.Sort{
+					{FieldName: "City", Ordering: spec.OrderingAscending},
+					{FieldName: "Age", Ordering: spec.OrderingDescending},
+				},
+			},
+		},
 	}
 
 	for _, testCase := range testTable {
@@ -1247,6 +1340,39 @@ func TestParseInterfaceMethod_Find_Invalid(t *testing.T) {
 				},
 			},
 			ExpectedError: spec.InvalidParamError,
+		},
+		{
+			Name: "misplaced operator token (leftmost)",
+			Method: code.Method{
+				Name: "FindAllOrderByAndAge",
+				Returns: []code.Type{
+					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedError: spec.NewInvalidSortError([]string{"Order", "By", "And", "Age"}),
+		},
+		{
+			Name: "misplaced operator token (rightmost)",
+			Method: code.Method{
+				Name: "FindAllOrderByAgeAnd",
+				Returns: []code.Type{
+					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedError: spec.NewInvalidSortError([]string{"Order", "By", "Age", "And"}),
+		},
+		{
+			Name: "misplaced operator token (double operator)",
+			Method: code.Method{
+				Name: "FindAllOrderByAgeAndAndGender",
+				Returns: []code.Type{
+					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedError: spec.NewInvalidSortError([]string{"Order", "By", "Age", "And", "And", "Gender"}),
 		},
 	}
 
