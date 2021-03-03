@@ -50,8 +50,8 @@ func (o FindOperation) Name() string {
 
 // Sort is a detail of sorting find result
 type Sort struct {
-	FieldName string
-	Ordering  Ordering
+	FieldReference FieldReference
+	Ordering       Ordering
 }
 
 // Ordering is a sort order
@@ -110,8 +110,8 @@ func (o UpdateOperation) Name() string {
 
 // UpdateField stores mapping between field name in the model and the parameter index
 type UpdateField struct {
-	Name       string
-	ParamIndex int
+	FieldReference FieldReference
+	ParamIndex     int
 }
 
 // DeleteOperation is a method specification for delete operations

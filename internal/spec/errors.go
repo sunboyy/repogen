@@ -75,8 +75,8 @@ func (err unknownOperationError) Error() string {
 }
 
 // NewStructFieldNotFoundError creates structFieldNotFoundError
-func NewStructFieldNotFoundError(fieldName string) error {
-	return structFieldNotFoundError{FieldName: fieldName}
+func NewStructFieldNotFoundError(tokens []string) error {
+	return structFieldNotFoundError{FieldName: strings.Join(tokens, "")}
 }
 
 type structFieldNotFoundError struct {

@@ -1,8 +1,6 @@
 package spec
 
 import (
-	"strings"
-
 	"github.com/sunboyy/repogen/internal/code"
 )
 
@@ -72,48 +70,17 @@ func (c Comparator) NumberOfArguments() int {
 
 // Predicate is a criteria for querying a field
 type Predicate struct {
-	Field      string
-	Comparator Comparator
-	ParamIndex int
+	FieldReference FieldReference
+	Comparator     Comparator
+	ParamIndex     int
 }
 
-type predicateToken []string
-
-func (t predicateToken) ToPredicate(paramIndex int) Predicate {
-	if len(t) > 1 && t[len(t)-1] == "Not" {
-		return Predicate{Field: strings.Join(t[:len(t)-1], ""), Comparator: ComparatorNot, ParamIndex: paramIndex}
-	}
-	if len(t) > 2 && t[len(t)-2] == "Less" && t[len(t)-1] == "Than" {
-		return Predicate{Field: strings.Join(t[:len(t)-2], ""), Comparator: ComparatorLessThan, ParamIndex: paramIndex}
-	}
-	if len(t) > 3 && t[len(t)-3] == "Less" && t[len(t)-2] == "Than" && t[len(t)-1] == "Equal" {
-		return Predicate{Field: strings.Join(t[:len(t)-3], ""), Comparator: ComparatorLessThanEqual, ParamIndex: paramIndex}
-	}
-	if len(t) > 2 && t[len(t)-2] == "Greater" && t[len(t)-1] == "Than" {
-		return Predicate{Field: strings.Join(t[:len(t)-2], ""), Comparator: ComparatorGreaterThan, ParamIndex: paramIndex}
-	}
-	if len(t) > 3 && t[len(t)-3] == "Greater" && t[len(t)-2] == "Than" && t[len(t)-1] == "Equal" {
-		return Predicate{Field: strings.Join(t[:len(t)-3], ""), Comparator: ComparatorGreaterThanEqual, ParamIndex: paramIndex}
-	}
-	if len(t) > 2 && t[len(t)-2] == "Not" && t[len(t)-1] == "In" {
-		return Predicate{Field: strings.Join(t[:len(t)-2], ""), Comparator: ComparatorNotIn, ParamIndex: paramIndex}
-	}
-	if len(t) > 1 && t[len(t)-1] == "In" {
-		return Predicate{Field: strings.Join(t[:len(t)-1], ""), Comparator: ComparatorIn, ParamIndex: paramIndex}
-	}
-	if len(t) > 1 && t[len(t)-1] == "Between" {
-		return Predicate{Field: strings.Join(t[:len(t)-1], ""), Comparator: ComparatorBetween, ParamIndex: paramIndex}
-	}
-	if len(t) > 1 && t[len(t)-1] == "True" {
-		return Predicate{Field: strings.Join(t[:len(t)-1], ""), Comparator: ComparatorTrue, ParamIndex: paramIndex}
-	}
-	if len(t) > 1 && t[len(t)-1] == "False" {
-		return Predicate{Field: strings.Join(t[:len(t)-1], ""), Comparator: ComparatorFalse, ParamIndex: paramIndex}
-	}
-	return Predicate{Field: strings.Join(t, ""), Comparator: ComparatorEqual, ParamIndex: paramIndex}
+type queryParser struct {
+	fieldResolver fieldResolver
+	StructModel   code.Struct
 }
 
-func parseQuery(rawTokens []string, paramIndex int) (QuerySpec, error) {
+func (p queryParser) parseQuery(rawTokens []string, paramIndex int) (QuerySpec, error) {
 	if len(rawTokens) == 0 {
 		return QuerySpec{}, QueryRequiredError
 	}
@@ -130,38 +97,104 @@ func parseQuery(rawTokens []string, paramIndex int) (QuerySpec, error) {
 		tokens = tokens[1:]
 	}
 
-	if len(tokens) == 0 || tokens[0] == "And" || tokens[0] == "Or" {
+	if len(tokens) == 0 {
 		return QuerySpec{}, NewInvalidQueryError(rawTokens)
 	}
 
+	operator, predicateTokens, err := p.splitPredicateTokens(tokens)
+	if err != nil {
+		return QuerySpec{}, err
+	}
+
+	querySpec := QuerySpec{
+		Operator: operator,
+	}
+
+	for _, predicateToken := range predicateTokens {
+		predicate, err := p.parsePredicate(predicateToken, paramIndex)
+		if err != nil {
+			return QuerySpec{}, err
+		}
+		querySpec.Predicates = append(querySpec.Predicates, predicate)
+		paramIndex += predicate.Comparator.NumberOfArguments()
+	}
+
+	return querySpec, nil
+}
+
+func (p queryParser) splitPredicateTokens(tokens []string) (Operator, [][]string, error) {
 	var operator Operator
-	var predicates []Predicate
-	var aggregatedToken predicateToken
+	var predicateTokens [][]string
+	var aggregatedToken []string
+
 	for _, token := range tokens {
 		if token != "And" && token != "Or" {
 			aggregatedToken = append(aggregatedToken, token)
 		} else if len(aggregatedToken) == 0 {
-			return QuerySpec{}, NewInvalidQueryError(rawTokens)
+			return "", nil, NewInvalidQueryError(tokens)
 		} else if token == "And" && operator != OperatorOr {
 			operator = OperatorAnd
-			predicate := aggregatedToken.ToPredicate(paramIndex)
-			predicates = append(predicates, predicate)
-			paramIndex += predicate.Comparator.NumberOfArguments()
-			aggregatedToken = predicateToken{}
+			predicateTokens = append(predicateTokens, aggregatedToken)
+			aggregatedToken = nil
 		} else if token == "Or" && operator != OperatorAnd {
 			operator = OperatorOr
-			predicate := aggregatedToken.ToPredicate(paramIndex)
-			predicates = append(predicates, predicate)
-			paramIndex += predicate.Comparator.NumberOfArguments()
-			aggregatedToken = predicateToken{}
+			predicateTokens = append(predicateTokens, aggregatedToken)
+			aggregatedToken = nil
 		} else {
-			return QuerySpec{}, NewInvalidQueryError(rawTokens)
+			return "", nil, NewInvalidQueryError(tokens)
 		}
 	}
 	if len(aggregatedToken) == 0 {
-		return QuerySpec{}, NewInvalidQueryError(rawTokens)
+		return "", nil, NewInvalidQueryError(tokens)
 	}
-	predicates = append(predicates, aggregatedToken.ToPredicate(paramIndex))
+	predicateTokens = append(predicateTokens, aggregatedToken)
 
-	return QuerySpec{Operator: operator, Predicates: predicates}, nil
+	return operator, predicateTokens, nil
+}
+
+func (p queryParser) parsePredicate(t []string, paramIndex int) (Predicate, error) {
+	if len(t) > 1 && t[len(t)-1] == "Not" {
+		return p.createPredicate(t[:len(t)-1], ComparatorNot, paramIndex)
+	}
+	if len(t) > 2 && t[len(t)-2] == "Less" && t[len(t)-1] == "Than" {
+		return p.createPredicate(t[:len(t)-2], ComparatorLessThan, paramIndex)
+	}
+	if len(t) > 3 && t[len(t)-3] == "Less" && t[len(t)-2] == "Than" && t[len(t)-1] == "Equal" {
+		return p.createPredicate(t[:len(t)-3], ComparatorLessThanEqual, paramIndex)
+	}
+	if len(t) > 2 && t[len(t)-2] == "Greater" && t[len(t)-1] == "Than" {
+		return p.createPredicate(t[:len(t)-2], ComparatorGreaterThan, paramIndex)
+	}
+	if len(t) > 3 && t[len(t)-3] == "Greater" && t[len(t)-2] == "Than" && t[len(t)-1] == "Equal" {
+		return p.createPredicate(t[:len(t)-3], ComparatorGreaterThanEqual, paramIndex)
+	}
+	if len(t) > 2 && t[len(t)-2] == "Not" && t[len(t)-1] == "In" {
+		return p.createPredicate(t[:len(t)-2], ComparatorNotIn, paramIndex)
+	}
+	if len(t) > 1 && t[len(t)-1] == "In" {
+		return p.createPredicate(t[:len(t)-1], ComparatorIn, paramIndex)
+	}
+	if len(t) > 1 && t[len(t)-1] == "Between" {
+		return p.createPredicate(t[:len(t)-1], ComparatorBetween, paramIndex)
+	}
+	if len(t) > 1 && t[len(t)-1] == "True" {
+		return p.createPredicate(t[:len(t)-1], ComparatorTrue, paramIndex)
+	}
+	if len(t) > 1 && t[len(t)-1] == "False" {
+		return p.createPredicate(t[:len(t)-1], ComparatorFalse, paramIndex)
+	}
+	return p.createPredicate(t, ComparatorEqual, paramIndex)
+}
+
+func (p queryParser) createPredicate(t []string, comparator Comparator, paramIndex int) (Predicate, error) {
+	fields, ok := p.fieldResolver.ResolveStructField(p.StructModel, t)
+	if !ok {
+		return Predicate{}, NewStructFieldNotFoundError(t)
+	}
+
+	return Predicate{
+		FieldReference: fields,
+		Comparator:     comparator,
+		ParamIndex:     paramIndex,
+	}, nil
 }

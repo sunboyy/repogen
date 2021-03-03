@@ -2,8 +2,8 @@ package mongo
 
 import (
 	"bytes"
-	"fmt"
 	"io"
+	"strings"
 	"text/template"
 
 	"github.com/sunboyy/repogen/internal/code"
@@ -126,13 +126,13 @@ func (g RepositoryGenerator) mongoSorts(sortSpec []spec.Sort) ([]sort, error) {
 	var sorts []sort
 
 	for _, s := range sortSpec {
-		bsonTag, err := g.bsonTagFromFieldName(s.FieldName)
+		bsonFieldReference, err := g.bsonFieldReference(s.FieldReference)
 		if err != nil {
 			return nil, err
 		}
 
 		sorts = append(sorts, sort{
-			BsonTag:  bsonTag,
+			BsonTag:  bsonFieldReference,
 			Ordering: s.Ordering,
 		})
 	}
@@ -169,11 +169,11 @@ func (g RepositoryGenerator) getMongoUpdate(updateSpec spec.Update) (update, err
 	case spec.UpdateFields:
 		var update updateFields
 		for _, field := range updateSpec {
-			bsonTag, err := g.bsonTagFromFieldName(field.Name)
+			bsonFieldReference, err := g.bsonFieldReference(field.FieldReference)
 			if err != nil {
-				return nil, err
+				return querySpec{}, err
 			}
-			update.Fields = append(update.Fields, updateField{BsonTag: bsonTag, ParamIndex: field.ParamIndex})
+			update.Fields = append(update.Fields, updateField{BsonTag: bsonFieldReference, ParamIndex: field.ParamIndex})
 		}
 		return update, nil
 	default:
@@ -214,13 +214,13 @@ func (g RepositoryGenerator) mongoQuerySpec(query spec.QuerySpec) (querySpec, er
 	var predicates []predicate
 
 	for _, predicateSpec := range query.Predicates {
-		bsonTag, err := g.bsonTagFromFieldName(predicateSpec.Field)
+		bsonFieldReference, err := g.bsonFieldReference(predicateSpec.FieldReference)
 		if err != nil {
 			return querySpec{}, err
 		}
 
 		predicates = append(predicates, predicate{
-			Field:      bsonTag,
+			Field:      bsonFieldReference,
 			Comparator: predicateSpec.Comparator,
 			ParamIndex: predicateSpec.ParamIndex,
 		})
@@ -232,15 +232,22 @@ func (g RepositoryGenerator) mongoQuerySpec(query spec.QuerySpec) (querySpec, er
 	}, nil
 }
 
-func (g RepositoryGenerator) bsonTagFromFieldName(fieldName string) (string, error) {
-	structField, ok := g.StructModel.Fields.ByName(fieldName)
-	if !ok {
-		return "", fmt.Errorf("struct field %s not found", fieldName)
+func (g RepositoryGenerator) bsonFieldReference(fieldReference spec.FieldReference) (string, error) {
+	var bsonTags []string
+	for _, field := range fieldReference {
+		tag, err := g.bsonTagFromField(field)
+		if err != nil {
+			return "", err
+		}
+		bsonTags = append(bsonTags, tag)
 	}
+	return strings.Join(bsonTags, "."), nil
+}
 
-	bsonTag, ok := structField.Tags["bson"]
+func (g RepositoryGenerator) bsonTagFromField(field code.StructField) (string, error) {
+	bsonTag, ok := field.Tags["bson"]
 	if !ok {
-		return "", NewBsonTagNotFoundError(fieldName)
+		return "", NewBsonTagNotFoundError(field.Name)
 	}
 
 	return bsonTag[0], nil
