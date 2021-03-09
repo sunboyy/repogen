@@ -75,7 +75,7 @@ func generateFromRequest(fileName, structModelName, repositoryInterfaceName stri
 
 	var methodSpecs []spec.MethodSpec
 	for _, method := range intf.Methods {
-		methodSpec, err := spec.ParseInterfaceMethod(structModel, method)
+		methodSpec, err := spec.ParseInterfaceMethod(file.Structs, structModel, method)
 		if err != nil {
 			return "", err
 		}

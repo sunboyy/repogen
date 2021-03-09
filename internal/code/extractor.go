@@ -165,7 +165,7 @@ func getType(expr ast.Expr) Type {
 
 	case *ast.ArrayType:
 		containedType := getType(expr.Elt)
-		return ArrayType{containedType}
+		return ArrayType{ContainedType: containedType}
 
 	case *ast.InterfaceType:
 		var methods []Method

@@ -10,38 +10,58 @@ import (
 	"github.com/sunboyy/repogen/internal/testutils"
 )
 
+var (
+	idField = code.StructField{
+		Name: "ID",
+		Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"},
+		Tags: map[string][]string{"bson": {"_id", "omitempty"}},
+	}
+	genderField = code.StructField{
+		Name: "Gender",
+		Type: code.SimpleType("Gender"),
+		Tags: map[string][]string{"bson": {"gender"}},
+	}
+	ageField = code.StructField{
+		Name: "Age",
+		Type: code.SimpleType("int"),
+		Tags: map[string][]string{"bson": {"age"}},
+	}
+	nameField = code.StructField{
+		Name: "Name",
+		Type: code.SimpleType("NameModel"),
+		Tags: map[string][]string{"bson": {"name"}},
+	}
+	enabledField = code.StructField{
+		Name: "Enabled",
+		Type: code.SimpleType("bool"),
+		Tags: map[string][]string{"bson": {"enabled"}},
+	}
+	accessTokenField = code.StructField{
+		Name: "AccessToken",
+		Type: code.SimpleType("string"),
+	}
+
+	firstNameField = code.StructField{
+		Name: "First",
+		Type: code.SimpleType("string"),
+		Tags: map[string][]string{"bson": {"first"}},
+	}
+)
+
 var userModel = code.Struct{
 	Name: "UserModel",
 	Fields: code.StructFields{
-		{
-			Name: "ID",
-			Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"},
-			Tags: map[string][]string{"bson": {"_id", "omitempty"}},
-		},
+		idField,
 		{
 			Name: "Username",
 			Type: code.SimpleType("string"),
 			Tags: map[string][]string{"bson": {"username"}},
 		},
-		{
-			Name: "Gender",
-			Type: code.SimpleType("Gender"),
-			Tags: map[string][]string{"bson": {"gender"}},
-		},
-		{
-			Name: "Age",
-			Type: code.SimpleType("int"),
-			Tags: map[string][]string{"bson": {"age"}},
-		},
-		{
-			Name: "Enabled",
-			Type: code.SimpleType("bool"),
-			Tags: map[string][]string{"bson": {"enabled"}},
-		},
-		{
-			Name: "AccessToken",
-			Type: code.SimpleType("string"),
-		},
+		genderField,
+		ageField,
+		nameField,
+		enabledField,
+		accessTokenField,
 	},
 }
 
@@ -183,7 +203,7 @@ func TestGenerateMethod_Find(t *testing.T) {
 					Mode: spec.QueryModeOne,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorEqual, Field: "ID", ParamIndex: 1},
+							{Comparator: spec.ComparatorEqual, FieldReference: spec.FieldReference{idField}, ParamIndex: 1},
 						},
 					},
 				},
@@ -217,7 +237,7 @@ func (r *UserRepositoryMongo) FindByID(arg0 context.Context, arg1 primitive.Obje
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorEqual, Field: "Gender", ParamIndex: 1},
+							{Comparator: spec.ComparatorEqual, FieldReference: spec.FieldReference{genderField}, ParamIndex: 1},
 						},
 					},
 				},
@@ -240,6 +260,44 @@ func (r *UserRepositoryMongo) FindByGender(arg0 context.Context, arg1 Gender) ([
 `,
 		},
 		{
+			Name: "find with deep field reference",
+			MethodSpec: spec.MethodSpec{
+				Name: "FindByNameFirst",
+				Params: []code.Param{
+					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Name: "firstName", Type: code.SimpleType("string")},
+				},
+				Returns: []code.Type{
+					code.PointerType{ContainedType: code.SimpleType("UserModel")},
+					code.SimpleType("error"),
+				},
+				Operation: spec.FindOperation{
+					Mode: spec.QueryModeOne,
+					Query: spec.QuerySpec{
+						Predicates: []spec.Predicate{
+							{
+								Comparator:     spec.ComparatorEqual,
+								FieldReference: spec.FieldReference{nameField, firstNameField},
+								ParamIndex:     1,
+							},
+						},
+					},
+				},
+			},
+			ExpectedCode: `
+func (r *UserRepositoryMongo) FindByNameFirst(arg0 context.Context, arg1 string) (*UserModel, error) {
+	var entity UserModel
+	if err := r.collection.FindOne(arg0, bson.M{
+		"name.first": arg1,
+	}, options.FindOne().SetSort(bson.M{
+	})).Decode(&entity); err != nil {
+		return nil, err
+	}
+	return &entity, nil
+}
+`,
+		},
+		{
 			Name: "find with And operator",
 			MethodSpec: spec.MethodSpec{
 				Name: "FindByGenderAndAge",
@@ -257,8 +315,8 @@ func (r *UserRepositoryMongo) FindByGender(arg0 context.Context, arg1 Gender) ([
 					Query: spec.QuerySpec{
 						Operator: spec.OperatorAnd,
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorEqual, Field: "Gender", ParamIndex: 1},
-							{Comparator: spec.ComparatorEqual, Field: "Age", ParamIndex: 2},
+							{Comparator: spec.ComparatorEqual, FieldReference: spec.FieldReference{genderField}, ParamIndex: 1},
+							{Comparator: spec.ComparatorEqual, FieldReference: spec.FieldReference{ageField}, ParamIndex: 2},
 						},
 					},
 				},
@@ -301,8 +359,8 @@ func (r *UserRepositoryMongo) FindByGenderAndAge(arg0 context.Context, arg1 Gend
 					Query: spec.QuerySpec{
 						Operator: spec.OperatorOr,
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorEqual, Field: "Gender", ParamIndex: 1},
-							{Comparator: spec.ComparatorEqual, Field: "Age", ParamIndex: 2},
+							{Comparator: spec.ComparatorEqual, FieldReference: spec.FieldReference{genderField}, ParamIndex: 1},
+							{Comparator: spec.ComparatorEqual, FieldReference: spec.FieldReference{ageField}, ParamIndex: 2},
 						},
 					},
 				},
@@ -343,7 +401,7 @@ func (r *UserRepositoryMongo) FindByGenderOrAge(arg0 context.Context, arg1 Gende
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorNot, Field: "Gender", ParamIndex: 1},
+							{Comparator: spec.ComparatorNot, FieldReference: spec.FieldReference{genderField}, ParamIndex: 1},
 						},
 					},
 				},
@@ -381,7 +439,7 @@ func (r *UserRepositoryMongo) FindByGenderNot(arg0 context.Context, arg1 Gender)
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorLessThan, Field: "Age", ParamIndex: 1},
+							{Comparator: spec.ComparatorLessThan, FieldReference: spec.FieldReference{ageField}, ParamIndex: 1},
 						},
 					},
 				},
@@ -419,7 +477,7 @@ func (r *UserRepositoryMongo) FindByAgeLessThan(arg0 context.Context, arg1 int) 
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorLessThanEqual, Field: "Age", ParamIndex: 1},
+							{Comparator: spec.ComparatorLessThanEqual, FieldReference: spec.FieldReference{ageField}, ParamIndex: 1},
 						},
 					},
 				},
@@ -457,7 +515,7 @@ func (r *UserRepositoryMongo) FindByAgeLessThanEqual(arg0 context.Context, arg1 
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorGreaterThan, Field: "Age", ParamIndex: 1},
+							{Comparator: spec.ComparatorGreaterThan, FieldReference: spec.FieldReference{ageField}, ParamIndex: 1},
 						},
 					},
 				},
@@ -495,7 +553,7 @@ func (r *UserRepositoryMongo) FindByAgeGreaterThan(arg0 context.Context, arg1 in
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorGreaterThanEqual, Field: "Age", ParamIndex: 1},
+							{Comparator: spec.ComparatorGreaterThanEqual, FieldReference: spec.FieldReference{ageField}, ParamIndex: 1},
 						},
 					},
 				},
@@ -534,7 +592,7 @@ func (r *UserRepositoryMongo) FindByAgeGreaterThanEqual(arg0 context.Context, ar
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorBetween, Field: "Age", ParamIndex: 1},
+							{Comparator: spec.ComparatorBetween, FieldReference: spec.FieldReference{ageField}, ParamIndex: 1},
 						},
 					},
 				},
@@ -572,7 +630,7 @@ func (r *UserRepositoryMongo) FindByAgeBetween(arg0 context.Context, arg1 int, a
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorIn, Field: "Gender", ParamIndex: 1},
+							{Comparator: spec.ComparatorIn, FieldReference: spec.FieldReference{genderField}, ParamIndex: 1},
 						},
 					},
 				},
@@ -610,7 +668,7 @@ func (r *UserRepositoryMongo) FindByGenderIn(arg0 context.Context, arg1 []Gender
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorNotIn, Field: "Gender", ParamIndex: 1},
+							{Comparator: spec.ComparatorNotIn, FieldReference: spec.FieldReference{genderField}, ParamIndex: 1},
 						},
 					},
 				},
@@ -647,7 +705,7 @@ func (r *UserRepositoryMongo) FindByGenderNotIn(arg0 context.Context, arg1 []Gen
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorTrue, Field: "Enabled", ParamIndex: 1},
+							{Comparator: spec.ComparatorTrue, FieldReference: spec.FieldReference{enabledField}, ParamIndex: 1},
 						},
 					},
 				},
@@ -684,7 +742,7 @@ func (r *UserRepositoryMongo) FindByEnabledTrue(arg0 context.Context) ([]*UserMo
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorFalse, Field: "Enabled", ParamIndex: 1},
+							{Comparator: spec.ComparatorFalse, FieldReference: spec.FieldReference{enabledField}, ParamIndex: 1},
 						},
 					},
 				},
@@ -720,7 +778,7 @@ func (r *UserRepositoryMongo) FindByEnabledFalse(arg0 context.Context) ([]*UserM
 				Operation: spec.FindOperation{
 					Mode: spec.QueryModeMany,
 					Sorts: []spec.Sort{
-						{FieldName: "Age", Ordering: spec.OrderingAscending},
+						{FieldReference: spec.FieldReference{ageField}, Ordering: spec.OrderingAscending},
 					},
 				},
 			},
@@ -745,7 +803,7 @@ func (r *UserRepositoryMongo) FindAllOrderByAge(arg0 context.Context) ([]*UserMo
 		{
 			Name: "find with sort descending",
 			MethodSpec: spec.MethodSpec{
-				Name: "FindAllOrderByAge",
+				Name: "FindAllOrderByAgeDesc",
 				Params: []code.Param{
 					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
 				},
@@ -756,16 +814,52 @@ func (r *UserRepositoryMongo) FindAllOrderByAge(arg0 context.Context) ([]*UserMo
 				Operation: spec.FindOperation{
 					Mode: spec.QueryModeMany,
 					Sorts: []spec.Sort{
-						{FieldName: "Age", Ordering: spec.OrderingDescending},
+						{FieldReference: spec.FieldReference{ageField}, Ordering: spec.OrderingDescending},
 					},
 				},
 			},
 			ExpectedCode: `
-func (r *UserRepositoryMongo) FindAllOrderByAge(arg0 context.Context) ([]*UserModel, error) {
+func (r *UserRepositoryMongo) FindAllOrderByAgeDesc(arg0 context.Context) ([]*UserModel, error) {
 	cursor, err := r.collection.Find(arg0, bson.M{
 
 	}, options.Find().SetSort(bson.M{
 		"age": -1,
+	}))
+	if err != nil {
+		return nil, err
+	}
+	var entities []*UserModel
+	if err := cursor.All(arg0, &entities); err != nil {
+		return nil, err
+	}
+	return entities, nil
+}
+`,
+		},
+		{
+			Name: "find with deep sort ascending",
+			MethodSpec: spec.MethodSpec{
+				Name: "FindAllOrderByNameFirst",
+				Params: []code.Param{
+					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+				},
+				Returns: []code.Type{
+					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+					code.SimpleType("error"),
+				},
+				Operation: spec.FindOperation{
+					Mode: spec.QueryModeMany,
+					Sorts: []spec.Sort{
+						{FieldReference: spec.FieldReference{nameField, firstNameField}, Ordering: spec.OrderingAscending},
+					},
+				},
+			},
+			ExpectedCode: `
+func (r *UserRepositoryMongo) FindAllOrderByNameFirst(arg0 context.Context) ([]*UserModel, error) {
+	cursor, err := r.collection.Find(arg0, bson.M{
+
+	}, options.Find().SetSort(bson.M{
+		"name.first": 1,
 	}))
 	if err != nil {
 		return nil, err
@@ -792,8 +886,8 @@ func (r *UserRepositoryMongo) FindAllOrderByAge(arg0 context.Context) ([]*UserMo
 				Operation: spec.FindOperation{
 					Mode: spec.QueryModeMany,
 					Sorts: []spec.Sort{
-						{FieldName: "Gender", Ordering: spec.OrderingAscending},
-						{FieldName: "Age", Ordering: spec.OrderingDescending},
+						{FieldReference: spec.FieldReference{genderField}, Ordering: spec.OrderingAscending},
+						{FieldReference: spec.FieldReference{ageField}, Ordering: spec.OrderingDescending},
 					},
 				},
 			},
@@ -855,7 +949,7 @@ func TestGenerateMethod_Update(t *testing.T) {
 					Mode:   spec.QueryModeOne,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Field: "ID", Comparator: spec.ComparatorEqual, ParamIndex: 2},
+							{FieldReference: spec.FieldReference{idField}, Comparator: spec.ComparatorEqual, ParamIndex: 2},
 						},
 					},
 				},
@@ -889,12 +983,12 @@ func (r *UserRepositoryMongo) UpdateByID(arg0 context.Context, arg1 *UserModel, 
 				},
 				Operation: spec.UpdateOperation{
 					Update: spec.UpdateFields{
-						{Name: "Age", ParamIndex: 1},
+						{FieldReference: spec.FieldReference{ageField}, ParamIndex: 1},
 					},
 					Mode: spec.QueryModeOne,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Field: "ID", Comparator: spec.ComparatorEqual, ParamIndex: 2},
+							{FieldReference: spec.FieldReference{idField}, Comparator: spec.ComparatorEqual, ParamIndex: 2},
 						},
 					},
 				},
@@ -930,12 +1024,12 @@ func (r *UserRepositoryMongo) UpdateAgeByID(arg0 context.Context, arg1 int, arg2
 				},
 				Operation: spec.UpdateOperation{
 					Update: spec.UpdateFields{
-						{Name: "Age", ParamIndex: 1},
+						{FieldReference: spec.FieldReference{ageField}, ParamIndex: 1},
 					},
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Field: "Gender", Comparator: spec.ComparatorEqual, ParamIndex: 2},
+							{FieldReference: spec.FieldReference{genderField}, Comparator: spec.ComparatorEqual, ParamIndex: 2},
 						},
 					},
 				},
@@ -953,6 +1047,47 @@ func (r *UserRepositoryMongo) UpdateAgeByGender(arg0 context.Context, arg1 int, 
 		return 0, err
 	}
 	return int(result.MatchedCount), err
+}
+`,
+		},
+		{
+			Name: "update with deeply referenced field",
+			MethodSpec: spec.MethodSpec{
+				Name: "UpdateNameFirstByID",
+				Params: []code.Param{
+					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Name: "firstName", Type: code.SimpleType("string")},
+					{Name: "id", Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
+				},
+				Returns: []code.Type{
+					code.SimpleType("bool"),
+					code.SimpleType("error"),
+				},
+				Operation: spec.UpdateOperation{
+					Update: spec.UpdateFields{
+						{FieldReference: spec.FieldReference{nameField, firstNameField}, ParamIndex: 1},
+					},
+					Mode: spec.QueryModeOne,
+					Query: spec.QuerySpec{
+						Predicates: []spec.Predicate{
+							{FieldReference: spec.FieldReference{idField}, Comparator: spec.ComparatorEqual, ParamIndex: 2},
+						},
+					},
+				},
+			},
+			ExpectedCode: `
+func (r *UserRepositoryMongo) UpdateNameFirstByID(arg0 context.Context, arg1 string, arg2 primitive.ObjectID) (bool, error) {
+	result, err := r.collection.UpdateOne(arg0, bson.M{
+		"_id": arg2,
+	}, bson.M{
+		"$set": bson.M{
+			"name.first": arg1,
+		},
+	})
+	if err != nil {
+		return false, err
+	}
+	return result.MatchedCount > 0, err
 }
 `,
 		},
@@ -990,7 +1125,7 @@ func TestGenerateMethod_Delete(t *testing.T) {
 					Mode: spec.QueryModeOne,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorEqual, Field: "ID", ParamIndex: 1},
+							{Comparator: spec.ComparatorEqual, FieldReference: spec.FieldReference{idField}, ParamIndex: 1},
 						},
 					},
 				},
@@ -1023,7 +1158,7 @@ func (r *UserRepositoryMongo) DeleteByID(arg0 context.Context, arg1 primitive.Ob
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorEqual, Field: "Gender", ParamIndex: 1},
+							{Comparator: spec.ComparatorEqual, FieldReference: spec.FieldReference{genderField}, ParamIndex: 1},
 						},
 					},
 				},
@@ -1058,8 +1193,8 @@ func (r *UserRepositoryMongo) DeleteByGender(arg0 context.Context, arg1 Gender) 
 					Query: spec.QuerySpec{
 						Operator: spec.OperatorAnd,
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorEqual, Field: "Gender", ParamIndex: 1},
-							{Comparator: spec.ComparatorEqual, Field: "Age", ParamIndex: 2},
+							{Comparator: spec.ComparatorEqual, FieldReference: spec.FieldReference{genderField}, ParamIndex: 1},
+							{Comparator: spec.ComparatorEqual, FieldReference: spec.FieldReference{ageField}, ParamIndex: 2},
 						},
 					},
 				},
@@ -1097,8 +1232,8 @@ func (r *UserRepositoryMongo) DeleteByGenderAndAge(arg0 context.Context, arg1 Ge
 					Query: spec.QuerySpec{
 						Operator: spec.OperatorOr,
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorEqual, Field: "Gender", ParamIndex: 1},
-							{Comparator: spec.ComparatorEqual, Field: "Age", ParamIndex: 2},
+							{Comparator: spec.ComparatorEqual, FieldReference: spec.FieldReference{genderField}, ParamIndex: 1},
+							{Comparator: spec.ComparatorEqual, FieldReference: spec.FieldReference{ageField}, ParamIndex: 2},
 						},
 					},
 				},
@@ -1134,7 +1269,7 @@ func (r *UserRepositoryMongo) DeleteByGenderOrAge(arg0 context.Context, arg1 Gen
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorNot, Field: "Gender", ParamIndex: 1},
+							{Comparator: spec.ComparatorNot, FieldReference: spec.FieldReference{genderField}, ParamIndex: 1},
 						},
 					},
 				},
@@ -1167,7 +1302,7 @@ func (r *UserRepositoryMongo) DeleteByGenderNot(arg0 context.Context, arg1 Gende
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorLessThan, Field: "Age", ParamIndex: 1},
+							{Comparator: spec.ComparatorLessThan, FieldReference: spec.FieldReference{ageField}, ParamIndex: 1},
 						},
 					},
 				},
@@ -1200,7 +1335,7 @@ func (r *UserRepositoryMongo) DeleteByAgeLessThan(arg0 context.Context, arg1 int
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorLessThanEqual, Field: "Age", ParamIndex: 1},
+							{Comparator: spec.ComparatorLessThanEqual, FieldReference: spec.FieldReference{ageField}, ParamIndex: 1},
 						},
 					},
 				},
@@ -1233,7 +1368,7 @@ func (r *UserRepositoryMongo) DeleteByAgeLessThanEqual(arg0 context.Context, arg
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorGreaterThan, Field: "Age", ParamIndex: 1},
+							{Comparator: spec.ComparatorGreaterThan, FieldReference: spec.FieldReference{ageField}, ParamIndex: 1},
 						},
 					},
 				},
@@ -1266,7 +1401,7 @@ func (r *UserRepositoryMongo) DeleteByAgeGreaterThan(arg0 context.Context, arg1 
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorGreaterThanEqual, Field: "Age", ParamIndex: 1},
+							{Comparator: spec.ComparatorGreaterThanEqual, FieldReference: spec.FieldReference{ageField}, ParamIndex: 1},
 						},
 					},
 				},
@@ -1300,7 +1435,7 @@ func (r *UserRepositoryMongo) DeleteByAgeGreaterThanEqual(arg0 context.Context, 
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorBetween, Field: "Age", ParamIndex: 1},
+							{Comparator: spec.ComparatorBetween, FieldReference: spec.FieldReference{ageField}, ParamIndex: 1},
 						},
 					},
 				},
@@ -1333,7 +1468,7 @@ func (r *UserRepositoryMongo) DeleteByAgeBetween(arg0 context.Context, arg1 int,
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorIn, Field: "Gender", ParamIndex: 1},
+							{Comparator: spec.ComparatorIn, FieldReference: spec.FieldReference{genderField}, ParamIndex: 1},
 						},
 					},
 				},
@@ -1386,7 +1521,7 @@ func TestGenerateMethod_Count(t *testing.T) {
 				Operation: spec.CountOperation{
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Field: "Gender", Comparator: spec.ComparatorEqual, ParamIndex: 1},
+							{FieldReference: spec.FieldReference{genderField}, Comparator: spec.ComparatorEqual, ParamIndex: 1},
 						},
 					},
 				},
@@ -1420,8 +1555,8 @@ func (r *UserRepositoryMongo) CountByGender(arg0 context.Context, arg1 Gender) (
 					Query: spec.QuerySpec{
 						Operator: spec.OperatorAnd,
 						Predicates: []spec.Predicate{
-							{Field: "Gender", Comparator: spec.ComparatorEqual, ParamIndex: 1},
-							{Field: "Age", Comparator: spec.ComparatorEqual, ParamIndex: 2},
+							{FieldReference: spec.FieldReference{genderField}, Comparator: spec.ComparatorEqual, ParamIndex: 1},
+							{FieldReference: spec.FieldReference{ageField}, Comparator: spec.ComparatorEqual, ParamIndex: 2},
 						},
 					},
 				},
@@ -1458,8 +1593,8 @@ func (r *UserRepositoryMongo) CountByGenderAndCity(arg0 context.Context, arg1 Ge
 					Query: spec.QuerySpec{
 						Operator: spec.OperatorOr,
 						Predicates: []spec.Predicate{
-							{Field: "Gender", Comparator: spec.ComparatorEqual, ParamIndex: 1},
-							{Field: "Age", Comparator: spec.ComparatorEqual, ParamIndex: 2},
+							{FieldReference: spec.FieldReference{genderField}, Comparator: spec.ComparatorEqual, ParamIndex: 1},
+							{FieldReference: spec.FieldReference{ageField}, Comparator: spec.ComparatorEqual, ParamIndex: 2},
 						},
 					},
 				},
@@ -1494,7 +1629,7 @@ func (r *UserRepositoryMongo) CountByGenderOrCity(arg0 context.Context, arg1 Gen
 				Operation: spec.CountOperation{
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Field: "Gender", Comparator: spec.ComparatorNot, ParamIndex: 1},
+							{FieldReference: spec.FieldReference{genderField}, Comparator: spec.ComparatorNot, ParamIndex: 1},
 						},
 					},
 				},
@@ -1526,7 +1661,7 @@ func (r *UserRepositoryMongo) CountByGenderNot(arg0 context.Context, arg1 Gender
 				Operation: spec.CountOperation{
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Field: "Age", Comparator: spec.ComparatorLessThan, ParamIndex: 1},
+							{FieldReference: spec.FieldReference{ageField}, Comparator: spec.ComparatorLessThan, ParamIndex: 1},
 						},
 					},
 				},
@@ -1558,7 +1693,7 @@ func (r *UserRepositoryMongo) CountByAgeLessThan(arg0 context.Context, arg1 int)
 				Operation: spec.CountOperation{
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Field: "Age", Comparator: spec.ComparatorLessThanEqual, ParamIndex: 1},
+							{FieldReference: spec.FieldReference{ageField}, Comparator: spec.ComparatorLessThanEqual, ParamIndex: 1},
 						},
 					},
 				},
@@ -1590,7 +1725,7 @@ func (r *UserRepositoryMongo) CountByAgeLessThanEqual(arg0 context.Context, arg1
 				Operation: spec.CountOperation{
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Field: "Age", Comparator: spec.ComparatorGreaterThan, ParamIndex: 1},
+							{FieldReference: spec.FieldReference{ageField}, Comparator: spec.ComparatorGreaterThan, ParamIndex: 1},
 						},
 					},
 				},
@@ -1622,7 +1757,7 @@ func (r *UserRepositoryMongo) CountByAgeGreaterThan(arg0 context.Context, arg1 i
 				Operation: spec.CountOperation{
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Field: "Age", Comparator: spec.ComparatorGreaterThanEqual, ParamIndex: 1},
+							{FieldReference: spec.FieldReference{ageField}, Comparator: spec.ComparatorGreaterThanEqual, ParamIndex: 1},
 						},
 					},
 				},
@@ -1655,7 +1790,7 @@ func (r *UserRepositoryMongo) CountByAgeGreaterThanEqual(arg0 context.Context, a
 				Operation: spec.CountOperation{
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Field: "Age", Comparator: spec.ComparatorBetween, ParamIndex: 1},
+							{FieldReference: spec.FieldReference{ageField}, Comparator: spec.ComparatorBetween, ParamIndex: 1},
 						},
 					},
 				},
@@ -1687,7 +1822,7 @@ func (r *UserRepositoryMongo) CountByAgeBetween(arg0 context.Context, arg1 int, 
 				Operation: spec.CountOperation{
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Field: "Age", Comparator: spec.ComparatorIn, ParamIndex: 1},
+							{FieldReference: spec.FieldReference{ageField}, Comparator: spec.ComparatorIn, ParamIndex: 1},
 						},
 					},
 				},
@@ -1770,7 +1905,7 @@ func TestGenerateMethod_Invalid(t *testing.T) {
 					Mode: spec.QueryModeOne,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Field: "AccessToken", Comparator: spec.ComparatorEqual, ParamIndex: 1},
+							{FieldReference: spec.FieldReference{accessTokenField}, Comparator: spec.ComparatorEqual, ParamIndex: 1},
 						},
 					},
 				},
@@ -1791,7 +1926,7 @@ func TestGenerateMethod_Invalid(t *testing.T) {
 				Operation: spec.FindOperation{
 					Mode: spec.QueryModeOne,
 					Sorts: []spec.Sort{
-						{FieldName: "AccessToken", Ordering: spec.OrderingAscending},
+						{FieldReference: spec.FieldReference{accessTokenField}, Ordering: spec.OrderingAscending},
 					},
 				},
 			},
@@ -1812,12 +1947,12 @@ func TestGenerateMethod_Invalid(t *testing.T) {
 				},
 				Operation: spec.UpdateOperation{
 					Update: spec.UpdateFields{
-						{Name: "AccessToken", ParamIndex: 1},
+						{FieldReference: spec.FieldReference{accessTokenField}, ParamIndex: 1},
 					},
 					Mode: spec.QueryModeOne,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Field: "ID", Comparator: spec.ComparatorEqual, ParamIndex: 2},
+							{FieldReference: spec.FieldReference{idField}, Comparator: spec.ComparatorEqual, ParamIndex: 2},
 						},
 					},
 				},
@@ -1842,7 +1977,7 @@ func TestGenerateMethod_Invalid(t *testing.T) {
 					Mode:   spec.QueryModeOne,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Field: "ID", Comparator: spec.ComparatorEqual, ParamIndex: 2},
+							{FieldReference: spec.FieldReference{idField}, Comparator: spec.ComparatorEqual, ParamIndex: 2},
 						},
 					},
 				},

@@ -1,15 +1,16 @@
 package spec
 
 import (
-	"strings"
-
 	"github.com/fatih/camelcase"
 	"github.com/sunboyy/repogen/internal/code"
 )
 
 // ParseInterfaceMethod returns repository method spec from declared interface method
-func ParseInterfaceMethod(structModel code.Struct, method code.Method) (MethodSpec, error) {
+func ParseInterfaceMethod(structs code.Structs, structModel code.Struct, method code.Method) (MethodSpec, error) {
 	parser := interfaceMethodParser{
+		fieldResolver: fieldResolver{
+			Structs: structs,
+		},
 		StructModel: structModel,
 		Method:      method,
 	}
@@ -18,8 +19,9 @@ func ParseInterfaceMethod(structModel code.Struct, method code.Method) (MethodSp
 }
 
 type interfaceMethodParser struct {
-	StructModel code.Struct
-	Method      code.Method
+	fieldResolver fieldResolver
+	StructModel   code.Struct
+	Method        code.Method
 }
 
 func (p interfaceMethodParser) Parse() (MethodSpec, error) {
@@ -115,7 +117,7 @@ func (p interfaceMethodParser) parseFindOperation(tokens []string) (Operation, e
 
 	queryTokens, sortTokens := p.splitQueryAndSortTokens(tokens)
 
-	querySpec, err := parseQuery(queryTokens, 1)
+	querySpec, err := p.parseQuery(queryTokens, 1)
 	if err != nil {
 		return nil, err
 	}
@@ -145,38 +147,43 @@ func (p interfaceMethodParser) parseSort(rawTokens []string) ([]Sort, error) {
 		return nil, nil
 	}
 
-	sortTokens := rawTokens[2:]
-
-	var sorts []Sort
-	var aggregatedToken sortToken
-	for _, token := range sortTokens {
-		if token != "And" {
-			aggregatedToken = append(aggregatedToken, token)
-		} else if len(aggregatedToken) == 0 {
-			return nil, NewInvalidSortError(rawTokens)
-		} else {
-			sorts = append(sorts, aggregatedToken.ToSort())
-			aggregatedToken = sortToken{}
-		}
-	}
-	if len(aggregatedToken) == 0 {
+	sortTokens, ok := splitByAnd(rawTokens[2:])
+	if !ok {
 		return nil, NewInvalidSortError(rawTokens)
 	}
-	sorts = append(sorts, aggregatedToken.ToSort())
+
+	var sorts []Sort
+	for _, token := range sortTokens {
+		sort, err := p.parseSortToken(token)
+		if err != nil {
+			return nil, err
+		}
+		sorts = append(sorts, sort)
+	}
 
 	return sorts, nil
 }
 
-type sortToken []string
-
-func (t sortToken) ToSort() Sort {
+func (p interfaceMethodParser) parseSortToken(t []string) (Sort, error) {
 	if len(t) > 1 && t[len(t)-1] == "Asc" {
-		return Sort{FieldName: strings.Join(t[:len(t)-1], ""), Ordering: OrderingAscending}
+		return p.createSort(t[:len(t)-1], OrderingAscending)
 	}
 	if len(t) > 1 && t[len(t)-1] == "Desc" {
-		return Sort{FieldName: strings.Join(t[:len(t)-1], ""), Ordering: OrderingDescending}
+		return p.createSort(t[:len(t)-1], OrderingDescending)
 	}
-	return Sort{FieldName: strings.Join(t, ""), Ordering: OrderingAscending}
+	return p.createSort(t, OrderingAscending)
+}
+
+func (p interfaceMethodParser) createSort(t []string, ordering Ordering) (Sort, error) {
+	fields, ok := p.fieldResolver.ResolveStructField(p.StructModel, t)
+	if !ok {
+		return Sort{}, NewStructFieldNotFoundError(t)
+	}
+
+	return Sort{
+		FieldReference: fields,
+		Ordering:       ordering,
+	}, nil
 }
 
 func (p interfaceMethodParser) splitQueryAndSortTokens(tokens []string) ([]string, []string) {
@@ -245,7 +252,7 @@ func (p interfaceMethodParser) parseUpdateOperation(tokens []string) (Operation,
 		return nil, err
 	}
 
-	querySpec, err := parseQuery(queryTokens, 1+update.NumberOfArguments())
+	querySpec, err := p.parseQuery(queryTokens, 1+update.NumberOfArguments())
 	if err != nil {
 		return nil, err
 	}
@@ -270,37 +277,57 @@ func (p interfaceMethodParser) parseUpdate(tokens []string) (Update, error) {
 		return UpdateModel{}, nil
 	}
 
+	updateFieldTokens, ok := splitByAnd(tokens)
+	if !ok {
+		return nil, InvalidUpdateFieldsError
+	}
+
+	var updateFields UpdateFields
+
 	paramIndex := 1
-	var update UpdateFields
-	var aggregatedToken string
+	for _, updateFieldToken := range updateFieldTokens {
+		updateFieldReference, ok := p.fieldResolver.ResolveStructField(p.StructModel, updateFieldToken)
+		if !ok {
+			return nil, NewStructFieldNotFoundError(updateFieldToken)
+		}
+
+		updateFields = append(updateFields, UpdateField{
+			FieldReference: updateFieldReference,
+			ParamIndex:     paramIndex,
+		})
+		paramIndex++
+	}
+
+	for _, field := range updateFields {
+		if len(p.Method.Params) <= field.ParamIndex ||
+			field.FieldReference.ReferencedField().Type != p.Method.Params[field.ParamIndex].Type {
+			return nil, InvalidUpdateFieldsError
+		}
+	}
+
+	return updateFields, nil
+}
+
+func splitByAnd(tokens []string) ([][]string, bool) {
+	var updateFieldTokens [][]string
+	var aggregatedToken []string
+
 	for _, token := range tokens {
 		if token != "And" {
-			aggregatedToken += token
+			aggregatedToken = append(aggregatedToken, token)
 		} else if len(aggregatedToken) == 0 {
-			return nil, InvalidUpdateFieldsError
+			return nil, false
 		} else {
-			update = append(update, UpdateField{Name: aggregatedToken, ParamIndex: paramIndex})
-			paramIndex++
-			aggregatedToken = ""
+			updateFieldTokens = append(updateFieldTokens, aggregatedToken)
+			aggregatedToken = nil
 		}
 	}
 	if len(aggregatedToken) == 0 {
-		return nil, InvalidUpdateFieldsError
+		return nil, false
 	}
-	update = append(update, UpdateField{Name: aggregatedToken, ParamIndex: paramIndex})
+	updateFieldTokens = append(updateFieldTokens, aggregatedToken)
 
-	for _, field := range update {
-		structField, ok := p.StructModel.Fields.ByName(field.Name)
-		if !ok {
-			return nil, NewStructFieldNotFoundError(field.Name)
-		}
-
-		if len(p.Method.Params) <= field.ParamIndex || structField.Type != p.Method.Params[field.ParamIndex].Type {
-			return nil, InvalidUpdateFieldsError
-		}
-	}
-
-	return update, nil
+	return updateFieldTokens, true
 }
 
 func (p interfaceMethodParser) splitUpdateAndQueryTokens(tokens []string) ([]string, []string) {
@@ -325,7 +352,7 @@ func (p interfaceMethodParser) parseDeleteOperation(tokens []string) (Operation,
 		return nil, err
 	}
 
-	querySpec, err := parseQuery(tokens, 1)
+	querySpec, err := p.parseQuery(tokens, 1)
 	if err != nil {
 		return nil, err
 	}
@@ -349,7 +376,7 @@ func (p interfaceMethodParser) parseCountOperation(tokens []string) (Operation, 
 		return nil, err
 	}
 
-	querySpec, err := parseQuery(tokens, 1)
+	querySpec, err := p.parseQuery(tokens, 1)
 	if err != nil {
 		return nil, err
 	}
@@ -420,19 +447,15 @@ func (p interfaceMethodParser) validateQueryFromParams(params []code.Param, quer
 
 	var currentParamIndex int
 	for _, predicate := range querySpec.Predicates {
-		structField, ok := p.StructModel.Fields.ByName(predicate.Field)
-		if !ok {
-			return NewStructFieldNotFoundError(predicate.Field)
-		}
-
 		if (predicate.Comparator == ComparatorTrue || predicate.Comparator == ComparatorFalse) &&
-			structField.Type != code.SimpleType("bool") {
-			return NewIncompatibleComparatorError(predicate.Comparator, structField)
+			predicate.FieldReference.ReferencedField().Type != code.SimpleType("bool") {
+			return NewIncompatibleComparatorError(predicate.Comparator,
+				predicate.FieldReference.ReferencedField())
 		}
 
 		for i := 0; i < predicate.Comparator.NumberOfArguments(); i++ {
 			if params[currentParamIndex].Type != predicate.Comparator.ArgumentTypeFromFieldType(
-				structField.Type) {
+				predicate.FieldReference.ReferencedField().Type) {
 				return InvalidParamError
 			}
 			currentParamIndex++
@@ -440,4 +463,12 @@ func (p interfaceMethodParser) validateQueryFromParams(params []code.Param, quer
 	}
 
 	return nil
+}
+
+func (p interfaceMethodParser) parseQuery(queryTokens []string, paramIndex int) (QuerySpec, error) {
+	queryParser := queryParser{
+		fieldResolver: p.fieldResolver,
+		StructModel:   p.StructModel,
+	}
+	return queryParser.parseQuery(queryTokens, paramIndex)
 }

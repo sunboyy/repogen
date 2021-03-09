@@ -22,13 +22,13 @@ func TestError(t *testing.T) {
 		},
 		{
 			Name:           "StructFieldNotFoundError",
-			Error:          spec.NewStructFieldNotFoundError("Country"),
-			ExpectedString: "struct field 'Country' not found",
+			Error:          spec.NewStructFieldNotFoundError([]string{"Phone", "Number"}),
+			ExpectedString: "struct field 'PhoneNumber' not found",
 		},
 		{
 			Name:           "InvalidQueryError",
-			Error:          spec.NewInvalidQueryError([]string{"By", "And"}),
-			ExpectedString: "invalid query 'ByAnd'",
+			Error:          spec.NewInvalidQueryError([]string{"And"}),
+			ExpectedString: "invalid query 'And'",
 		},
 		{
 			Name: "IncompatibleComparatorError",

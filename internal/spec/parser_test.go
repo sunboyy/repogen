@@ -8,34 +8,87 @@ import (
 	"github.com/sunboyy/repogen/internal/spec"
 )
 
-var structModel = code.Struct{
-	Name: "UserModel",
-	Fields: code.StructFields{
-		{
-			Name: "ID",
-			Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"},
+var (
+	idField = code.StructField{
+		Name: "ID",
+		Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"},
+	}
+	phoneNumberField = code.StructField{
+		Name: "PhoneNumber",
+		Type: code.SimpleType("string"),
+	}
+	genderField = code.StructField{
+		Name: "Gender",
+		Type: code.SimpleType("Gender"),
+	}
+	cityField = code.StructField{
+		Name: "City",
+		Type: code.SimpleType("string"),
+	}
+	ageField = code.StructField{
+		Name: "Age",
+		Type: code.SimpleType("int"),
+	}
+	nameField = code.StructField{
+		Name: "Name",
+		Type: code.SimpleType("NameModel"),
+	}
+	contactField = code.StructField{
+		Name: "Contact",
+		Type: code.SimpleType("ContactModel"),
+	}
+	referrerField = code.StructField{
+		Name: "Referrer",
+		Type: code.PointerType{ContainedType: code.SimpleType("UserModel")},
+	}
+	defaultPaymentField = code.StructField{
+		Name: "DefaultPayment",
+		Type: code.ExternalType{PackageAlias: "payment", Name: "Payment"},
+	}
+	enabledField = code.StructField{
+		Name: "Enabled",
+		Type: code.SimpleType("bool"),
+	}
+
+	firstNameField = code.StructField{
+		Name: "First",
+		Type: code.SimpleType("string"),
+	}
+	lastNameField = code.StructField{
+		Name: "Last",
+		Type: code.SimpleType("string"),
+	}
+)
+
+var (
+	nameStruct = code.Struct{
+		Name: "NameModel",
+		Fields: code.StructFields{
+			firstNameField,
+			lastNameField,
 		},
-		{
-			Name: "PhoneNumber",
-			Type: code.SimpleType("string"),
+	}
+
+	structModel = code.Struct{
+		Name: "UserModel",
+		Fields: code.StructFields{
+			idField,
+			phoneNumberField,
+			genderField,
+			cityField,
+			ageField,
+			nameField,
+			contactField,
+			referrerField,
+			defaultPaymentField,
+			enabledField,
 		},
-		{
-			Name: "Gender",
-			Type: code.SimpleType("Gender"),
-		},
-		{
-			Name: "City",
-			Type: code.SimpleType("string"),
-		},
-		{
-			Name: "Age",
-			Type: code.SimpleType("int"),
-		},
-		{
-			Name: "Enabled",
-			Type: code.SimpleType("bool"),
-		},
-	},
+	}
+)
+
+var structs = code.Structs{
+	nameStruct,
+	structModel,
 }
 
 type ParseInterfaceMethodTestCase struct {
@@ -84,7 +137,7 @@ func TestParseInterfaceMethod_Insert(t *testing.T) {
 
 	for _, testCase := range testTable {
 		t.Run(testCase.Name, func(t *testing.T) {
-			actualSpec, err := spec.ParseInterfaceMethod(structModel, testCase.Method)
+			actualSpec, err := spec.ParseInterfaceMethod(structs, structModel, testCase.Method)
 
 			if err != nil {
 				t.Errorf("Error = %s", err)
@@ -120,7 +173,7 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 			ExpectedOperation: spec.FindOperation{
 				Mode: spec.QueryModeOne,
 				Query: spec.QuerySpec{Predicates: []spec.Predicate{
-					{Field: "ID", Comparator: spec.ComparatorEqual, ParamIndex: 1},
+					{FieldReference: spec.FieldReference{idField}, Comparator: spec.ComparatorEqual, ParamIndex: 1},
 				}},
 			},
 		},
@@ -140,7 +193,7 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 			ExpectedOperation: spec.FindOperation{
 				Mode: spec.QueryModeOne,
 				Query: spec.QuerySpec{Predicates: []spec.Predicate{
-					{Field: "PhoneNumber", Comparator: spec.ComparatorEqual, ParamIndex: 1},
+					{FieldReference: spec.FieldReference{phoneNumberField}, Comparator: spec.ComparatorEqual, ParamIndex: 1},
 				}},
 			},
 		},
@@ -160,7 +213,47 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 			ExpectedOperation: spec.FindOperation{
 				Mode: spec.QueryModeMany,
 				Query: spec.QuerySpec{Predicates: []spec.Predicate{
-					{Field: "City", Comparator: spec.ComparatorEqual, ParamIndex: 1},
+					{FieldReference: spec.FieldReference{cityField}, Comparator: spec.ComparatorEqual, ParamIndex: 1},
+				}},
+			},
+		},
+		{
+			Name: "FindByDeepArg method",
+			Method: code.Method{
+				Name: "FindByNameFirst",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("string")},
+				},
+				Returns: []code.Type{
+					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedOperation: spec.FindOperation{
+				Mode: spec.QueryModeMany,
+				Query: spec.QuerySpec{Predicates: []spec.Predicate{
+					{FieldReference: spec.FieldReference{nameField, firstNameField}, Comparator: spec.ComparatorEqual, ParamIndex: 1},
+				}},
+			},
+		},
+		{
+			Name: "FindByDeepPointerArg method",
+			Method: code.Method{
+				Name: "FindByReferrerID",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
+				},
+				Returns: []code.Type{
+					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedOperation: spec.FindOperation{
+				Mode: spec.QueryModeMany,
+				Query: spec.QuerySpec{Predicates: []spec.Predicate{
+					{FieldReference: spec.FieldReference{referrerField, idField}, Comparator: spec.ComparatorEqual, ParamIndex: 1},
 				}},
 			},
 		},
@@ -199,8 +292,8 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 				Query: spec.QuerySpec{
 					Operator: spec.OperatorAnd,
 					Predicates: []spec.Predicate{
-						{Field: "City", Comparator: spec.ComparatorEqual, ParamIndex: 1},
-						{Field: "Gender", Comparator: spec.ComparatorEqual, ParamIndex: 2},
+						{FieldReference: spec.FieldReference{cityField}, Comparator: spec.ComparatorEqual, ParamIndex: 1},
+						{FieldReference: spec.FieldReference{genderField}, Comparator: spec.ComparatorEqual, ParamIndex: 2},
 					},
 				},
 			},
@@ -224,8 +317,8 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 				Query: spec.QuerySpec{
 					Operator: spec.OperatorOr,
 					Predicates: []spec.Predicate{
-						{Field: "City", Comparator: spec.ComparatorEqual, ParamIndex: 1},
-						{Field: "Gender", Comparator: spec.ComparatorEqual, ParamIndex: 2},
+						{FieldReference: spec.FieldReference{cityField}, Comparator: spec.ComparatorEqual, ParamIndex: 1},
+						{FieldReference: spec.FieldReference{genderField}, Comparator: spec.ComparatorEqual, ParamIndex: 2},
 					},
 				},
 			},
@@ -246,7 +339,7 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 			ExpectedOperation: spec.FindOperation{
 				Mode: spec.QueryModeMany,
 				Query: spec.QuerySpec{Predicates: []spec.Predicate{
-					{Field: "City", Comparator: spec.ComparatorNot, ParamIndex: 1},
+					{FieldReference: spec.FieldReference{cityField}, Comparator: spec.ComparatorNot, ParamIndex: 1},
 				}},
 			},
 		},
@@ -266,7 +359,7 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 			ExpectedOperation: spec.FindOperation{
 				Mode: spec.QueryModeMany,
 				Query: spec.QuerySpec{Predicates: []spec.Predicate{
-					{Field: "Age", Comparator: spec.ComparatorLessThan, ParamIndex: 1},
+					{FieldReference: spec.FieldReference{ageField}, Comparator: spec.ComparatorLessThan, ParamIndex: 1},
 				}},
 			},
 		},
@@ -286,7 +379,7 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 			ExpectedOperation: spec.FindOperation{
 				Mode: spec.QueryModeMany,
 				Query: spec.QuerySpec{Predicates: []spec.Predicate{
-					{Field: "Age", Comparator: spec.ComparatorLessThanEqual, ParamIndex: 1},
+					{FieldReference: spec.FieldReference{ageField}, Comparator: spec.ComparatorLessThanEqual, ParamIndex: 1},
 				}},
 			},
 		},
@@ -306,7 +399,7 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 			ExpectedOperation: spec.FindOperation{
 				Mode: spec.QueryModeMany,
 				Query: spec.QuerySpec{Predicates: []spec.Predicate{
-					{Field: "Age", Comparator: spec.ComparatorGreaterThan, ParamIndex: 1},
+					{FieldReference: spec.FieldReference{ageField}, Comparator: spec.ComparatorGreaterThan, ParamIndex: 1},
 				}},
 			},
 		},
@@ -326,7 +419,7 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 			ExpectedOperation: spec.FindOperation{
 				Mode: spec.QueryModeMany,
 				Query: spec.QuerySpec{Predicates: []spec.Predicate{
-					{Field: "Age", Comparator: spec.ComparatorGreaterThanEqual, ParamIndex: 1},
+					{FieldReference: spec.FieldReference{ageField}, Comparator: spec.ComparatorGreaterThanEqual, ParamIndex: 1},
 				}},
 			},
 		},
@@ -347,7 +440,7 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 			ExpectedOperation: spec.FindOperation{
 				Mode: spec.QueryModeMany,
 				Query: spec.QuerySpec{Predicates: []spec.Predicate{
-					{Field: "Age", Comparator: spec.ComparatorBetween, ParamIndex: 1},
+					{FieldReference: spec.FieldReference{ageField}, Comparator: spec.ComparatorBetween, ParamIndex: 1},
 				}},
 			},
 		},
@@ -367,7 +460,7 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 			ExpectedOperation: spec.FindOperation{
 				Mode: spec.QueryModeMany,
 				Query: spec.QuerySpec{Predicates: []spec.Predicate{
-					{Field: "City", Comparator: spec.ComparatorIn, ParamIndex: 1},
+					{FieldReference: spec.FieldReference{cityField}, Comparator: spec.ComparatorIn, ParamIndex: 1},
 				}},
 			},
 		},
@@ -387,7 +480,7 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 			ExpectedOperation: spec.FindOperation{
 				Mode: spec.QueryModeMany,
 				Query: spec.QuerySpec{Predicates: []spec.Predicate{
-					{Field: "City", Comparator: spec.ComparatorNotIn, ParamIndex: 1},
+					{FieldReference: spec.FieldReference{cityField}, Comparator: spec.ComparatorNotIn, ParamIndex: 1},
 				}},
 			},
 		},
@@ -406,7 +499,7 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 			ExpectedOperation: spec.FindOperation{
 				Mode: spec.QueryModeMany,
 				Query: spec.QuerySpec{Predicates: []spec.Predicate{
-					{Field: "Enabled", Comparator: spec.ComparatorTrue, ParamIndex: 1},
+					{FieldReference: spec.FieldReference{enabledField}, Comparator: spec.ComparatorTrue, ParamIndex: 1},
 				}},
 			},
 		},
@@ -425,7 +518,7 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 			ExpectedOperation: spec.FindOperation{
 				Mode: spec.QueryModeMany,
 				Query: spec.QuerySpec{Predicates: []spec.Predicate{
-					{Field: "Enabled", Comparator: spec.ComparatorFalse, ParamIndex: 1},
+					{FieldReference: spec.FieldReference{enabledField}, Comparator: spec.ComparatorFalse, ParamIndex: 1},
 				}},
 			},
 		},
@@ -445,10 +538,10 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 			ExpectedOperation: spec.FindOperation{
 				Mode: spec.QueryModeMany,
 				Query: spec.QuerySpec{Predicates: []spec.Predicate{
-					{Field: "City", Comparator: spec.ComparatorEqual, ParamIndex: 1},
+					{FieldReference: spec.FieldReference{cityField}, Comparator: spec.ComparatorEqual, ParamIndex: 1},
 				}},
 				Sorts: []spec.Sort{
-					{FieldName: "Age", Ordering: spec.OrderingAscending},
+					{FieldReference: spec.FieldReference{ageField}, Ordering: spec.OrderingAscending},
 				},
 			},
 		},
@@ -468,10 +561,10 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 			ExpectedOperation: spec.FindOperation{
 				Mode: spec.QueryModeMany,
 				Query: spec.QuerySpec{Predicates: []spec.Predicate{
-					{Field: "City", Comparator: spec.ComparatorEqual, ParamIndex: 1},
+					{FieldReference: spec.FieldReference{cityField}, Comparator: spec.ComparatorEqual, ParamIndex: 1},
 				}},
 				Sorts: []spec.Sort{
-					{FieldName: "Age", Ordering: spec.OrderingAscending},
+					{FieldReference: spec.FieldReference{ageField}, Ordering: spec.OrderingAscending},
 				},
 			},
 		},
@@ -491,10 +584,33 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 			ExpectedOperation: spec.FindOperation{
 				Mode: spec.QueryModeMany,
 				Query: spec.QuerySpec{Predicates: []spec.Predicate{
-					{Field: "City", Comparator: spec.ComparatorEqual, ParamIndex: 1},
+					{FieldReference: spec.FieldReference{cityField}, Comparator: spec.ComparatorEqual, ParamIndex: 1},
 				}},
 				Sorts: []spec.Sort{
-					{FieldName: "Age", Ordering: spec.OrderingDescending},
+					{FieldReference: spec.FieldReference{ageField}, Ordering: spec.OrderingDescending},
+				},
+			},
+		},
+		{
+			Name: "FindByArgOrderByDeepArg method",
+			Method: code.Method{
+				Name: "FindByCityOrderByNameFirst",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("string")},
+				},
+				Returns: []code.Type{
+					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedOperation: spec.FindOperation{
+				Mode: spec.QueryModeMany,
+				Query: spec.QuerySpec{Predicates: []spec.Predicate{
+					{FieldReference: spec.FieldReference{cityField}, Comparator: spec.ComparatorEqual, ParamIndex: 1},
+				}},
+				Sorts: []spec.Sort{
+					{FieldReference: spec.FieldReference{nameField, firstNameField}, Ordering: spec.OrderingAscending},
 				},
 			},
 		},
@@ -514,11 +630,11 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 			ExpectedOperation: spec.FindOperation{
 				Mode: spec.QueryModeMany,
 				Query: spec.QuerySpec{Predicates: []spec.Predicate{
-					{Field: "City", Comparator: spec.ComparatorEqual, ParamIndex: 1},
+					{FieldReference: spec.FieldReference{cityField}, Comparator: spec.ComparatorEqual, ParamIndex: 1},
 				}},
 				Sorts: []spec.Sort{
-					{FieldName: "City", Ordering: spec.OrderingAscending},
-					{FieldName: "Age", Ordering: spec.OrderingDescending},
+					{FieldReference: spec.FieldReference{cityField}, Ordering: spec.OrderingAscending},
+					{FieldReference: spec.FieldReference{ageField}, Ordering: spec.OrderingDescending},
 				},
 			},
 		},
@@ -526,7 +642,7 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 
 	for _, testCase := range testTable {
 		t.Run(testCase.Name, func(t *testing.T) {
-			actualSpec, err := spec.ParseInterfaceMethod(structModel, testCase.Method)
+			actualSpec, err := spec.ParseInterfaceMethod(structs, structModel, testCase.Method)
 
 			if err != nil {
 				t.Errorf("Error = %s", err)
@@ -564,7 +680,7 @@ func TestParseInterfaceMethod_Update(t *testing.T) {
 				Update: spec.UpdateModel{},
 				Mode:   spec.QueryModeOne,
 				Query: spec.QuerySpec{Predicates: []spec.Predicate{
-					{Field: "ID", Comparator: spec.ComparatorEqual, ParamIndex: 2},
+					{FieldReference: spec.FieldReference{idField}, Comparator: spec.ComparatorEqual, ParamIndex: 2},
 				}},
 			},
 		},
@@ -584,11 +700,11 @@ func TestParseInterfaceMethod_Update(t *testing.T) {
 			},
 			ExpectedOperation: spec.UpdateOperation{
 				Update: spec.UpdateFields{
-					{Name: "Gender", ParamIndex: 1},
+					{FieldReference: spec.FieldReference{genderField}, ParamIndex: 1},
 				},
 				Mode: spec.QueryModeOne,
 				Query: spec.QuerySpec{Predicates: []spec.Predicate{
-					{Field: "ID", Comparator: spec.ComparatorEqual, ParamIndex: 2},
+					{FieldReference: spec.FieldReference{idField}, Comparator: spec.ComparatorEqual, ParamIndex: 2},
 				}},
 			},
 		},
@@ -608,11 +724,35 @@ func TestParseInterfaceMethod_Update(t *testing.T) {
 			},
 			ExpectedOperation: spec.UpdateOperation{
 				Update: spec.UpdateFields{
-					{Name: "Gender", ParamIndex: 1},
+					{FieldReference: spec.FieldReference{genderField}, ParamIndex: 1},
 				},
 				Mode: spec.QueryModeMany,
 				Query: spec.QuerySpec{Predicates: []spec.Predicate{
-					{Field: "ID", Comparator: spec.ComparatorEqual, ParamIndex: 2},
+					{FieldReference: spec.FieldReference{idField}, Comparator: spec.ComparatorEqual, ParamIndex: 2},
+				}},
+			},
+		},
+		{
+			Name: "UpdateArgByArg one with deeply referenced update field method",
+			Method: code.Method{
+				Name: "UpdateNameFirstByID",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("string")},
+					{Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
+				},
+				Returns: []code.Type{
+					code.SimpleType("bool"),
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedOperation: spec.UpdateOperation{
+				Update: spec.UpdateFields{
+					{FieldReference: spec.FieldReference{nameField, firstNameField}, ParamIndex: 1},
+				},
+				Mode: spec.QueryModeOne,
+				Query: spec.QuerySpec{Predicates: []spec.Predicate{
+					{FieldReference: spec.FieldReference{idField}, Comparator: spec.ComparatorEqual, ParamIndex: 2},
 				}},
 			},
 		},
@@ -633,12 +773,12 @@ func TestParseInterfaceMethod_Update(t *testing.T) {
 			},
 			ExpectedOperation: spec.UpdateOperation{
 				Update: spec.UpdateFields{
-					{Name: "Gender", ParamIndex: 1},
-					{Name: "City", ParamIndex: 2},
+					{FieldReference: spec.FieldReference{genderField}, ParamIndex: 1},
+					{FieldReference: spec.FieldReference{cityField}, ParamIndex: 2},
 				},
 				Mode: spec.QueryModeMany,
 				Query: spec.QuerySpec{Predicates: []spec.Predicate{
-					{Field: "ID", Comparator: spec.ComparatorEqual, ParamIndex: 3},
+					{FieldReference: spec.FieldReference{idField}, Comparator: spec.ComparatorEqual, ParamIndex: 3},
 				}},
 			},
 		},
@@ -646,7 +786,7 @@ func TestParseInterfaceMethod_Update(t *testing.T) {
 
 	for _, testCase := range testTable {
 		t.Run(testCase.Name, func(t *testing.T) {
-			actualSpec, err := spec.ParseInterfaceMethod(structModel, testCase.Method)
+			actualSpec, err := spec.ParseInterfaceMethod(structs, structModel, testCase.Method)
 
 			if err != nil {
 				t.Errorf("Error = %s", err)
@@ -682,7 +822,7 @@ func TestParseInterfaceMethod_Delete(t *testing.T) {
 			ExpectedOperation: spec.DeleteOperation{
 				Mode: spec.QueryModeOne,
 				Query: spec.QuerySpec{Predicates: []spec.Predicate{
-					{Field: "ID", Comparator: spec.ComparatorEqual, ParamIndex: 1},
+					{FieldReference: spec.FieldReference{idField}, Comparator: spec.ComparatorEqual, ParamIndex: 1},
 				}},
 			},
 		},
@@ -702,7 +842,7 @@ func TestParseInterfaceMethod_Delete(t *testing.T) {
 			ExpectedOperation: spec.DeleteOperation{
 				Mode: spec.QueryModeOne,
 				Query: spec.QuerySpec{Predicates: []spec.Predicate{
-					{Field: "PhoneNumber", Comparator: spec.ComparatorEqual, ParamIndex: 1},
+					{FieldReference: spec.FieldReference{phoneNumberField}, Comparator: spec.ComparatorEqual, ParamIndex: 1},
 				}},
 			},
 		},
@@ -722,7 +862,7 @@ func TestParseInterfaceMethod_Delete(t *testing.T) {
 			ExpectedOperation: spec.DeleteOperation{
 				Mode: spec.QueryModeMany,
 				Query: spec.QuerySpec{Predicates: []spec.Predicate{
-					{Field: "City", Comparator: spec.ComparatorEqual, ParamIndex: 1},
+					{FieldReference: spec.FieldReference{cityField}, Comparator: spec.ComparatorEqual, ParamIndex: 1},
 				}},
 			},
 		},
@@ -761,8 +901,8 @@ func TestParseInterfaceMethod_Delete(t *testing.T) {
 				Query: spec.QuerySpec{
 					Operator: spec.OperatorAnd,
 					Predicates: []spec.Predicate{
-						{Field: "City", Comparator: spec.ComparatorEqual, ParamIndex: 1},
-						{Field: "Gender", Comparator: spec.ComparatorEqual, ParamIndex: 2},
+						{FieldReference: spec.FieldReference{cityField}, Comparator: spec.ComparatorEqual, ParamIndex: 1},
+						{FieldReference: spec.FieldReference{genderField}, Comparator: spec.ComparatorEqual, ParamIndex: 2},
 					},
 				},
 			},
@@ -786,8 +926,8 @@ func TestParseInterfaceMethod_Delete(t *testing.T) {
 				Query: spec.QuerySpec{
 					Operator: spec.OperatorOr,
 					Predicates: []spec.Predicate{
-						{Field: "City", Comparator: spec.ComparatorEqual, ParamIndex: 1},
-						{Field: "Gender", Comparator: spec.ComparatorEqual, ParamIndex: 2},
+						{FieldReference: spec.FieldReference{cityField}, Comparator: spec.ComparatorEqual, ParamIndex: 1},
+						{FieldReference: spec.FieldReference{genderField}, Comparator: spec.ComparatorEqual, ParamIndex: 2},
 					},
 				},
 			},
@@ -808,7 +948,7 @@ func TestParseInterfaceMethod_Delete(t *testing.T) {
 			ExpectedOperation: spec.DeleteOperation{
 				Mode: spec.QueryModeMany,
 				Query: spec.QuerySpec{Predicates: []spec.Predicate{
-					{Field: "City", Comparator: spec.ComparatorNot, ParamIndex: 1},
+					{FieldReference: spec.FieldReference{cityField}, Comparator: spec.ComparatorNot, ParamIndex: 1},
 				}},
 			},
 		},
@@ -828,7 +968,7 @@ func TestParseInterfaceMethod_Delete(t *testing.T) {
 			ExpectedOperation: spec.DeleteOperation{
 				Mode: spec.QueryModeMany,
 				Query: spec.QuerySpec{Predicates: []spec.Predicate{
-					{Field: "Age", Comparator: spec.ComparatorLessThan, ParamIndex: 1},
+					{FieldReference: spec.FieldReference{ageField}, Comparator: spec.ComparatorLessThan, ParamIndex: 1},
 				}},
 			},
 		},
@@ -848,7 +988,7 @@ func TestParseInterfaceMethod_Delete(t *testing.T) {
 			ExpectedOperation: spec.DeleteOperation{
 				Mode: spec.QueryModeMany,
 				Query: spec.QuerySpec{Predicates: []spec.Predicate{
-					{Field: "Age", Comparator: spec.ComparatorLessThanEqual, ParamIndex: 1},
+					{FieldReference: spec.FieldReference{ageField}, Comparator: spec.ComparatorLessThanEqual, ParamIndex: 1},
 				}},
 			},
 		},
@@ -868,7 +1008,7 @@ func TestParseInterfaceMethod_Delete(t *testing.T) {
 			ExpectedOperation: spec.DeleteOperation{
 				Mode: spec.QueryModeMany,
 				Query: spec.QuerySpec{Predicates: []spec.Predicate{
-					{Field: "Age", Comparator: spec.ComparatorGreaterThan, ParamIndex: 1},
+					{FieldReference: spec.FieldReference{ageField}, Comparator: spec.ComparatorGreaterThan, ParamIndex: 1},
 				}},
 			},
 		},
@@ -888,7 +1028,7 @@ func TestParseInterfaceMethod_Delete(t *testing.T) {
 			ExpectedOperation: spec.DeleteOperation{
 				Mode: spec.QueryModeMany,
 				Query: spec.QuerySpec{Predicates: []spec.Predicate{
-					{Field: "Age", Comparator: spec.ComparatorGreaterThanEqual, ParamIndex: 1},
+					{FieldReference: spec.FieldReference{ageField}, Comparator: spec.ComparatorGreaterThanEqual, ParamIndex: 1},
 				}},
 			},
 		},
@@ -909,7 +1049,7 @@ func TestParseInterfaceMethod_Delete(t *testing.T) {
 			ExpectedOperation: spec.DeleteOperation{
 				Mode: spec.QueryModeMany,
 				Query: spec.QuerySpec{Predicates: []spec.Predicate{
-					{Field: "Age", Comparator: spec.ComparatorBetween, ParamIndex: 1},
+					{FieldReference: spec.FieldReference{ageField}, Comparator: spec.ComparatorBetween, ParamIndex: 1},
 				}},
 			},
 		},
@@ -929,7 +1069,7 @@ func TestParseInterfaceMethod_Delete(t *testing.T) {
 			ExpectedOperation: spec.DeleteOperation{
 				Mode: spec.QueryModeMany,
 				Query: spec.QuerySpec{Predicates: []spec.Predicate{
-					{Field: "City", Comparator: spec.ComparatorIn, ParamIndex: 1},
+					{FieldReference: spec.FieldReference{cityField}, Comparator: spec.ComparatorIn, ParamIndex: 1},
 				}},
 			},
 		},
@@ -937,7 +1077,7 @@ func TestParseInterfaceMethod_Delete(t *testing.T) {
 
 	for _, testCase := range testTable {
 		t.Run(testCase.Name, func(t *testing.T) {
-			actualSpec, err := spec.ParseInterfaceMethod(structModel, testCase.Method)
+			actualSpec, err := spec.ParseInterfaceMethod(structs, structModel, testCase.Method)
 
 			if err != nil {
 				t.Errorf("Error = %s", err)
@@ -989,7 +1129,7 @@ func TestParseInterfaceMethod_Count(t *testing.T) {
 			ExpectedOperation: spec.CountOperation{
 				Query: spec.QuerySpec{
 					Predicates: []spec.Predicate{
-						{Field: "Gender", Comparator: spec.ComparatorEqual, ParamIndex: 1},
+						{FieldReference: spec.FieldReference{genderField}, Comparator: spec.ComparatorEqual, ParamIndex: 1},
 					},
 				},
 			},
@@ -998,7 +1138,7 @@ func TestParseInterfaceMethod_Count(t *testing.T) {
 
 	for _, testCase := range testTable {
 		t.Run(testCase.Name, func(t *testing.T) {
-			actualSpec, err := spec.ParseInterfaceMethod(structModel, testCase.Method)
+			actualSpec, err := spec.ParseInterfaceMethod(structs, structModel, testCase.Method)
 
 			if err != nil {
 				t.Errorf("Error = %s", err)
@@ -1023,7 +1163,7 @@ type ParseInterfaceMethodInvalidTestCase struct {
 }
 
 func TestParseInterfaceMethod_Invalid(t *testing.T) {
-	_, err := spec.ParseInterfaceMethod(structModel, code.Method{
+	_, err := spec.ParseInterfaceMethod(structs, structModel, code.Method{
 		Name: "SearchByID",
 	})
 
@@ -1132,7 +1272,7 @@ func TestParseInterfaceMethod_Insert_Invalid(t *testing.T) {
 
 	for _, testCase := range testTable {
 		t.Run(testCase.Name, func(t *testing.T) {
-			_, err := spec.ParseInterfaceMethod(structModel, testCase.Method)
+			_, err := spec.ParseInterfaceMethod(structs, structModel, testCase.Method)
 
 			if err != testCase.ExpectedError {
 				t.Errorf("\nExpected = %v\nReceived = %v", testCase.ExpectedError, err)
@@ -1197,7 +1337,7 @@ func TestParseInterfaceMethod_Find_Invalid(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedError: spec.NewInvalidQueryError([]string{"By", "And", "Gender"}),
+			ExpectedError: spec.NewInvalidQueryError([]string{"And", "Gender"}),
 		},
 		{
 			Name: "misplaced operator token (rightmost)",
@@ -1208,7 +1348,7 @@ func TestParseInterfaceMethod_Find_Invalid(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedError: spec.NewInvalidQueryError([]string{"By", "Gender", "And"}),
+			ExpectedError: spec.NewInvalidQueryError([]string{"Gender", "And"}),
 		},
 		{
 			Name: "misplaced operator token (double operator)",
@@ -1219,7 +1359,7 @@ func TestParseInterfaceMethod_Find_Invalid(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedError: spec.NewInvalidQueryError([]string{"By", "Gender", "And", "And", "City"}),
+			ExpectedError: spec.NewInvalidQueryError([]string{"Gender", "And", "And", "City"}),
 		},
 		{
 			Name: "ambiguous query",
@@ -1230,7 +1370,7 @@ func TestParseInterfaceMethod_Find_Invalid(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedError: spec.NewInvalidQueryError([]string{"By", "Gender", "And", "City", "Or", "Age"}),
+			ExpectedError: spec.NewInvalidQueryError([]string{"Gender", "And", "City", "Or", "Age"}),
 		},
 		{
 			Name: "no context parameter",
@@ -1249,7 +1389,7 @@ func TestParseInterfaceMethod_Find_Invalid(t *testing.T) {
 		{
 			Name: "mismatched number of parameters",
 			Method: code.Method{
-				Name: "FindByCountry",
+				Name: "FindByCity",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
 					{Type: code.SimpleType("string")},
@@ -1275,7 +1415,52 @@ func TestParseInterfaceMethod_Find_Invalid(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedError: spec.NewStructFieldNotFoundError("Country"),
+			ExpectedError: spec.NewStructFieldNotFoundError([]string{"Country"}),
+		},
+		{
+			Name: "deeply referenced struct field not found",
+			Method: code.Method{
+				Name: "FindByNameMiddle",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("string")},
+				},
+				Returns: []code.Type{
+					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedError: spec.NewStructFieldNotFoundError([]string{"Name", "Middle"}),
+		},
+		{
+			Name: "deeply referenced struct not found",
+			Method: code.Method{
+				Name: "FindByContactPhone",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("string")},
+				},
+				Returns: []code.Type{
+					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedError: spec.NewStructFieldNotFoundError([]string{"Contact", "Phone"}),
+		},
+		{
+			Name: "deeply referenced external struct field",
+			Method: code.Method{
+				Name: "FindByDefaultPaymentMethod",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("string")},
+				},
+				Returns: []code.Type{
+					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedError: spec.NewStructFieldNotFoundError([]string{"Default", "Payment", "Method"}),
 		},
 		{
 			Name: "incompatible struct field for True comparator",
@@ -1374,11 +1559,22 @@ func TestParseInterfaceMethod_Find_Invalid(t *testing.T) {
 			},
 			ExpectedError: spec.NewInvalidSortError([]string{"Order", "By", "Age", "And", "And", "Gender"}),
 		},
+		{
+			Name: "sort field not found",
+			Method: code.Method{
+				Name: "FindAllOrderByCountry",
+				Returns: []code.Type{
+					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedError: spec.NewStructFieldNotFoundError([]string{"Country"}),
+		},
 	}
 
 	for _, testCase := range testTable {
 		t.Run(testCase.Name, func(t *testing.T) {
-			_, err := spec.ParseInterfaceMethod(structModel, testCase.Method)
+			_, err := spec.ParseInterfaceMethod(structs, structModel, testCase.Method)
 
 			if err.Error() != testCase.ExpectedError.Error() {
 				t.Errorf("\nExpected = %v\nReceived = %v", testCase.ExpectedError.Error(), err.Error())
@@ -1479,7 +1675,7 @@ func TestParseInterfaceMethod_Update_Invalid(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedError: spec.NewInvalidQueryError([]string{"By", "ID", "And", "Username", "Or", "Gender"}),
+			ExpectedError: spec.NewInvalidQueryError([]string{"ID", "And", "Username", "Or", "Gender"}),
 		},
 		{
 			Name: "update model with invalid parameter",
@@ -1525,7 +1721,7 @@ func TestParseInterfaceMethod_Update_Invalid(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedError: spec.NewStructFieldNotFoundError("Country"),
+			ExpectedError: spec.NewStructFieldNotFoundError([]string{"Country"}),
 		},
 		{
 			Name: "struct field does not match parameter in update fields",
@@ -1563,7 +1759,7 @@ func TestParseInterfaceMethod_Update_Invalid(t *testing.T) {
 
 	for _, testCase := range testTable {
 		t.Run(testCase.Name, func(t *testing.T) {
-			_, err := spec.ParseInterfaceMethod(structModel, testCase.Method)
+			_, err := spec.ParseInterfaceMethod(structs, structModel, testCase.Method)
 
 			if err != testCase.ExpectedError {
 				t.Errorf("\nExpected = %v\nReceived = %v", testCase.ExpectedError, err)
@@ -1628,7 +1824,7 @@ func TestParseInterfaceMethod_Delete_Invalid(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedError: spec.NewInvalidQueryError([]string{"By", "And", "Gender"}),
+			ExpectedError: spec.NewInvalidQueryError([]string{"And", "Gender"}),
 		},
 		{
 			Name: "misplaced operator token (rightmost)",
@@ -1639,7 +1835,7 @@ func TestParseInterfaceMethod_Delete_Invalid(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedError: spec.NewInvalidQueryError([]string{"By", "Gender", "And"}),
+			ExpectedError: spec.NewInvalidQueryError([]string{"Gender", "And"}),
 		},
 		{
 			Name: "misplaced operator token (double operator)",
@@ -1650,7 +1846,7 @@ func TestParseInterfaceMethod_Delete_Invalid(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedError: spec.NewInvalidQueryError([]string{"By", "Gender", "And", "And", "City"}),
+			ExpectedError: spec.NewInvalidQueryError([]string{"Gender", "And", "And", "City"}),
 		},
 		{
 			Name: "ambiguous query",
@@ -1661,7 +1857,7 @@ func TestParseInterfaceMethod_Delete_Invalid(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedError: spec.NewInvalidQueryError([]string{"By", "Gender", "And", "City", "Or", "Age"}),
+			ExpectedError: spec.NewInvalidQueryError([]string{"Gender", "And", "City", "Or", "Age"}),
 		},
 		{
 			Name: "no context parameter",
@@ -1680,7 +1876,7 @@ func TestParseInterfaceMethod_Delete_Invalid(t *testing.T) {
 		{
 			Name: "mismatched number of parameters",
 			Method: code.Method{
-				Name: "DeleteByCountry",
+				Name: "DeleteByCity",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
 					{Type: code.SimpleType("string")},
@@ -1706,7 +1902,7 @@ func TestParseInterfaceMethod_Delete_Invalid(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedError: spec.NewStructFieldNotFoundError("Country"),
+			ExpectedError: spec.NewStructFieldNotFoundError([]string{"Country"}),
 		},
 		{
 			Name: "mismatched method parameter type",
@@ -1742,7 +1938,7 @@ func TestParseInterfaceMethod_Delete_Invalid(t *testing.T) {
 
 	for _, testCase := range testTable {
 		t.Run(testCase.Name, func(t *testing.T) {
-			_, err := spec.ParseInterfaceMethod(structModel, testCase.Method)
+			_, err := spec.ParseInterfaceMethod(structs, structModel, testCase.Method)
 
 			if err != testCase.ExpectedError {
 				t.Errorf("\nExpected = %v\nReceived = %v", testCase.ExpectedError, err)
@@ -1867,13 +2063,13 @@ func TestParseInterfaceMethod_Count_Invalid(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedError: spec.NewStructFieldNotFoundError("Country"),
+			ExpectedError: spec.NewStructFieldNotFoundError([]string{"Country"}),
 		},
 	}
 
 	for _, testCase := range testTable {
 		t.Run(testCase.Name, func(t *testing.T) {
-			_, err := spec.ParseInterfaceMethod(structModel, testCase.Method)
+			_, err := spec.ParseInterfaceMethod(structs, structModel, testCase.Method)
 
 			if err != testCase.ExpectedError {
 				t.Errorf("\nExpected = %v\nReceived = %v", testCase.ExpectedError, err)

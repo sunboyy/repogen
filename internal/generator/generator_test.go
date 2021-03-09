@@ -9,30 +9,36 @@ import (
 	"github.com/sunboyy/repogen/internal/spec"
 )
 
+var (
+	idField = code.StructField{
+		Name: "ID",
+		Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"},
+		Tags: map[string][]string{"bson": {"_id", "omitempty"}},
+	}
+	genderField = code.StructField{
+		Name: "Gender",
+		Type: code.SimpleType("Gender"),
+		Tags: map[string][]string{"bson": {"gender"}},
+	}
+	ageField = code.StructField{
+		Name: "Age",
+		Type: code.SimpleType("int"),
+		Tags: map[string][]string{"bson": {"age"}},
+	}
+)
+
 func TestGenerateMongoRepository(t *testing.T) {
 	userModel := code.Struct{
 		Name: "UserModel",
 		Fields: code.StructFields{
-			{
-				Name: "ID",
-				Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"},
-				Tags: map[string][]string{"bson": {"_id", "omitempty"}},
-			},
+			idField,
 			{
 				Name: "Username",
 				Type: code.SimpleType("string"),
 				Tags: map[string][]string{"bson": {"username"}},
 			},
-			{
-				Name: "Gender",
-				Type: code.SimpleType("Gender"),
-				Tags: map[string][]string{"bson": {"gender"}},
-			},
-			{
-				Name: "Age",
-				Type: code.SimpleType("int"),
-				Tags: map[string][]string{"bson": {"age"}},
-			},
+			genderField,
+			ageField,
 		},
 	}
 	methods := []spec.MethodSpec{
@@ -48,7 +54,7 @@ func TestGenerateMongoRepository(t *testing.T) {
 				Mode: spec.QueryModeOne,
 				Query: spec.QuerySpec{
 					Predicates: []spec.Predicate{
-						{Field: "ID", Comparator: spec.ComparatorEqual, ParamIndex: 1},
+						{FieldReference: spec.FieldReference{idField}, Comparator: spec.ComparatorEqual, ParamIndex: 1},
 					},
 				},
 			},
@@ -70,8 +76,8 @@ func TestGenerateMongoRepository(t *testing.T) {
 				Query: spec.QuerySpec{
 					Operator: spec.OperatorAnd,
 					Predicates: []spec.Predicate{
-						{Field: "Gender", Comparator: spec.ComparatorNot, ParamIndex: 1},
-						{Field: "Age", Comparator: spec.ComparatorLessThan, ParamIndex: 2},
+						{FieldReference: spec.FieldReference{genderField}, Comparator: spec.ComparatorNot, ParamIndex: 1},
+						{FieldReference: spec.FieldReference{ageField}, Comparator: spec.ComparatorLessThan, ParamIndex: 2},
 					},
 				},
 			},
@@ -90,11 +96,11 @@ func TestGenerateMongoRepository(t *testing.T) {
 				Mode: spec.QueryModeMany,
 				Query: spec.QuerySpec{
 					Predicates: []spec.Predicate{
-						{Field: "Age", Comparator: spec.ComparatorLessThanEqual, ParamIndex: 1},
+						{FieldReference: spec.FieldReference{ageField}, Comparator: spec.ComparatorLessThanEqual, ParamIndex: 1},
 					},
 				},
 				Sorts: []spec.Sort{
-					{FieldName: "Age", Ordering: spec.OrderingAscending},
+					{FieldReference: spec.FieldReference{ageField}, Ordering: spec.OrderingAscending},
 				},
 			},
 		},
@@ -112,11 +118,11 @@ func TestGenerateMongoRepository(t *testing.T) {
 				Mode: spec.QueryModeMany,
 				Query: spec.QuerySpec{
 					Predicates: []spec.Predicate{
-						{Field: "Age", Comparator: spec.ComparatorGreaterThan, ParamIndex: 1},
+						{FieldReference: spec.FieldReference{ageField}, Comparator: spec.ComparatorGreaterThan, ParamIndex: 1},
 					},
 				},
 				Sorts: []spec.Sort{
-					{FieldName: "Age", Ordering: spec.OrderingAscending},
+					{FieldReference: spec.FieldReference{ageField}, Ordering: spec.OrderingAscending},
 				},
 			},
 		},
@@ -134,11 +140,11 @@ func TestGenerateMongoRepository(t *testing.T) {
 				Mode: spec.QueryModeMany,
 				Query: spec.QuerySpec{
 					Predicates: []spec.Predicate{
-						{Field: "Age", Comparator: spec.ComparatorGreaterThanEqual, ParamIndex: 1},
+						{FieldReference: spec.FieldReference{ageField}, Comparator: spec.ComparatorGreaterThanEqual, ParamIndex: 1},
 					},
 				},
 				Sorts: []spec.Sort{
-					{FieldName: "Age", Ordering: spec.OrderingDescending},
+					{FieldReference: spec.FieldReference{ageField}, Ordering: spec.OrderingDescending},
 				},
 			},
 		},
@@ -157,7 +163,7 @@ func TestGenerateMongoRepository(t *testing.T) {
 				Mode: spec.QueryModeMany,
 				Query: spec.QuerySpec{
 					Predicates: []spec.Predicate{
-						{Field: "Age", Comparator: spec.ComparatorBetween, ParamIndex: 1},
+						{FieldReference: spec.FieldReference{ageField}, Comparator: spec.ComparatorBetween, ParamIndex: 1},
 					},
 				},
 			},
@@ -178,8 +184,8 @@ func TestGenerateMongoRepository(t *testing.T) {
 				Query: spec.QuerySpec{
 					Operator: spec.OperatorOr,
 					Predicates: []spec.Predicate{
-						{Field: "Gender", Comparator: spec.ComparatorEqual, ParamIndex: 1},
-						{Field: "Age", Comparator: spec.ComparatorEqual, ParamIndex: 2},
+						{FieldReference: spec.FieldReference{genderField}, Comparator: spec.ComparatorEqual, ParamIndex: 1},
+						{FieldReference: spec.FieldReference{ageField}, Comparator: spec.ComparatorEqual, ParamIndex: 2},
 					},
 				},
 			},
