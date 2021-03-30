@@ -3,8 +3,10 @@ package main
 import (
 	"errors"
 	"flag"
+	"fmt"
 	"go/parser"
 	"go/token"
+	"log"
 	"os"
 	"path/filepath"
 
@@ -13,7 +15,12 @@ import (
 	"github.com/sunboyy/repogen/internal/spec"
 )
 
+const version = ""
+
 func main() {
+	flag.Usage = printUsage
+
+	versionPtr := flag.Bool("version", false, "print repogen version")
 	sourcePtr := flag.String("src", "", "source file")
 	destPtr := flag.String("dest", "", "destination file")
 	modelPtr := flag.String("model", "", "model struct name")
@@ -21,14 +28,22 @@ func main() {
 
 	flag.Parse()
 
+	if *versionPtr {
+		printVersion()
+		return
+	}
+
 	if *sourcePtr == "" {
-		panic("-source flag required")
+		printUsage()
+		log.Fatal("-source flag required")
 	}
 	if *modelPtr == "" {
-		panic("-model flag required")
+		printUsage()
+		log.Fatal("-model flag required")
 	}
 	if *repoPtr == "" {
-		panic("-repo flag required")
+		printUsage()
+		log.Fatal("-repo flag required")
 	}
 
 	code, err := generateFromRequest(*sourcePtr, *modelPtr, *repoPtr)
@@ -51,6 +66,19 @@ func main() {
 
 	if _, err := dest.WriteString(code); err != nil {
 		panic(err)
+	}
+}
+
+func printUsage() {
+	fmt.Println("Usage of repogen")
+	flag.PrintDefaults()
+}
+
+func printVersion() {
+	if version != "" {
+		fmt.Println(version)
+	} else {
+		fmt.Println("(devel)")
 	}
 }
 
