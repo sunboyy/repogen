@@ -23,16 +23,19 @@ func (u updateModel) Code() string {
 	return `		"$set": arg1,`
 }
 
-type updateFields struct {
-	Fields []updateField
-}
+type updateFields map[string][]updateField
 
 func (u updateFields) Code() string {
-	lines := []string{`		"$set": bson.M{`}
-	for _, field := range u.Fields {
-		lines = append(lines, fmt.Sprintf(`			"%s": arg%d,`, field.BsonTag, field.ParamIndex))
+	var lines []string
+	for k, v := range u {
+		lines = append(lines, fmt.Sprintf(`		"%s": bson.M{`, k))
+
+		for _, field := range v {
+			lines = append(lines, fmt.Sprintf(`			"%s": arg%d,`, field.BsonTag, field.ParamIndex))
+		}
+
+		lines = append(lines, `		},`)
 	}
-	lines = append(lines, `		},`)
 	return strings.Join(lines, "\n")
 }
 

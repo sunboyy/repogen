@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/sunboyy/repogen/internal/mongo"
+	"github.com/sunboyy/repogen/internal/spec"
 )
 
 type ErrorTestCase struct {
@@ -40,12 +41,17 @@ func TestError(t *testing.T) {
 			Error:          mongo.NewUpdateTypeNotSupportedError(StubUpdate{}),
 			ExpectedString: "update type Stub not supported",
 		},
+		{
+			Name:           "UpdateOperatorNotSupportedError",
+			Error:          mongo.NewUpdateOperatorNotSupportedError(spec.UpdateOperator("STUB")),
+			ExpectedString: "update operator STUB not supported",
+		},
 	}
 
 	for _, testCase := range testTable {
 		t.Run(testCase.Name, func(t *testing.T) {
 			if testCase.Error.Error() != testCase.ExpectedString {
-				t.Errorf("Expected = %v\nReceived = %v", testCase.ExpectedString, testCase.Error.Error())
+				t.Errorf("Expected = %+v\nReceived = %+v", testCase.ExpectedString, testCase.Error.Error())
 			}
 		})
 	}

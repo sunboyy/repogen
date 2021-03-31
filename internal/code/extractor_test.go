@@ -277,7 +277,7 @@ type UserRepository interface {
 			file := code.ExtractComponents(f)
 
 			if !reflect.DeepEqual(file, testCase.ExpectedOutput) {
-				t.Errorf("Expected = %v\nReceived = %v", testCase.ExpectedOutput, file)
+				t.Errorf("Expected = %+v\nReceived = %+v", testCase.ExpectedOutput, file)
 			}
 		})
 	}

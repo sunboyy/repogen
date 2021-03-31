@@ -31,6 +31,11 @@ var (
 		Type: code.SimpleType("NameModel"),
 		Tags: map[string][]string{"bson": {"name"}},
 	}
+	consentHistoryField = code.StructField{
+		Name: "ConsentHistory",
+		Type: code.ArrayType{ContainedType: code.SimpleType("ConsentHistory")},
+		Tags: map[string][]string{"bson": {"consent_history"}},
+	}
 	enabledField = code.StructField{
 		Name: "Enabled",
 		Type: code.SimpleType("bool"),
@@ -60,6 +65,7 @@ var userModel = code.Struct{
 		genderField,
 		ageField,
 		nameField,
+		consentHistoryField,
 		enabledField,
 		accessTokenField,
 	},
@@ -983,7 +989,7 @@ func (r *UserRepositoryMongo) UpdateByID(arg0 context.Context, arg1 *UserModel, 
 				},
 				Operation: spec.UpdateOperation{
 					Update: spec.UpdateFields{
-						{FieldReference: spec.FieldReference{ageField}, ParamIndex: 1},
+						{FieldReference: spec.FieldReference{ageField}, ParamIndex: 1, Operator: spec.UpdateOperatorSet},
 					},
 					Mode: spec.QueryModeOne,
 					Query: spec.QuerySpec{
@@ -1024,7 +1030,7 @@ func (r *UserRepositoryMongo) UpdateAgeByID(arg0 context.Context, arg1 int, arg2
 				},
 				Operation: spec.UpdateOperation{
 					Update: spec.UpdateFields{
-						{FieldReference: spec.FieldReference{ageField}, ParamIndex: 1},
+						{FieldReference: spec.FieldReference{ageField}, ParamIndex: 1, Operator: spec.UpdateOperatorSet},
 					},
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
@@ -1051,6 +1057,93 @@ func (r *UserRepositoryMongo) UpdateAgeByGender(arg0 context.Context, arg1 int, 
 `,
 		},
 		{
+			Name: "simple update push method",
+			MethodSpec: spec.MethodSpec{
+				Name: "UpdateConsentHistoryPushByID",
+				Params: []code.Param{
+					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Name: "consentHistory", Type: code.SimpleType("ConsentHistory")},
+					{Name: "gender", Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
+				},
+				Returns: []code.Type{
+					code.SimpleType("bool"),
+					code.SimpleType("error"),
+				},
+				Operation: spec.UpdateOperation{
+					Update: spec.UpdateFields{
+						{FieldReference: spec.FieldReference{consentHistoryField}, ParamIndex: 1, Operator: spec.UpdateOperatorPush},
+					},
+					Mode: spec.QueryModeOne,
+					Query: spec.QuerySpec{
+						Predicates: []spec.Predicate{
+							{FieldReference: spec.FieldReference{idField}, Comparator: spec.ComparatorEqual, ParamIndex: 2},
+						},
+					},
+				},
+			},
+			ExpectedCode: `
+func (r *UserRepositoryMongo) UpdateConsentHistoryPushByID(arg0 context.Context, arg1 ConsentHistory, arg2 primitive.ObjectID) (bool, error) {
+	result, err := r.collection.UpdateOne(arg0, bson.M{
+		"_id": arg2,
+	}, bson.M{
+		"$push": bson.M{
+			"consent_history": arg1,
+		},
+	})
+	if err != nil {
+		return false, err
+	}
+	return result.MatchedCount > 0, err
+}
+`,
+		},
+		{
+			Name: "simple update set and push method",
+			MethodSpec: spec.MethodSpec{
+				Name: "UpdateEnabledAndConsentHistoryPushByID",
+				Params: []code.Param{
+					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Name: "enabled", Type: code.SimpleType("bool")},
+					{Name: "consentHistory", Type: code.SimpleType("ConsentHistory")},
+					{Name: "gender", Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
+				},
+				Returns: []code.Type{
+					code.SimpleType("bool"),
+					code.SimpleType("error"),
+				},
+				Operation: spec.UpdateOperation{
+					Update: spec.UpdateFields{
+						{FieldReference: spec.FieldReference{enabledField}, ParamIndex: 1, Operator: spec.UpdateOperatorSet},
+						{FieldReference: spec.FieldReference{consentHistoryField}, ParamIndex: 2, Operator: spec.UpdateOperatorPush},
+					},
+					Mode: spec.QueryModeOne,
+					Query: spec.QuerySpec{
+						Predicates: []spec.Predicate{
+							{FieldReference: spec.FieldReference{idField}, Comparator: spec.ComparatorEqual, ParamIndex: 3},
+						},
+					},
+				},
+			},
+			ExpectedCode: `
+func (r *UserRepositoryMongo) UpdateEnabledAndConsentHistoryPushByID(arg0 context.Context, arg1 bool, arg2 ConsentHistory, arg3 primitive.ObjectID) (bool, error) {
+	result, err := r.collection.UpdateOne(arg0, bson.M{
+		"_id": arg3,
+	}, bson.M{
+		"$set": bson.M{
+			"enabled": arg1,
+		},
+		"$push": bson.M{
+			"consent_history": arg2,
+		},
+	})
+	if err != nil {
+		return false, err
+	}
+	return result.MatchedCount > 0, err
+}
+`,
+		},
+		{
 			Name: "update with deeply referenced field",
 			MethodSpec: spec.MethodSpec{
 				Name: "UpdateNameFirstByID",
@@ -1065,7 +1158,7 @@ func (r *UserRepositoryMongo) UpdateAgeByGender(arg0 context.Context, arg1 int, 
 				},
 				Operation: spec.UpdateOperation{
 					Update: spec.UpdateFields{
-						{FieldReference: spec.FieldReference{nameField, firstNameField}, ParamIndex: 1},
+						{FieldReference: spec.FieldReference{nameField, firstNameField}, ParamIndex: 1, Operator: spec.UpdateOperatorSet},
 					},
 					Mode: spec.QueryModeOne,
 					Query: spec.QuerySpec{
@@ -1947,7 +2040,7 @@ func TestGenerateMethod_Invalid(t *testing.T) {
 				},
 				Operation: spec.UpdateOperation{
 					Update: spec.UpdateFields{
-						{FieldReference: spec.FieldReference{accessTokenField}, ParamIndex: 1},
+						{FieldReference: spec.FieldReference{accessTokenField}, ParamIndex: 1, Operator: spec.UpdateOperatorSet},
 					},
 					Mode: spec.QueryModeOne,
 					Query: spec.QuerySpec{
@@ -1984,6 +2077,33 @@ func TestGenerateMethod_Invalid(t *testing.T) {
 			},
 			ExpectedError: mongo.NewUpdateTypeNotSupportedError(StubUpdate{}),
 		},
+		{
+			Name: "update operator not supported",
+			Method: spec.MethodSpec{
+				Name: "UpdateConsentHistoryAppendByID",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("int")},
+					{Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
+				},
+				Returns: []code.Type{
+					code.SimpleType("bool"),
+					code.SimpleType("error"),
+				},
+				Operation: spec.UpdateOperation{
+					Update: spec.UpdateFields{
+						{FieldReference: spec.FieldReference{consentHistoryField}, ParamIndex: 1, Operator: "APPEND"},
+					},
+					Mode: spec.QueryModeOne,
+					Query: spec.QuerySpec{
+						Predicates: []spec.Predicate{
+							{FieldReference: spec.FieldReference{idField}, Comparator: spec.ComparatorEqual, ParamIndex: 2},
+						},
+					},
+				},
+			},
+			ExpectedError: mongo.NewUpdateOperatorNotSupportedError("APPEND"),
+		},
 	}
 
 	for _, testCase := range testTable {
@@ -1994,7 +2114,7 @@ func TestGenerateMethod_Invalid(t *testing.T) {
 			err := generator.GenerateMethod(testCase.Method, buffer)
 
 			if err != testCase.ExpectedError {
-				t.Errorf("\nExpected = %v\nReceived = %v", testCase.ExpectedError, err)
+				t.Errorf("\nExpected = %+v\nReceived = %+v", testCase.ExpectedError, err)
 			}
 		})
 	}

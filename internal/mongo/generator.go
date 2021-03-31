@@ -167,17 +167,37 @@ func (g RepositoryGenerator) getMongoUpdate(updateSpec spec.Update) (update, err
 	case spec.UpdateModel:
 		return updateModel{}, nil
 	case spec.UpdateFields:
-		var update updateFields
+		update := make(updateFields)
 		for _, field := range updateSpec {
 			bsonFieldReference, err := g.bsonFieldReference(field.FieldReference)
 			if err != nil {
 				return querySpec{}, err
 			}
-			update.Fields = append(update.Fields, updateField{BsonTag: bsonFieldReference, ParamIndex: field.ParamIndex})
+
+			updateKey := getUpdateOperatorKey(field.Operator)
+			if updateKey == "" {
+				return querySpec{}, NewUpdateOperatorNotSupportedError(field.Operator)
+			}
+			updateField := updateField{
+				BsonTag:    bsonFieldReference,
+				ParamIndex: field.ParamIndex,
+			}
+			update[updateKey] = append(update[updateKey], updateField)
 		}
 		return update, nil
 	default:
 		return nil, NewUpdateTypeNotSupportedError(updateSpec)
+	}
+}
+
+func getUpdateOperatorKey(operator spec.UpdateOperator) string {
+	switch operator {
+	case spec.UpdateOperatorSet:
+		return "$set"
+	case spec.UpdateOperatorPush:
+		return "$push"
+	default:
+		return ""
 	}
 }
 

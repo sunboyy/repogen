@@ -200,13 +200,15 @@ Assuming that the `City` field in the `UserModel` struct is of type `string` and
 
 When you specify the query like `ByAge`, it finds documents that contains age value **equal to** the provided parameter value. However, there are other types of comparators provided for you to use as follows.
 
-- `Not`: The value in the document is not equal to the provided parameter value.
-- `LessThan`: The value in the document is less than the provided parameter value.
-- `LessThanEqual`: The value in the document is less than or equal to the provided parameter value.
-- `GreaterThan`: The value in the document is greater than the provided parameter value.
-- `GreaterThanEqual`: The value in the document is greater than of equal to the provided parameter value.
-- `Between`: The value in the document is between two provided parameter values (inclusive).
-- `In`: The value in the document is in the provided parameter value (which is a slice).
+| Keyword            | Meaning         | Sample                               |
+|--------------------|-----------------|--------------------------------------|
+| -                  | == $1           | `FindByUsername(ctx, $1)`            |
+| `LessThan`         | < $1            | `FindByAgeLessThan(ctx, $1)`         |
+| `LessThanEqual`    | <= $1           | `FindByAgeLessThanEqual(ctx, $1)`    |
+| `GreaterThan`      | > $1            | `FindByAgeGreaterThan(ctx, $1)`      |
+| `GreaterThanEqual` | >= $1           | `FindByAgeGreaterThanEqual(ctx, $1)` |
+| `Between`          | >= $1 and <= $2 | `FindByAgeBetween(ctx, $1, $2)`      |
+| `In`               | in slice $1     | `FindByCityIn(ctx, $1)`              |
 
 To apply these comparators to the query, place these words after the field name such as `ByAgeGreaterThan`. You can also use comparators along with `And` and `Or` operators. For example, `ByGenderNotOrAgeLessThan` will apply `Not` comparator to the `Gender` field and `LessThan` comparator to the `Age` field.
 

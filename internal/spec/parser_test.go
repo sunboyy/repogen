@@ -49,6 +49,10 @@ var (
 		Name: "Enabled",
 		Type: code.SimpleType("bool"),
 	}
+	consentHistoryField = code.StructField{
+		Name: "ConsentHistory",
+		Type: code.ArrayType{ContainedType: code.SimpleType("ConsentHistoryItem")},
+	}
 
 	firstNameField = code.StructField{
 		Name: "First",
@@ -81,6 +85,7 @@ var (
 			contactField,
 			referrerField,
 			defaultPaymentField,
+			consentHistoryField,
 			enabledField,
 		},
 	}
@@ -149,7 +154,7 @@ func TestParseInterfaceMethod_Insert(t *testing.T) {
 				Operation: testCase.ExpectedOperation,
 			}
 			if !reflect.DeepEqual(actualSpec, expectedOutput) {
-				t.Errorf("Expected = %v\nReceived = %v", expectedOutput, actualSpec)
+				t.Errorf("Expected = %+v\nReceived = %+v", expectedOutput, actualSpec)
 			}
 		})
 	}
@@ -654,7 +659,7 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 				Operation: testCase.ExpectedOperation,
 			}
 			if !reflect.DeepEqual(actualSpec, expectedOutput) {
-				t.Errorf("Expected = %v\nReceived = %v", expectedOutput, actualSpec)
+				t.Errorf("Expected = %+v\nReceived = %+v", expectedOutput, actualSpec)
 			}
 		})
 	}
@@ -700,7 +705,7 @@ func TestParseInterfaceMethod_Update(t *testing.T) {
 			},
 			ExpectedOperation: spec.UpdateOperation{
 				Update: spec.UpdateFields{
-					{FieldReference: spec.FieldReference{genderField}, ParamIndex: 1},
+					{FieldReference: spec.FieldReference{genderField}, ParamIndex: 1, Operator: spec.UpdateOperatorSet},
 				},
 				Mode: spec.QueryModeOne,
 				Query: spec.QuerySpec{Predicates: []spec.Predicate{
@@ -724,7 +729,7 @@ func TestParseInterfaceMethod_Update(t *testing.T) {
 			},
 			ExpectedOperation: spec.UpdateOperation{
 				Update: spec.UpdateFields{
-					{FieldReference: spec.FieldReference{genderField}, ParamIndex: 1},
+					{FieldReference: spec.FieldReference{genderField}, ParamIndex: 1, Operator: spec.UpdateOperatorSet},
 				},
 				Mode: spec.QueryModeMany,
 				Query: spec.QuerySpec{Predicates: []spec.Predicate{
@@ -748,7 +753,7 @@ func TestParseInterfaceMethod_Update(t *testing.T) {
 			},
 			ExpectedOperation: spec.UpdateOperation{
 				Update: spec.UpdateFields{
-					{FieldReference: spec.FieldReference{nameField, firstNameField}, ParamIndex: 1},
+					{FieldReference: spec.FieldReference{nameField, firstNameField}, ParamIndex: 1, Operator: spec.UpdateOperatorSet},
 				},
 				Mode: spec.QueryModeOne,
 				Query: spec.QuerySpec{Predicates: []spec.Predicate{
@@ -773,8 +778,58 @@ func TestParseInterfaceMethod_Update(t *testing.T) {
 			},
 			ExpectedOperation: spec.UpdateOperation{
 				Update: spec.UpdateFields{
-					{FieldReference: spec.FieldReference{genderField}, ParamIndex: 1},
-					{FieldReference: spec.FieldReference{cityField}, ParamIndex: 2},
+					{FieldReference: spec.FieldReference{genderField}, ParamIndex: 1, Operator: spec.UpdateOperatorSet},
+					{FieldReference: spec.FieldReference{cityField}, ParamIndex: 2, Operator: spec.UpdateOperatorSet},
+				},
+				Mode: spec.QueryModeMany,
+				Query: spec.QuerySpec{Predicates: []spec.Predicate{
+					{FieldReference: spec.FieldReference{idField}, Comparator: spec.ComparatorEqual, ParamIndex: 3},
+				}},
+			},
+		},
+		{
+			Name: "UpdateArgPushByArg method",
+			Method: code.Method{
+				Name: "UpdateConsentHistoryPushByID",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("ConsentHistoryItem")},
+					{Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
+				},
+				Returns: []code.Type{
+					code.SimpleType("int"),
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedOperation: spec.UpdateOperation{
+				Update: spec.UpdateFields{
+					{FieldReference: spec.FieldReference{consentHistoryField}, ParamIndex: 1, Operator: spec.UpdateOperatorPush},
+				},
+				Mode: spec.QueryModeMany,
+				Query: spec.QuerySpec{Predicates: []spec.Predicate{
+					{FieldReference: spec.FieldReference{idField}, Comparator: spec.ComparatorEqual, ParamIndex: 2},
+				}},
+			},
+		},
+		{
+			Name: "UpdateArgAndArgPushByArg method",
+			Method: code.Method{
+				Name: "UpdateEnabledAndConsentHistoryPushByID",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("bool")},
+					{Type: code.SimpleType("ConsentHistoryItem")},
+					{Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
+				},
+				Returns: []code.Type{
+					code.SimpleType("int"),
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedOperation: spec.UpdateOperation{
+				Update: spec.UpdateFields{
+					{FieldReference: spec.FieldReference{enabledField}, ParamIndex: 1, Operator: spec.UpdateOperatorSet},
+					{FieldReference: spec.FieldReference{consentHistoryField}, ParamIndex: 2, Operator: spec.UpdateOperatorPush},
 				},
 				Mode: spec.QueryModeMany,
 				Query: spec.QuerySpec{Predicates: []spec.Predicate{
@@ -798,7 +853,7 @@ func TestParseInterfaceMethod_Update(t *testing.T) {
 				Operation: testCase.ExpectedOperation,
 			}
 			if !reflect.DeepEqual(actualSpec, expectedOutput) {
-				t.Errorf("Expected = %v\nReceived = %v", expectedOutput, actualSpec)
+				t.Errorf("Expected = %+v\nReceived = %+v", expectedOutput, actualSpec)
 			}
 		})
 	}
@@ -1089,7 +1144,7 @@ func TestParseInterfaceMethod_Delete(t *testing.T) {
 				Operation: testCase.ExpectedOperation,
 			}
 			if !reflect.DeepEqual(actualSpec, expectedOutput) {
-				t.Errorf("Expected = %v\nReceived = %v", expectedOutput, actualSpec)
+				t.Errorf("Expected = %+v\nReceived = %+v", expectedOutput, actualSpec)
 			}
 		})
 	}
@@ -1150,7 +1205,7 @@ func TestParseInterfaceMethod_Count(t *testing.T) {
 				Operation: testCase.ExpectedOperation,
 			}
 			if !reflect.DeepEqual(actualSpec, expectedOutput) {
-				t.Errorf("Expected = %v\nReceived = %v", expectedOutput, actualSpec)
+				t.Errorf("Expected = %+v\nReceived = %+v", expectedOutput, actualSpec)
 			}
 		})
 	}
@@ -1169,7 +1224,7 @@ func TestParseInterfaceMethod_Invalid(t *testing.T) {
 
 	expectedError := spec.NewUnknownOperationError("Search")
 	if err != expectedError {
-		t.Errorf("\nExpected = %v\nReceived = %v", expectedError, err)
+		t.Errorf("\nExpected = %+v\nReceived = %+v", expectedError, err)
 	}
 }
 
@@ -1275,7 +1330,7 @@ func TestParseInterfaceMethod_Insert_Invalid(t *testing.T) {
 			_, err := spec.ParseInterfaceMethod(structs, structModel, testCase.Method)
 
 			if err != testCase.ExpectedError {
-				t.Errorf("\nExpected = %v\nReceived = %v", testCase.ExpectedError, err)
+				t.Errorf("\nExpected = %+v\nReceived = %+v", testCase.ExpectedError, err)
 			}
 		})
 	}
@@ -1577,7 +1632,7 @@ func TestParseInterfaceMethod_Find_Invalid(t *testing.T) {
 			_, err := spec.ParseInterfaceMethod(structs, structModel, testCase.Method)
 
 			if err.Error() != testCase.ExpectedError.Error() {
-				t.Errorf("\nExpected = %v\nReceived = %v", testCase.ExpectedError.Error(), err.Error())
+				t.Errorf("\nExpected = %+v\nReceived = %+v", testCase.ExpectedError.Error(), err.Error())
 			}
 		})
 	}
@@ -1648,6 +1703,22 @@ func TestParseInterfaceMethod_Update_Invalid(t *testing.T) {
 			ExpectedError: spec.InvalidUpdateFieldsError,
 		},
 		{
+			Name: "push operator in non-array field",
+			Method: code.Method{
+				Name: "UpdateGenderPushByID",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("Gender")},
+					{Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
+				},
+				Returns: []code.Type{
+					code.SimpleType("bool"),
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedError: spec.PushNonArrayError,
+		},
+		{
 			Name: "update method without query",
 			Method: code.Method{
 				Name: "UpdateCity",
@@ -1676,6 +1747,37 @@ func TestParseInterfaceMethod_Update_Invalid(t *testing.T) {
 				},
 			},
 			ExpectedError: spec.NewInvalidQueryError([]string{"ID", "And", "Username", "Or", "Gender"}),
+		},
+		{
+			Name: "parameters for push operator is not array's contained type",
+			Method: code.Method{
+				Name: "UpdateConsentHistoryPushByID",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.ArrayType{ContainedType: code.SimpleType("ConsentHistoryItem")}},
+					{Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
+				},
+				Returns: []code.Type{
+					code.SimpleType("int"),
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedError: spec.InvalidUpdateFieldsError,
+		},
+		{
+			Name: "insufficient function parameters",
+			Method: code.Method{
+				Name: "UpdateEnabledAll",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					// {Type: code.SimpleType("Enabled")},
+				},
+				Returns: []code.Type{
+					code.SimpleType("int"),
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedError: spec.InvalidUpdateFieldsError,
 		},
 		{
 			Name: "update model with invalid parameter",
@@ -1762,7 +1864,7 @@ func TestParseInterfaceMethod_Update_Invalid(t *testing.T) {
 			_, err := spec.ParseInterfaceMethod(structs, structModel, testCase.Method)
 
 			if err != testCase.ExpectedError {
-				t.Errorf("\nExpected = %v\nReceived = %v", testCase.ExpectedError, err)
+				t.Errorf("\nExpected = %+v\nReceived = %+v", testCase.ExpectedError, err)
 			}
 		})
 	}
@@ -1941,7 +2043,7 @@ func TestParseInterfaceMethod_Delete_Invalid(t *testing.T) {
 			_, err := spec.ParseInterfaceMethod(structs, structModel, testCase.Method)
 
 			if err != testCase.ExpectedError {
-				t.Errorf("\nExpected = %v\nReceived = %v", testCase.ExpectedError, err)
+				t.Errorf("\nExpected = %+v\nReceived = %+v", testCase.ExpectedError, err)
 			}
 		})
 	}
@@ -2072,7 +2174,7 @@ func TestParseInterfaceMethod_Count_Invalid(t *testing.T) {
 			_, err := spec.ParseInterfaceMethod(structs, structModel, testCase.Method)
 
 			if err != testCase.ExpectedError {
-				t.Errorf("\nExpected = %v\nReceived = %v", testCase.ExpectedError, err)
+				t.Errorf("\nExpected = %+v\nReceived = %+v", testCase.ExpectedError, err)
 			}
 		})
 	}
