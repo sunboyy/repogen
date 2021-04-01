@@ -26,7 +26,7 @@ func TestUpdateTypeName(t *testing.T) {
 	for _, testCase := range testTable {
 		t.Run(testCase.ExpectedName, func(t *testing.T) {
 			if testCase.Update.Name() != testCase.ExpectedName {
-				t.Errorf("Expected = %v\nReceived = %v", testCase.ExpectedName, testCase.Update.Name())
+				t.Errorf("Expected = %+v\nReceived = %+v", testCase.ExpectedName, testCase.Update.Name())
 			}
 		})
 	}

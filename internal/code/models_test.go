@@ -24,7 +24,7 @@ func TestStructsByName(t *testing.T) {
 			t.Fail()
 		}
 		if !reflect.DeepEqual(structModel, userStruct) {
-			t.Errorf("Expected = %v\nReceived = %v", userStruct, structModel)
+			t.Errorf("Expected = %+v\nReceived = %+v", userStruct, structModel)
 		}
 	})
 
@@ -49,7 +49,7 @@ func TestStructFieldsByName(t *testing.T) {
 			t.Fail()
 		}
 		if !reflect.DeepEqual(field, usernameField) {
-			t.Errorf("Expected = %v\nReceived = %v", usernameField, field)
+			t.Errorf("Expected = %+v\nReceived = %+v", usernameField, field)
 		}
 	})
 
@@ -73,7 +73,7 @@ func TestInterfacesByName(t *testing.T) {
 			t.Fail()
 		}
 		if !reflect.DeepEqual(intf, userRepoIntf) {
-			t.Errorf("Expected = %v\nReceived = %v", userRepoIntf, intf)
+			t.Errorf("Expected = %+v\nReceived = %+v", userRepoIntf, intf)
 		}
 	})
 
@@ -121,7 +121,7 @@ func TestArrayTypeCode(t *testing.T) {
 			code := testCase.Type.Code()
 
 			if code != testCase.ExpectedCode {
-				t.Errorf("Expected = %v\nReceived = %v", testCase.ExpectedCode, code)
+				t.Errorf("Expected = %+v\nReceived = %+v", testCase.ExpectedCode, code)
 			}
 		})
 	}

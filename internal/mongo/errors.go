@@ -44,3 +44,16 @@ type updateTypeNotSupportedError struct {
 func (err updateTypeNotSupportedError) Error() string {
 	return fmt.Sprintf("update type %s not supported", err.Update.Name())
 }
+
+// NewUpdateOperatorNotSupportedError creates updateOperatorNotSupportedError
+func NewUpdateOperatorNotSupportedError(operator spec.UpdateOperator) error {
+	return updateOperatorNotSupportedError{Operator: operator}
+}
+
+type updateOperatorNotSupportedError struct {
+	Operator spec.UpdateOperator
+}
+
+func (err updateOperatorNotSupportedError) Error() string {
+	return fmt.Sprintf("update operator %s not supported", err.Operator)
+}

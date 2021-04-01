@@ -48,7 +48,7 @@ func TestError(t *testing.T) {
 	for _, testCase := range testTable {
 		t.Run(testCase.Name, func(t *testing.T) {
 			if testCase.Error.Error() != testCase.ExpectedString {
-				t.Errorf("Expected = %v\nReceived = %v", testCase.ExpectedString, testCase.Error.Error())
+				t.Errorf("Expected = %+v\nReceived = %+v", testCase.ExpectedString, testCase.Error.Error())
 			}
 		})
 	}

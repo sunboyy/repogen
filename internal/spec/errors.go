@@ -19,9 +19,11 @@ func (err ParsingError) Error() string {
 	case InvalidParamError:
 		return "parameters do not match the query"
 	case InvalidUpdateFieldsError:
-		return "update fields is invalid"
+		return "update fields are invalid"
 	case ContextParamRequiredError:
 		return "context parameter is required"
+	case PushNonArrayError:
+		return "cannot use push operation in a non-array type"
 	}
 	return string(err)
 }
@@ -33,6 +35,7 @@ const (
 	InvalidParamError         ParsingError = "ERROR_INVALID_PARAM"
 	InvalidUpdateFieldsError  ParsingError = "ERROR_INVALID_UPDATE_FIELDS"
 	ContextParamRequiredError ParsingError = "ERROR_CONTEXT_PARAM_REQUIRED"
+	PushNonArrayError         ParsingError = "ERROR_PUSH_NON_ARRAY"
 )
 
 // NewInvalidQueryError creates invalidQueryError

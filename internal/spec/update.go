@@ -51,6 +51,35 @@ func (u UpdateFields) NumberOfArguments() int {
 type UpdateField struct {
 	FieldReference FieldReference
 	ParamIndex     int
+	Operator       UpdateOperator
+}
+
+// UpdateOperator is a custom type that declares update operator to be used in an update operation
+type UpdateOperator string
+
+// UpdateOperator constants
+const (
+	UpdateOperatorSet  UpdateOperator = "SET"
+	UpdateOperatorPush UpdateOperator = "PUSH"
+)
+
+// NumberOfArguments returns number of arguments required to perform an update operation
+func (o UpdateOperator) NumberOfArguments() int {
+	return 1
+}
+
+// ArgumentType returns type that is required for function parameter
+func (o UpdateOperator) ArgumentType(fieldType code.Type) (code.Type, error) {
+	switch o {
+	case UpdateOperatorPush:
+		arrayType, ok := fieldType.(code.ArrayType)
+		if !ok {
+			return nil, PushNonArrayError
+		}
+		return arrayType.ContainedType, nil
+	default:
+		return fieldType, nil
+	}
 }
 
 func (p interfaceMethodParser) parseUpdateOperation(tokens []string) (Operation, error) {
@@ -104,24 +133,51 @@ func (p interfaceMethodParser) parseUpdate(tokens []string) (Update, error) {
 
 	paramIndex := 1
 	for _, updateFieldToken := range updateFieldTokens {
-		updateFieldReference, ok := p.fieldResolver.ResolveStructField(p.StructModel, updateFieldToken)
-		if !ok {
-			return nil, NewStructFieldNotFoundError(updateFieldToken)
+		updateField, err := p.parseUpdateField(updateFieldToken, paramIndex)
+		if err != nil {
+			return nil, err
 		}
 
-		updateFields = append(updateFields, UpdateField{
-			FieldReference: updateFieldReference,
-			ParamIndex:     paramIndex,
-		})
-		paramIndex++
+		updateFields = append(updateFields, updateField)
+		paramIndex += updateField.Operator.NumberOfArguments()
 	}
 
 	for _, field := range updateFields {
-		if len(p.Method.Params) <= field.ParamIndex ||
-			field.FieldReference.ReferencedField().Type != p.Method.Params[field.ParamIndex].Type {
+		if len(p.Method.Params) < field.ParamIndex+field.Operator.NumberOfArguments() {
 			return nil, InvalidUpdateFieldsError
+		}
+
+		requiredType, err := field.Operator.ArgumentType(field.FieldReference.ReferencedField().Type)
+		if err != nil {
+			return nil, err
+		}
+
+		for i := 0; i < field.Operator.NumberOfArguments(); i++ {
+			if requiredType != p.Method.Params[field.ParamIndex+i].Type {
+				return nil, InvalidUpdateFieldsError
+			}
 		}
 	}
 
 	return updateFields, nil
+}
+
+func (p interfaceMethodParser) parseUpdateField(t []string, paramIndex int) (UpdateField, error) {
+	if len(t) > 1 && t[len(t)-1] == "Push" {
+		return p.createUpdateField(t[:len(t)-1], UpdateOperatorPush, paramIndex)
+	}
+	return p.createUpdateField(t, UpdateOperatorSet, paramIndex)
+}
+
+func (p interfaceMethodParser) createUpdateField(t []string, operator UpdateOperator, paramIndex int) (UpdateField, error) {
+	fieldReference, ok := p.fieldResolver.ResolveStructField(p.StructModel, t)
+	if !ok {
+		return UpdateField{}, NewStructFieldNotFoundError(t)
+	}
+
+	return UpdateField{
+		FieldReference: fieldReference,
+		ParamIndex:     paramIndex,
+		Operator:       operator,
+	}, nil
 }
