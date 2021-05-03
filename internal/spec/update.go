@@ -61,6 +61,7 @@ type UpdateOperator string
 const (
 	UpdateOperatorSet  UpdateOperator = "SET"
 	UpdateOperatorPush UpdateOperator = "PUSH"
+	UpdateOperatorInc  UpdateOperator = "INC"
 )
 
 // NumberOfArguments returns number of arguments required to perform an update operation
@@ -69,16 +70,13 @@ func (o UpdateOperator) NumberOfArguments() int {
 }
 
 // ArgumentType returns type that is required for function parameter
-func (o UpdateOperator) ArgumentType(fieldType code.Type) (code.Type, error) {
+func (o UpdateOperator) ArgumentType(fieldType code.Type) code.Type {
 	switch o {
 	case UpdateOperatorPush:
-		arrayType, ok := fieldType.(code.ArrayType)
-		if !ok {
-			return nil, PushNonArrayError
-		}
-		return arrayType.ContainedType, nil
+		arrayType := fieldType.(code.ArrayType)
+		return arrayType.ContainedType
 	default:
-		return fieldType, nil
+		return fieldType
 	}
 }
 
@@ -147,14 +145,12 @@ func (p interfaceMethodParser) parseUpdate(tokens []string) (Update, error) {
 			return nil, InvalidUpdateFieldsError
 		}
 
-		requiredType, err := field.Operator.ArgumentType(field.FieldReference.ReferencedField().Type)
-		if err != nil {
-			return nil, err
-		}
+		requiredType := field.Operator.ArgumentType(field.FieldReference.ReferencedField().Type)
 
 		for i := 0; i < field.Operator.NumberOfArguments(); i++ {
 			if requiredType != p.Method.Params[field.ParamIndex+i].Type {
-				return nil, InvalidUpdateFieldsError
+				return nil, NewArgumentTypeNotMatchedError(field.FieldReference.ReferencingCode(), requiredType,
+					p.Method.Params[field.ParamIndex+i].Type)
 			}
 		}
 	}
@@ -166,6 +162,9 @@ func (p interfaceMethodParser) parseUpdateField(t []string, paramIndex int) (Upd
 	if len(t) > 1 && t[len(t)-1] == "Push" {
 		return p.createUpdateField(t[:len(t)-1], UpdateOperatorPush, paramIndex)
 	}
+	if len(t) > 1 && t[len(t)-1] == "Inc" {
+		return p.createUpdateField(t[:len(t)-1], UpdateOperatorInc, paramIndex)
+	}
 	return p.createUpdateField(t, UpdateOperatorSet, paramIndex)
 }
 
@@ -175,9 +174,24 @@ func (p interfaceMethodParser) createUpdateField(t []string, operator UpdateOper
 		return UpdateField{}, NewStructFieldNotFoundError(t)
 	}
 
+	if !p.validateUpdateOperator(fieldReference.ReferencedField().Type, operator) {
+		return UpdateField{}, NewIncompatibleUpdateOperatorError(operator, fieldReference)
+	}
+
 	return UpdateField{
 		FieldReference: fieldReference,
 		ParamIndex:     paramIndex,
 		Operator:       operator,
 	}, nil
+}
+
+func (p interfaceMethodParser) validateUpdateOperator(referencedType code.Type, operator UpdateOperator) bool {
+	switch operator {
+	case UpdateOperatorPush:
+		_, ok := referencedType.(code.ArrayType)
+		return ok
+	case UpdateOperatorInc:
+		return referencedType.IsNumber()
+	}
+	return true
 }

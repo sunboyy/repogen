@@ -14,6 +14,15 @@ func (r FieldReference) ReferencedField() code.StructField {
 	return r[len(r)-1]
 }
 
+// ReferencingCode returns a string containing name of the referenced fields concatenating with period (.).
+func (r FieldReference) ReferencingCode() string {
+	var fieldNames []string
+	for _, field := range r {
+		fieldNames = append(fieldNames, field.Name)
+	}
+	return strings.Join(fieldNames, ".")
+}
+
 type fieldResolver struct {
 	Structs code.Structs
 }

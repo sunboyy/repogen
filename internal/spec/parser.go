@@ -381,9 +381,11 @@ func (p interfaceMethodParser) validateQueryFromParams(params []code.Param, quer
 		}
 
 		for i := 0; i < predicate.Comparator.NumberOfArguments(); i++ {
-			if params[currentParamIndex].Type != predicate.Comparator.ArgumentTypeFromFieldType(
-				predicate.FieldReference.ReferencedField().Type) {
-				return InvalidParamError
+			requiredType := predicate.Comparator.ArgumentTypeFromFieldType(predicate.FieldReference.ReferencedField().Type)
+
+			if params[currentParamIndex].Type != requiredType {
+				return NewArgumentTypeNotMatchedError(predicate.FieldReference.ReferencingCode(), requiredType,
+					params[currentParamIndex].Type)
 			}
 			currentParamIndex++
 		}

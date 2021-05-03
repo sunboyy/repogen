@@ -122,8 +122,8 @@ func (g RepositoryGenerator) generateFindImplementation(operation spec.FindOpera
 	return generateFromTemplate("mongo_repository_findmany", findManyTemplate, tmplData)
 }
 
-func (g RepositoryGenerator) mongoSorts(sortSpec []spec.Sort) ([]sort, error) {
-	var sorts []sort
+func (g RepositoryGenerator) mongoSorts(sortSpec []spec.Sort) ([]findSort, error) {
+	var sorts []findSort
 
 	for _, s := range sortSpec {
 		bsonFieldReference, err := g.bsonFieldReference(s.FieldReference)
@@ -131,7 +131,7 @@ func (g RepositoryGenerator) mongoSorts(sortSpec []spec.Sort) ([]sort, error) {
 			return nil, err
 		}
 
-		sorts = append(sorts, sort{
+		sorts = append(sorts, findSort{
 			BsonTag:  bsonFieldReference,
 			Ordering: s.Ordering,
 		})
@@ -196,6 +196,8 @@ func getUpdateOperatorKey(operator spec.UpdateOperator) string {
 		return "$set"
 	case spec.UpdateOperatorPush:
 		return "$push"
+	case spec.UpdateOperatorInc:
+		return "$inc"
 	default:
 		return ""
 	}

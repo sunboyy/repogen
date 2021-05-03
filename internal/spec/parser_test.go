@@ -812,6 +812,30 @@ func TestParseInterfaceMethod_Update(t *testing.T) {
 			},
 		},
 		{
+			Name: "UpdateArgPushByArg method",
+			Method: code.Method{
+				Name: "UpdateAgeIncByID",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("int")},
+					{Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
+				},
+				Returns: []code.Type{
+					code.SimpleType("bool"),
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedOperation: spec.UpdateOperation{
+				Update: spec.UpdateFields{
+					{FieldReference: spec.FieldReference{ageField}, ParamIndex: 1, Operator: spec.UpdateOperatorInc},
+				},
+				Mode: spec.QueryModeOne,
+				Query: spec.QuerySpec{Predicates: []spec.Predicate{
+					{FieldReference: spec.FieldReference{idField}, Comparator: spec.ComparatorEqual, ParamIndex: 2},
+				}},
+			},
+		},
+		{
 			Name: "UpdateArgAndArgPushByArg method",
 			Method: code.Method{
 				Name: "UpdateEnabledAndConsentHistoryPushByID",
@@ -1564,7 +1588,7 @@ func TestParseInterfaceMethod_Find_Invalid(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedError: spec.InvalidParamError,
+			ExpectedError: spec.NewArgumentTypeNotMatchedError(genderField.Name, genderField.Type, code.SimpleType("string")),
 		},
 		{
 			Name: "mismatched method parameter type for special case",
@@ -1579,7 +1603,8 @@ func TestParseInterfaceMethod_Find_Invalid(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedError: spec.InvalidParamError,
+			ExpectedError: spec.NewArgumentTypeNotMatchedError(cityField.Name,
+				code.ArrayType{ContainedType: code.SimpleType("string")}, code.SimpleType("string")),
 		},
 		{
 			Name: "misplaced operator token (leftmost)",
@@ -1716,7 +1741,29 @@ func TestParseInterfaceMethod_Update_Invalid(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedError: spec.PushNonArrayError,
+			ExpectedError: spec.NewIncompatibleUpdateOperatorError(spec.UpdateOperatorPush, spec.FieldReference{{
+				Name: "Gender",
+				Type: code.SimpleType("Gender"),
+			}}),
+		},
+		{
+			Name: "inc operator in non-number field",
+			Method: code.Method{
+				Name: "UpdateCityIncByID",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("Gender")},
+					{Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
+				},
+				Returns: []code.Type{
+					code.SimpleType("bool"),
+					code.SimpleType("error"),
+				},
+			},
+			ExpectedError: spec.NewIncompatibleUpdateOperatorError(spec.UpdateOperatorInc, spec.FieldReference{{
+				Name: "City",
+				Type: code.SimpleType("string"),
+			}}),
 		},
 		{
 			Name: "update method without query",
@@ -1762,7 +1809,8 @@ func TestParseInterfaceMethod_Update_Invalid(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedError: spec.InvalidUpdateFieldsError,
+			ExpectedError: spec.NewArgumentTypeNotMatchedError(consentHistoryField.Name, code.SimpleType("ConsentHistoryItem"),
+				code.ArrayType{ContainedType: code.SimpleType("ConsentHistoryItem")}),
 		},
 		{
 			Name: "insufficient function parameters",
@@ -1839,7 +1887,7 @@ func TestParseInterfaceMethod_Update_Invalid(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedError: spec.InvalidUpdateFieldsError,
+			ExpectedError: spec.NewArgumentTypeNotMatchedError(ageField.Name, ageField.Type, code.SimpleType("float64")),
 		},
 		{
 			Name: "struct field does not match parameter in query",
@@ -1855,7 +1903,7 @@ func TestParseInterfaceMethod_Update_Invalid(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedError: spec.InvalidParamError,
+			ExpectedError: spec.NewArgumentTypeNotMatchedError(genderField.Name, genderField.Type, code.SimpleType("string")),
 		},
 	}
 
@@ -2019,7 +2067,7 @@ func TestParseInterfaceMethod_Delete_Invalid(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedError: spec.InvalidParamError,
+			ExpectedError: spec.NewArgumentTypeNotMatchedError("Gender", code.SimpleType("Gender"), code.SimpleType("string")),
 		},
 		{
 			Name: "mismatched method parameter type for special case",
@@ -2034,7 +2082,8 @@ func TestParseInterfaceMethod_Delete_Invalid(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedError: spec.InvalidParamError,
+			ExpectedError: spec.NewArgumentTypeNotMatchedError("City",
+				code.ArrayType{ContainedType: code.SimpleType("string")}, code.SimpleType("string")),
 		},
 	}
 
@@ -2150,7 +2199,7 @@ func TestParseInterfaceMethod_Count_Invalid(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedError: spec.InvalidParamError,
+			ExpectedError: spec.NewArgumentTypeNotMatchedError("Gender", code.SimpleType("Gender"), code.SimpleType("string")),
 		},
 		{
 			Name: "struct field not found",

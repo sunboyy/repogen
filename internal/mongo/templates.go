@@ -91,15 +91,15 @@ const insertManyTemplate = `	var entities []interface{}
 type mongoFindTemplateData struct {
 	EntityType string
 	QuerySpec  querySpec
-	Sorts      []sort
+	Sorts      []findSort
 }
 
-type sort struct {
+type findSort struct {
 	BsonTag  string
 	Ordering spec.Ordering
 }
 
-func (s sort) OrderNum() int {
+func (s findSort) OrderNum() int {
 	if s.Ordering == spec.OrderingAscending {
 		return 1
 	}
