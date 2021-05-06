@@ -2,6 +2,7 @@ package mongo
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/sunboyy/repogen/internal/spec"
@@ -26,11 +27,17 @@ func (u updateModel) Code() string {
 type updateFields map[string][]updateField
 
 func (u updateFields) Code() string {
-	var lines []string
-	for k, v := range u {
-		lines = append(lines, fmt.Sprintf(`		"%s": bson.M{`, k))
+	var keys []string
+	for k := range u {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
 
-		for _, field := range v {
+	var lines []string
+	for _, key := range keys {
+		lines = append(lines, fmt.Sprintf(`		"%s": bson.M{`, key))
+
+		for _, field := range u[key] {
 			lines = append(lines, fmt.Sprintf(`			"%s": arg%d,`, field.BsonTag, field.ParamIndex))
 		}
 

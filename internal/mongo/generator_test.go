@@ -1063,7 +1063,7 @@ func (r *UserRepositoryMongo) UpdateAgeByGender(arg0 context.Context, arg1 int, 
 				Params: []code.Param{
 					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
 					{Name: "consentHistory", Type: code.SimpleType("ConsentHistory")},
-					{Name: "gender", Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
+					{Name: "id", Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
 				},
 				Returns: []code.Type{
 					code.SimpleType("bool"),
@@ -1088,6 +1088,47 @@ func (r *UserRepositoryMongo) UpdateConsentHistoryPushByID(arg0 context.Context,
 	}, bson.M{
 		"$push": bson.M{
 			"consent_history": arg1,
+		},
+	})
+	if err != nil {
+		return false, err
+	}
+	return result.MatchedCount > 0, err
+}
+`,
+		},
+		{
+			Name: "simple update inc method",
+			MethodSpec: spec.MethodSpec{
+				Name: "UpdateAgeIncByID",
+				Params: []code.Param{
+					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Name: "age", Type: code.SimpleType("int")},
+					{Name: "id", Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
+				},
+				Returns: []code.Type{
+					code.SimpleType("bool"),
+					code.SimpleType("error"),
+				},
+				Operation: spec.UpdateOperation{
+					Update: spec.UpdateFields{
+						{FieldReference: spec.FieldReference{ageField}, ParamIndex: 1, Operator: spec.UpdateOperatorInc},
+					},
+					Mode: spec.QueryModeOne,
+					Query: spec.QuerySpec{
+						Predicates: []spec.Predicate{
+							{FieldReference: spec.FieldReference{idField}, Comparator: spec.ComparatorEqual, ParamIndex: 2},
+						},
+					},
+				},
+			},
+			ExpectedCode: `
+func (r *UserRepositoryMongo) UpdateAgeIncByID(arg0 context.Context, arg1 int, arg2 primitive.ObjectID) (bool, error) {
+	result, err := r.collection.UpdateOne(arg0, bson.M{
+		"_id": arg2,
+	}, bson.M{
+		"$inc": bson.M{
+			"age": arg1,
 		},
 	})
 	if err != nil {
@@ -1129,11 +1170,11 @@ func (r *UserRepositoryMongo) UpdateEnabledAndConsentHistoryPushByID(arg0 contex
 	result, err := r.collection.UpdateOne(arg0, bson.M{
 		"_id": arg3,
 	}, bson.M{
-		"$set": bson.M{
-			"enabled": arg1,
-		},
 		"$push": bson.M{
 			"consent_history": arg2,
+		},
+		"$set": bson.M{
+			"enabled": arg1,
 		},
 	})
 	if err != nil {

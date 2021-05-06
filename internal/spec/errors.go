@@ -22,8 +22,6 @@ func (err ParsingError) Error() string {
 		return "update fields are invalid"
 	case ContextParamRequiredError:
 		return "context parameter is required"
-	case PushNonArrayError:
-		return "cannot use push operation in a non-array type"
 	}
 	return string(err)
 }
@@ -35,7 +33,6 @@ const (
 	InvalidParamError         ParsingError = "ERROR_INVALID_PARAM"
 	InvalidUpdateFieldsError  ParsingError = "ERROR_INVALID_UPDATE_FIELDS"
 	ContextParamRequiredError ParsingError = "ERROR_CONTEXT_PARAM_REQUIRED"
-	PushNonArrayError         ParsingError = "ERROR_PUSH_NON_ARRAY"
 )
 
 // NewInvalidQueryError creates invalidQueryError
@@ -62,6 +59,26 @@ type invalidSortError struct {
 
 func (err invalidSortError) Error() string {
 	return fmt.Sprintf("invalid sort '%s'", err.SortString)
+}
+
+// NewArgumentTypeNotMatchedError creates argumentTypeNotMatchedError
+func NewArgumentTypeNotMatchedError(fieldName string, requiredType code.Type, givenType code.Type) error {
+	return argumentTypeNotMatchedError{
+		FieldName:    fieldName,
+		RequiredType: requiredType,
+		GivenType:    givenType,
+	}
+}
+
+type argumentTypeNotMatchedError struct {
+	FieldName    string
+	RequiredType code.Type
+	GivenType    code.Type
+}
+
+func (err argumentTypeNotMatchedError) Error() string {
+	return fmt.Sprintf("field '%s' requires an argument of type '%s' (got '%s')",
+		err.FieldName, err.RequiredType.Code(), err.GivenType.Code())
 }
 
 // NewUnknownOperationError creates unknownOperationError
@@ -106,4 +123,24 @@ type incompatibleComparatorError struct {
 func (err incompatibleComparatorError) Error() string {
 	return fmt.Sprintf("cannot use comparator %s with struct field '%s' of type '%s'",
 		err.Comparator, err.Field.Name, err.Field.Type.Code())
+}
+
+// NewIncompatibleUpdateOperatorError creates incompatibleUpdateOperatorError
+func NewIncompatibleUpdateOperatorError(updateOperator UpdateOperator, fieldReference FieldReference) error {
+	return incompatibleUpdateOperatorError{
+		UpdateOperator:  updateOperator,
+		ReferencingCode: fieldReference.ReferencingCode(),
+		ReferencedType:  fieldReference.ReferencedField().Type,
+	}
+}
+
+type incompatibleUpdateOperatorError struct {
+	UpdateOperator  UpdateOperator
+	ReferencingCode string
+	ReferencedType  code.Type
+}
+
+func (err incompatibleUpdateOperatorError) Error() string {
+	return fmt.Sprintf("cannot use update operator %s with struct field '%s' of type '%s'",
+		err.UpdateOperator, err.ReferencingCode, err.ReferencedType.Code())
 }

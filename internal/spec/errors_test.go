@@ -43,6 +43,19 @@ func TestError(t *testing.T) {
 			Error:          spec.NewInvalidSortError([]string{"Order", "By"}),
 			ExpectedString: "invalid sort 'OrderBy'",
 		},
+		{
+			Name:           "ArgumentTypeNotMatchedError",
+			Error:          spec.NewArgumentTypeNotMatchedError("Age", code.SimpleType("int"), code.SimpleType("float64")),
+			ExpectedString: "field 'Age' requires an argument of type 'int' (got 'float64')",
+		},
+		{
+			Name: "IncompatibleUpdateOperatorError",
+			Error: spec.NewIncompatibleUpdateOperatorError(spec.UpdateOperatorInc, spec.FieldReference{{
+				Name: "City",
+				Type: code.SimpleType("string"),
+			}}),
+			ExpectedString: "cannot use update operator INC with struct field 'City' of type 'string'",
+		},
 	}
 
 	for _, testCase := range testTable {
