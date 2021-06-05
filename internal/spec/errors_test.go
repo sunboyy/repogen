@@ -26,6 +26,16 @@ func TestError(t *testing.T) {
 			ExpectedString: "struct field 'PhoneNumber' not found",
 		},
 		{
+			Name:           "UnsupportedReturnError",
+			Error:          spec.NewUnsupportedReturnError(code.SimpleType("User"), 0),
+			ExpectedString: "return type 'User' at index 0 is not supported",
+		},
+		{
+			Name:           "OperationReturnCountUnmatchedError",
+			Error:          spec.NewOperationReturnCountUnmatchedError(2),
+			ExpectedString: "operation requires return count of 2",
+		},
+		{
 			Name:           "InvalidQueryError",
 			Error:          spec.NewInvalidQueryError([]string{"And"}),
 			ExpectedString: "invalid query 'And'",

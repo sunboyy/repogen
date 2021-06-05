@@ -15,12 +15,18 @@ import (
 	"github.com/sunboyy/repogen/internal/spec"
 )
 
-const version = ""
+const usageText = `repogen generates MongoDB repository implementation from repository interface
+
+  Find more information at: https://github.com/sunboyy/repogen
+
+Supported options:`
+
+const version = "v0.2.0"
 
 func main() {
 	flag.Usage = printUsage
 
-	versionPtr := flag.Bool("version", false, "print repogen version")
+	versionPtr := flag.Bool("version", false, "print version of repogen")
 	sourcePtr := flag.String("src", "", "source file")
 	destPtr := flag.String("dest", "", "destination file")
 	modelPtr := flag.String("model", "", "model struct name")
@@ -70,16 +76,12 @@ func main() {
 }
 
 func printUsage() {
-	fmt.Println("Usage of repogen")
+	fmt.Println(usageText)
 	flag.PrintDefaults()
 }
 
 func printVersion() {
-	if version != "" {
-		fmt.Println(version)
-	} else {
-		fmt.Println("(devel)")
-	}
+	fmt.Println(version)
 }
 
 func generateFromRequest(fileName, structModelName, repositoryInterfaceName string) (string, error) {

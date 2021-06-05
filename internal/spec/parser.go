@@ -82,31 +82,27 @@ func (p interfaceMethodParser) parseInsertOperation(tokens []string) (Operation,
 
 func (p interfaceMethodParser) extractInsertReturns(returns []code.Type) (QueryMode, error) {
 	if len(returns) != 2 {
-		return "", UnsupportedReturnError
+		return "", NewOperationReturnCountUnmatchedError(2)
 	}
 
 	if returns[1] != code.SimpleType("error") {
-		return "", UnsupportedReturnError
+		return "", NewUnsupportedReturnError(returns[1], 1)
 	}
 
-	interfaceType, ok := returns[0].(code.InterfaceType)
-	if ok {
-		if len(interfaceType.Methods) != 0 {
-			return "", UnsupportedReturnError
+	switch t := returns[0].(type) {
+	case code.InterfaceType:
+		if len(t.Methods) == 0 {
+			return QueryModeOne, nil
 		}
-		return QueryModeOne, nil
-	}
 
-	arrayType, ok := returns[0].(code.ArrayType)
-	if ok {
-		interfaceType, ok := arrayType.ContainedType.(code.InterfaceType)
-		if !ok || len(interfaceType.Methods) != 0 {
-			return "", UnsupportedReturnError
+	case code.ArrayType:
+		interfaceType, ok := t.ContainedType.(code.InterfaceType)
+		if ok && len(interfaceType.Methods) == 0 {
+			return QueryModeMany, nil
 		}
-		return QueryModeMany, nil
 	}
 
-	return "", UnsupportedReturnError
+	return "", NewUnsupportedReturnError(returns[0], 0)
 }
 
 func (p interfaceMethodParser) parseFindOperation(tokens []string) (Operation, error) {
@@ -204,35 +200,31 @@ func (p interfaceMethodParser) splitQueryAndSortTokens(tokens []string) ([]strin
 
 func (p interfaceMethodParser) extractModelOrSliceReturns(returns []code.Type) (QueryMode, error) {
 	if len(returns) != 2 {
-		return "", UnsupportedReturnError
+		return "", NewOperationReturnCountUnmatchedError(2)
 	}
 
 	if returns[1] != code.SimpleType("error") {
-		return "", UnsupportedReturnError
+		return "", NewUnsupportedReturnError(returns[1], 1)
 	}
 
-	pointerType, ok := returns[0].(code.PointerType)
-	if ok {
-		simpleType := pointerType.ContainedType
+	switch t := returns[0].(type) {
+	case code.PointerType:
+		simpleType := t.ContainedType
 		if simpleType == code.SimpleType(p.StructModel.Name) {
 			return QueryModeOne, nil
 		}
-		return "", UnsupportedReturnError
-	}
 
-	arrayType, ok := returns[0].(code.ArrayType)
-	if ok {
-		pointerType, ok := arrayType.ContainedType.(code.PointerType)
+	case code.ArrayType:
+		pointerType, ok := t.ContainedType.(code.PointerType)
 		if ok {
 			simpleType := pointerType.ContainedType
 			if simpleType == code.SimpleType(p.StructModel.Name) {
 				return QueryModeMany, nil
 			}
-			return "", UnsupportedReturnError
 		}
 	}
 
-	return "", UnsupportedReturnError
+	return "", NewUnsupportedReturnError(returns[0], 0)
 }
 
 func splitByAnd(tokens []string) ([][]string, bool) {
@@ -323,15 +315,15 @@ func (p interfaceMethodParser) parseCountOperation(tokens []string) (Operation, 
 
 func (p interfaceMethodParser) validateCountReturns(returns []code.Type) error {
 	if len(returns) != 2 {
-		return UnsupportedReturnError
+		return NewOperationReturnCountUnmatchedError(2)
 	}
 
 	if returns[0] != code.SimpleType("int") {
-		return UnsupportedReturnError
+		return NewUnsupportedReturnError(returns[0], 0)
 	}
 
 	if returns[1] != code.SimpleType("error") {
-		return UnsupportedReturnError
+		return NewUnsupportedReturnError(returns[1], 1)
 	}
 
 	return nil
@@ -339,11 +331,11 @@ func (p interfaceMethodParser) validateCountReturns(returns []code.Type) error {
 
 func (p interfaceMethodParser) extractIntOrBoolReturns(returns []code.Type) (QueryMode, error) {
 	if len(returns) != 2 {
-		return "", UnsupportedReturnError
+		return "", NewOperationReturnCountUnmatchedError(2)
 	}
 
 	if returns[1] != code.SimpleType("error") {
-		return "", UnsupportedReturnError
+		return "", NewUnsupportedReturnError(returns[1], 1)
 	}
 
 	simpleType, ok := returns[0].(code.SimpleType)
@@ -356,7 +348,7 @@ func (p interfaceMethodParser) extractIntOrBoolReturns(returns []code.Type) (Que
 		}
 	}
 
-	return "", UnsupportedReturnError
+	return "", NewUnsupportedReturnError(returns[0], 0)
 }
 
 func (p interfaceMethodParser) validateContextParam() error {

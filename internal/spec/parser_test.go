@@ -1264,7 +1264,7 @@ func TestParseInterfaceMethod_Insert_Invalid(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedError: spec.UnsupportedReturnError,
+			ExpectedError: spec.NewOperationReturnCountUnmatchedError(2),
 		},
 		{
 			Name: "unsupported return types from insert method",
@@ -1275,7 +1275,7 @@ func TestParseInterfaceMethod_Insert_Invalid(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedError: spec.UnsupportedReturnError,
+			ExpectedError: spec.NewUnsupportedReturnError(code.PointerType{ContainedType: code.SimpleType("UserModel")}, 0),
 		},
 		{
 			Name: "unempty interface return from insert method",
@@ -1290,7 +1290,7 @@ func TestParseInterfaceMethod_Insert_Invalid(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedError: spec.UnsupportedReturnError,
+			ExpectedError: spec.NewUnsupportedReturnError(code.InterfaceType{}, 0),
 		},
 		{
 			Name: "error return not provided",
@@ -1301,7 +1301,7 @@ func TestParseInterfaceMethod_Insert_Invalid(t *testing.T) {
 					code.InterfaceType{},
 				},
 			},
-			ExpectedError: spec.UnsupportedReturnError,
+			ExpectedError: spec.NewUnsupportedReturnError(code.InterfaceType{}, 1),
 		},
 		{
 			Name: "no context parameter",
@@ -1353,7 +1353,7 @@ func TestParseInterfaceMethod_Insert_Invalid(t *testing.T) {
 		t.Run(testCase.Name, func(t *testing.T) {
 			_, err := spec.ParseInterfaceMethod(structs, structModel, testCase.Method)
 
-			if err != testCase.ExpectedError {
+			if err.Error() != testCase.ExpectedError.Error() {
 				t.Errorf("\nExpected = %+v\nReceived = %+v", testCase.ExpectedError, err)
 			}
 		})
@@ -1372,7 +1372,7 @@ func TestParseInterfaceMethod_Find_Invalid(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedError: spec.UnsupportedReturnError,
+			ExpectedError: spec.NewOperationReturnCountUnmatchedError(2),
 		},
 		{
 			Name: "unsupported return types from find method",
@@ -1383,7 +1383,7 @@ func TestParseInterfaceMethod_Find_Invalid(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedError: spec.UnsupportedReturnError,
+			ExpectedError: spec.NewUnsupportedReturnError(code.SimpleType("UserModel"), 0),
 		},
 		{
 			Name: "error return not provided",
@@ -1394,7 +1394,7 @@ func TestParseInterfaceMethod_Find_Invalid(t *testing.T) {
 					code.SimpleType("int"),
 				},
 			},
-			ExpectedError: spec.UnsupportedReturnError,
+			ExpectedError: spec.NewUnsupportedReturnError(code.SimpleType("int"), 1),
 		},
 		{
 			Name: "find method without query",
@@ -1675,7 +1675,7 @@ func TestParseInterfaceMethod_Update_Invalid(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedError: spec.UnsupportedReturnError,
+			ExpectedError: spec.NewOperationReturnCountUnmatchedError(2),
 		},
 		{
 			Name: "unsupported return types from update method",
@@ -1686,7 +1686,7 @@ func TestParseInterfaceMethod_Update_Invalid(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedError: spec.UnsupportedReturnError,
+			ExpectedError: spec.NewUnsupportedReturnError(code.SimpleType("float64"), 0),
 		},
 		{
 			Name: "error return not provided",
@@ -1697,7 +1697,7 @@ func TestParseInterfaceMethod_Update_Invalid(t *testing.T) {
 					code.SimpleType("bool"),
 				},
 			},
-			ExpectedError: spec.UnsupportedReturnError,
+			ExpectedError: spec.NewUnsupportedReturnError(code.SimpleType("bool"), 1),
 		},
 		{
 			Name: "update with no field provided",
@@ -1911,7 +1911,7 @@ func TestParseInterfaceMethod_Update_Invalid(t *testing.T) {
 		t.Run(testCase.Name, func(t *testing.T) {
 			_, err := spec.ParseInterfaceMethod(structs, structModel, testCase.Method)
 
-			if err != testCase.ExpectedError {
+			if err.Error() != testCase.ExpectedError.Error() {
 				t.Errorf("\nExpected = %+v\nReceived = %+v", testCase.ExpectedError, err)
 			}
 		})
@@ -1930,7 +1930,7 @@ func TestParseInterfaceMethod_Delete_Invalid(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedError: spec.UnsupportedReturnError,
+			ExpectedError: spec.NewOperationReturnCountUnmatchedError(2),
 		},
 		{
 			Name: "unsupported return types from delete method",
@@ -1941,7 +1941,7 @@ func TestParseInterfaceMethod_Delete_Invalid(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedError: spec.UnsupportedReturnError,
+			ExpectedError: spec.NewUnsupportedReturnError(code.SimpleType("float64"), 0),
 		},
 		{
 			Name: "error return not provided",
@@ -1952,7 +1952,7 @@ func TestParseInterfaceMethod_Delete_Invalid(t *testing.T) {
 					code.SimpleType("bool"),
 				},
 			},
-			ExpectedError: spec.UnsupportedReturnError,
+			ExpectedError: spec.NewUnsupportedReturnError(code.SimpleType("bool"), 1),
 		},
 		{
 			Name: "delete method without query",
@@ -2091,7 +2091,7 @@ func TestParseInterfaceMethod_Delete_Invalid(t *testing.T) {
 		t.Run(testCase.Name, func(t *testing.T) {
 			_, err := spec.ParseInterfaceMethod(structs, structModel, testCase.Method)
 
-			if err != testCase.ExpectedError {
+			if err.Error() != testCase.ExpectedError.Error() {
 				t.Errorf("\nExpected = %+v\nReceived = %+v", testCase.ExpectedError, err)
 			}
 		})
@@ -2110,7 +2110,7 @@ func TestParseInterfaceMethod_Count_Invalid(t *testing.T) {
 					code.SimpleType("bool"),
 				},
 			},
-			ExpectedError: spec.UnsupportedReturnError,
+			ExpectedError: spec.NewOperationReturnCountUnmatchedError(2),
 		},
 		{
 			Name: "invalid integer return",
@@ -2121,7 +2121,7 @@ func TestParseInterfaceMethod_Count_Invalid(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedError: spec.UnsupportedReturnError,
+			ExpectedError: spec.NewUnsupportedReturnError(code.SimpleType("int64"), 0),
 		},
 		{
 			Name: "error return not provided",
@@ -2132,7 +2132,7 @@ func TestParseInterfaceMethod_Count_Invalid(t *testing.T) {
 					code.SimpleType("bool"),
 				},
 			},
-			ExpectedError: spec.UnsupportedReturnError,
+			ExpectedError: spec.NewUnsupportedReturnError(code.SimpleType("bool"), 1),
 		},
 		{
 			Name: "count method without query",
@@ -2222,7 +2222,7 @@ func TestParseInterfaceMethod_Count_Invalid(t *testing.T) {
 		t.Run(testCase.Name, func(t *testing.T) {
 			_, err := spec.ParseInterfaceMethod(structs, structModel, testCase.Method)
 
-			if err != testCase.ExpectedError {
+			if err.Error() != testCase.ExpectedError.Error() {
 				t.Errorf("\nExpected = %+v\nReceived = %+v", testCase.ExpectedError, err)
 			}
 		})

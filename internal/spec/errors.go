@@ -12,8 +12,6 @@ type ParsingError string
 
 func (err ParsingError) Error() string {
 	switch err {
-	case UnsupportedReturnError:
-		return "this type of return is not supported"
 	case QueryRequiredError:
 		return "query is required"
 	case InvalidParamError:
@@ -28,12 +26,43 @@ func (err ParsingError) Error() string {
 
 // parsing error constants
 const (
-	UnsupportedReturnError    ParsingError = "ERROR_UNSUPPORTED_RETURN"
 	QueryRequiredError        ParsingError = "ERROR_QUERY_REQUIRED"
 	InvalidParamError         ParsingError = "ERROR_INVALID_PARAM"
 	InvalidUpdateFieldsError  ParsingError = "ERROR_INVALID_UPDATE_FIELDS"
 	ContextParamRequiredError ParsingError = "ERROR_CONTEXT_PARAM_REQUIRED"
 )
+
+// NewUnsupportedReturnError creates unsupportedReturnError
+func NewUnsupportedReturnError(givenType code.Type, index int) error {
+	return unsupportedReturnError{
+		GivenType: givenType,
+		Index:     index,
+	}
+}
+
+type unsupportedReturnError struct {
+	GivenType code.Type
+	Index     int
+}
+
+func (err unsupportedReturnError) Error() string {
+	return fmt.Sprintf("return type '%s' at index %d is not supported", err.GivenType.Code(), err.Index)
+}
+
+// NewOperationReturnCountUnmatchedError creates operationReturnCountUnmatchedError
+func NewOperationReturnCountUnmatchedError(returnCount int) error {
+	return operationReturnCountUnmatchedError{
+		ReturnCount: returnCount,
+	}
+}
+
+type operationReturnCountUnmatchedError struct {
+	ReturnCount int
+}
+
+func (err operationReturnCountUnmatchedError) Error() string {
+	return fmt.Sprintf("operation requires return count of %d", err.ReturnCount)
+}
 
 // NewInvalidQueryError creates invalidQueryError
 func NewInvalidQueryError(queryTokens []string) error {
