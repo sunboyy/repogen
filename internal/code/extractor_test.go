@@ -98,6 +98,7 @@ type UserRepository interface {
 	FindAll(context.Context) ([]*UserModel, error)
 	FindByAgeBetween(ctx context.Context, fromAge, toAge int) ([]*UserModel, error)
 	InsertOne(ctx context.Context, user *UserModel) (interface{}, error)
+	UpdateAgreementByID(ctx context.Context, agreement map[string]bool, id primitive.ObjectID) (bool, error)
 	CustomMethod(interface {
 		Run(arg1 int)
 	}) interface {
@@ -151,6 +152,18 @@ type UserRepository interface {
 								},
 								Returns: []code.Type{
 									code.InterfaceType{},
+									code.SimpleType("error"),
+								},
+							},
+							{
+								Name: "UpdateAgreementByID",
+								Params: []code.Param{
+									{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+									{Name: "agreement", Type: code.MapType{KeyType: code.SimpleType("string"), ValueType: code.SimpleType("bool")}},
+									{Name: "id", Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
+								},
+								Returns: []code.Type{
+									code.SimpleType("bool"),
 									code.SimpleType("error"),
 								},
 							},

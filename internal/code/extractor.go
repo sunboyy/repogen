@@ -167,6 +167,11 @@ func getType(expr ast.Expr) Type {
 		containedType := getType(expr.Elt)
 		return ArrayType{ContainedType: containedType}
 
+	case *ast.MapType:
+		keyType := getType(expr.Key)
+		valueType := getType(expr.Value)
+		return MapType{KeyType: keyType, ValueType: valueType}
+
 	case *ast.InterfaceType:
 		var methods []Method
 		for _, method := range expr.Methods.List {
