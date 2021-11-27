@@ -172,3 +172,19 @@ func (t ArrayType) Code() string {
 func (t ArrayType) IsNumber() bool {
 	return false
 }
+
+// MapType is a model of map
+type MapType struct {
+	KeyType   Type
+	ValueType Type
+}
+
+// Code returns token string in code format
+func (t MapType) Code() string {
+	return fmt.Sprintf("map[%s]%s", t.KeyType.Code(), t.ValueType.Code())
+}
+
+// IsNumber returns false
+func (t MapType) IsNumber() bool {
+	return false
+}

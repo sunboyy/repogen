@@ -21,7 +21,7 @@ const usageText = `repogen generates MongoDB repository implementation from repo
 
 Supported options:`
 
-const version = "v0.2.0"
+const version = "v0.2.1"
 
 func main() {
 	flag.Usage = printUsage
@@ -41,7 +41,7 @@ func main() {
 
 	if *sourcePtr == "" {
 		printUsage()
-		log.Fatal("-source flag required")
+		log.Fatal("-src flag required")
 	}
 	if *modelPtr == "" {
 		printUsage()

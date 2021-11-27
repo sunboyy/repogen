@@ -114,6 +114,14 @@ func TestTypeCode(t *testing.T) {
 			Type:         code.ArrayType{ContainedType: code.SimpleType("UserModel")},
 			ExpectedCode: "[]UserModel",
 		},
+		{
+			Name: "map type",
+			Type: code.MapType{
+				KeyType:   code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"},
+				ValueType: code.PointerType{ContainedType: code.SimpleType("UserModel")},
+			},
+			ExpectedCode: "map[primitive.ObjectID]*UserModel",
+		},
 	}
 
 	for _, testCase := range testTable {
@@ -193,6 +201,11 @@ func TestTypeIsNumber(t *testing.T) {
 		{
 			Name:     "array type",
 			Type:     code.ArrayType{ContainedType: code.SimpleType("int")},
+			IsNumber: false,
+		},
+		{
+			Name:     "map type",
+			Type:     code.MapType{KeyType: code.SimpleType("int"), ValueType: code.SimpleType("float64")},
 			IsNumber: false,
 		},
 		{
