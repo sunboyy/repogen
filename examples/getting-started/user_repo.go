@@ -7,6 +7,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func NewUserRepository(collection *mongo.Collection) UserRepository {
@@ -31,7 +32,7 @@ func (r *UserRepositoryMongo) FindByUsername(arg0 context.Context, arg1 string) 
 	var entity UserModel
 	if err := r.collection.FindOne(arg0, bson.M{
 		"username": arg1,
-	}).Decode(&entity); err != nil {
+	}, options.FindOne().SetSort(bson.M{})).Decode(&entity); err != nil {
 		return nil, err
 	}
 	return &entity, nil
