@@ -32,7 +32,7 @@ func TestGenerateMongoRepository(t *testing.T) {
 		Name: "UserModel",
 		Fields: code.StructFields{
 			idField,
-			{
+			code.StructField{
 				Name: "Username",
 				Type: code.SimpleType("string"),
 				Tags: map[string][]string{"bson": {"username"}},

@@ -57,7 +57,7 @@ var userModel = code.Struct{
 	Name: "UserModel",
 	Fields: code.StructFields{
 		idField,
-		{
+		code.StructField{
 			Name: "Username",
 			Type: code.SimpleType("string"),
 			Tags: map[string][]string{"bson": {"username"}},
@@ -989,7 +989,7 @@ func (r *UserRepositoryMongo) UpdateByID(arg0 context.Context, arg1 *UserModel, 
 				},
 				Operation: spec.UpdateOperation{
 					Update: spec.UpdateFields{
-						{FieldReference: spec.FieldReference{ageField}, ParamIndex: 1, Operator: spec.UpdateOperatorSet},
+						spec.UpdateField{FieldReference: spec.FieldReference{ageField}, ParamIndex: 1, Operator: spec.UpdateOperatorSet},
 					},
 					Mode: spec.QueryModeOne,
 					Query: spec.QuerySpec{
@@ -1030,7 +1030,7 @@ func (r *UserRepositoryMongo) UpdateAgeByID(arg0 context.Context, arg1 int, arg2
 				},
 				Operation: spec.UpdateOperation{
 					Update: spec.UpdateFields{
-						{FieldReference: spec.FieldReference{ageField}, ParamIndex: 1, Operator: spec.UpdateOperatorSet},
+						spec.UpdateField{FieldReference: spec.FieldReference{ageField}, ParamIndex: 1, Operator: spec.UpdateOperatorSet},
 					},
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
@@ -1071,7 +1071,7 @@ func (r *UserRepositoryMongo) UpdateAgeByGender(arg0 context.Context, arg1 int, 
 				},
 				Operation: spec.UpdateOperation{
 					Update: spec.UpdateFields{
-						{FieldReference: spec.FieldReference{consentHistoryField}, ParamIndex: 1, Operator: spec.UpdateOperatorPush},
+						spec.UpdateField{FieldReference: spec.FieldReference{consentHistoryField}, ParamIndex: 1, Operator: spec.UpdateOperatorPush},
 					},
 					Mode: spec.QueryModeOne,
 					Query: spec.QuerySpec{
@@ -1112,7 +1112,7 @@ func (r *UserRepositoryMongo) UpdateConsentHistoryPushByID(arg0 context.Context,
 				},
 				Operation: spec.UpdateOperation{
 					Update: spec.UpdateFields{
-						{FieldReference: spec.FieldReference{ageField}, ParamIndex: 1, Operator: spec.UpdateOperatorInc},
+						spec.UpdateField{FieldReference: spec.FieldReference{ageField}, ParamIndex: 1, Operator: spec.UpdateOperatorInc},
 					},
 					Mode: spec.QueryModeOne,
 					Query: spec.QuerySpec{
@@ -1154,8 +1154,8 @@ func (r *UserRepositoryMongo) UpdateAgeIncByID(arg0 context.Context, arg1 int, a
 				},
 				Operation: spec.UpdateOperation{
 					Update: spec.UpdateFields{
-						{FieldReference: spec.FieldReference{enabledField}, ParamIndex: 1, Operator: spec.UpdateOperatorSet},
-						{FieldReference: spec.FieldReference{consentHistoryField}, ParamIndex: 2, Operator: spec.UpdateOperatorPush},
+						spec.UpdateField{FieldReference: spec.FieldReference{enabledField}, ParamIndex: 1, Operator: spec.UpdateOperatorSet},
+						spec.UpdateField{FieldReference: spec.FieldReference{consentHistoryField}, ParamIndex: 2, Operator: spec.UpdateOperatorPush},
 					},
 					Mode: spec.QueryModeOne,
 					Query: spec.QuerySpec{
@@ -1199,7 +1199,7 @@ func (r *UserRepositoryMongo) UpdateEnabledAndConsentHistoryPushByID(arg0 contex
 				},
 				Operation: spec.UpdateOperation{
 					Update: spec.UpdateFields{
-						{FieldReference: spec.FieldReference{nameField, firstNameField}, ParamIndex: 1, Operator: spec.UpdateOperatorSet},
+						spec.UpdateField{FieldReference: spec.FieldReference{nameField, firstNameField}, ParamIndex: 1, Operator: spec.UpdateOperatorSet},
 					},
 					Mode: spec.QueryModeOne,
 					Query: spec.QuerySpec{
@@ -2081,7 +2081,7 @@ func TestGenerateMethod_Invalid(t *testing.T) {
 				},
 				Operation: spec.UpdateOperation{
 					Update: spec.UpdateFields{
-						{FieldReference: spec.FieldReference{accessTokenField}, ParamIndex: 1, Operator: spec.UpdateOperatorSet},
+						spec.UpdateField{FieldReference: spec.FieldReference{accessTokenField}, ParamIndex: 1, Operator: spec.UpdateOperatorSet},
 					},
 					Mode: spec.QueryModeOne,
 					Query: spec.QuerySpec{
@@ -2133,7 +2133,7 @@ func TestGenerateMethod_Invalid(t *testing.T) {
 				},
 				Operation: spec.UpdateOperation{
 					Update: spec.UpdateFields{
-						{FieldReference: spec.FieldReference{consentHistoryField}, ParamIndex: 1, Operator: "APPEND"},
+						spec.UpdateField{FieldReference: spec.FieldReference{consentHistoryField}, ParamIndex: 1, Operator: "APPEND"},
 					},
 					Mode: spec.QueryModeOne,
 					Query: spec.QuerySpec{

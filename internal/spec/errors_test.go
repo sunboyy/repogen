@@ -60,10 +60,12 @@ func TestError(t *testing.T) {
 		},
 		{
 			Name: "IncompatibleUpdateOperatorError",
-			Error: spec.NewIncompatibleUpdateOperatorError(spec.UpdateOperatorInc, spec.FieldReference{{
-				Name: "City",
-				Type: code.SimpleType("string"),
-			}}),
+			Error: spec.NewIncompatibleUpdateOperatorError(spec.UpdateOperatorInc, spec.FieldReference{
+				code.StructField{
+					Name: "City",
+					Type: code.SimpleType("string"),
+				},
+			}),
 			ExpectedString: "cannot use update operator INC with struct field 'City' of type 'string'",
 		},
 	}

@@ -65,10 +65,10 @@ type UserModel struct {
 			ExpectedOutput: code.File{
 				PackageName: "user",
 				Structs: code.Structs{
-					{
+					code.Struct{
 						Name: "UserModel",
 						Fields: code.StructFields{
-							{
+							code.StructField{
 								Name: "ID",
 								Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"},
 								Tags: map[string][]string{
@@ -76,7 +76,7 @@ type UserModel struct {
 									"json": {"id"},
 								},
 							},
-							{
+							code.StructField{
 								Name: "Username",
 								Type: code.SimpleType("string"),
 								Tags: map[string][]string{
@@ -99,6 +99,7 @@ type UserRepository interface {
 	FindByAgeBetween(ctx context.Context, fromAge, toAge int) ([]*UserModel, error)
 	InsertOne(ctx context.Context, user *UserModel) (interface{}, error)
 	UpdateAgreementByID(ctx context.Context, agreement map[string]bool, id primitive.ObjectID) (bool, error)
+	// CustomMethod does custom things.
 	CustomMethod(interface {
 		Run(arg1 int)
 	}) interface {
@@ -108,7 +109,7 @@ type UserRepository interface {
 			ExpectedOutput: code.File{
 				PackageName: "user",
 				Interfaces: code.Interfaces{
-					{
+					code.InterfaceType{
 						Name: "UserRepository",
 						Methods: []code.Method{
 							{
@@ -168,7 +169,8 @@ type UserRepository interface {
 								},
 							},
 							{
-								Name: "CustomMethod",
+								Name:     "CustomMethod",
+								Comments: []string{"CustomMethod does custom things."},
 								Params: []code.Param{
 									{
 										Type: code.InterfaceType{
@@ -228,10 +230,10 @@ type UserRepository interface {
 					{Path: "go.mongodb.org/mongo-driver/bson/primitive"},
 				},
 				Structs: code.Structs{
-					{
+					code.Struct{
 						Name: "UserModel",
 						Fields: code.StructFields{
-							{
+							code.StructField{
 								Name: "ID",
 								Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"},
 								Tags: map[string][]string{
@@ -239,7 +241,7 @@ type UserRepository interface {
 									"json": {"id"},
 								},
 							},
-							{
+							code.StructField{
 								Name: "Username",
 								Type: code.SimpleType("string"),
 								Tags: map[string][]string{
@@ -251,7 +253,7 @@ type UserRepository interface {
 					},
 				},
 				Interfaces: code.Interfaces{
-					{
+					code.InterfaceType{
 						Name: "UserRepository",
 						Methods: []code.Method{
 							{
