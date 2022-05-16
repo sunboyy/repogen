@@ -19,29 +19,27 @@ func ExtractComponents(f *ast.File) File {
 		}
 
 		for _, spec := range genDecl.Specs {
-			importSpec, ok := spec.(*ast.ImportSpec)
-			if ok {
+			switch spec := spec.(type) {
+			case *ast.ImportSpec:
 				var imp Import
-				if importSpec.Name != nil {
-					imp.Name = importSpec.Name.Name
+				if spec.Name != nil {
+					imp.Name = spec.Name.Name
 				}
-				importPath, err := strconv.Unquote(importSpec.Path.Value)
+				importPath, err := strconv.Unquote(spec.Path.Value)
 				if err != nil {
-					fmt.Printf("cannot unquote import %s : %s \n", importSpec.Path.Value, err)
+					fmt.Printf("cannot unquote import %s : %s \n", spec.Path.Value, err)
 					continue
 				}
 				imp.Path = importPath
 
 				file.Imports = append(file.Imports, imp)
-			}
 
-			typeSpec, ok := spec.(*ast.TypeSpec)
-			if ok {
-				switch t := typeSpec.Type.(type) {
+			case *ast.TypeSpec:
+				switch t := spec.Type.(type) {
 				case *ast.StructType:
-					file.Structs = append(file.Structs, extractStructType(typeSpec.Name.Name, t))
+					file.Structs = append(file.Structs, extractStructType(spec.Name.Name, t))
 				case *ast.InterfaceType:
-					file.Interfaces = append(file.Interfaces, extractInterfaceType(typeSpec.Name.Name, t))
+					file.Interfaces = append(file.Interfaces, extractInterfaceType(spec.Name.Name, t))
 				}
 			}
 		}
@@ -88,7 +86,16 @@ func extractInterfaceType(name string, interfaceType *ast.InterfaceType) Interfa
 			break
 		}
 
-		meth := extractFunction(name, funcType)
+		var comments []string
+		if method.Doc != nil {
+			for _, comment := range method.Doc.List {
+				commentRunes := []rune(comment.Text)
+				commentText := strings.TrimSpace(string(commentRunes[2:]))
+				comments = append(comments, commentText)
+			}
+		}
+
+		meth := extractFunction(name, comments, funcType)
 
 		intf.Methods = append(intf.Methods, meth)
 	}
@@ -118,9 +125,10 @@ func extractStructTag(tagValue string) map[string][]string {
 	return tags
 }
 
-func extractFunction(name string, funcType *ast.FuncType) Method {
+func extractFunction(name string, comments []string, funcType *ast.FuncType) Method {
 	meth := Method{
-		Name: name,
+		Name:     name,
+		Comments: comments,
 	}
 	for _, param := range funcType.Params.List {
 		paramType := getType(param.Type)
@@ -173,25 +181,7 @@ func getType(expr ast.Expr) Type {
 		return MapType{KeyType: keyType, ValueType: valueType}
 
 	case *ast.InterfaceType:
-		var methods []Method
-		for _, method := range expr.Methods.List {
-			funcType, ok := method.Type.(*ast.FuncType)
-			if !ok {
-				continue
-			}
-
-			var name string
-			for _, n := range method.Names {
-				name = n.Name
-				break
-			}
-
-			methods = append(methods, extractFunction(name, funcType))
-		}
-
-		return InterfaceType{
-			Methods: methods,
-		}
+		return extractInterfaceType("", expr)
 	}
 
 	return nil

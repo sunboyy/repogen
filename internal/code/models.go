@@ -95,9 +95,10 @@ func (intf InterfaceType) IsNumber() bool {
 
 // Method is a definition of the method inside the interface
 type Method struct {
-	Name    string
-	Params  []Param
-	Returns []Type
+	Name     string
+	Comments []string
+	Params   []Param
+	Returns  []Type
 }
 
 // Param is a model of method parameter

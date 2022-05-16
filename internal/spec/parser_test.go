@@ -705,7 +705,7 @@ func TestParseInterfaceMethod_Update(t *testing.T) {
 			},
 			ExpectedOperation: spec.UpdateOperation{
 				Update: spec.UpdateFields{
-					{FieldReference: spec.FieldReference{genderField}, ParamIndex: 1, Operator: spec.UpdateOperatorSet},
+					spec.UpdateField{FieldReference: spec.FieldReference{genderField}, ParamIndex: 1, Operator: spec.UpdateOperatorSet},
 				},
 				Mode: spec.QueryModeOne,
 				Query: spec.QuerySpec{Predicates: []spec.Predicate{
@@ -729,7 +729,7 @@ func TestParseInterfaceMethod_Update(t *testing.T) {
 			},
 			ExpectedOperation: spec.UpdateOperation{
 				Update: spec.UpdateFields{
-					{FieldReference: spec.FieldReference{genderField}, ParamIndex: 1, Operator: spec.UpdateOperatorSet},
+					spec.UpdateField{FieldReference: spec.FieldReference{genderField}, ParamIndex: 1, Operator: spec.UpdateOperatorSet},
 				},
 				Mode: spec.QueryModeMany,
 				Query: spec.QuerySpec{Predicates: []spec.Predicate{
@@ -753,7 +753,7 @@ func TestParseInterfaceMethod_Update(t *testing.T) {
 			},
 			ExpectedOperation: spec.UpdateOperation{
 				Update: spec.UpdateFields{
-					{FieldReference: spec.FieldReference{nameField, firstNameField}, ParamIndex: 1, Operator: spec.UpdateOperatorSet},
+					spec.UpdateField{FieldReference: spec.FieldReference{nameField, firstNameField}, ParamIndex: 1, Operator: spec.UpdateOperatorSet},
 				},
 				Mode: spec.QueryModeOne,
 				Query: spec.QuerySpec{Predicates: []spec.Predicate{
@@ -778,8 +778,8 @@ func TestParseInterfaceMethod_Update(t *testing.T) {
 			},
 			ExpectedOperation: spec.UpdateOperation{
 				Update: spec.UpdateFields{
-					{FieldReference: spec.FieldReference{genderField}, ParamIndex: 1, Operator: spec.UpdateOperatorSet},
-					{FieldReference: spec.FieldReference{cityField}, ParamIndex: 2, Operator: spec.UpdateOperatorSet},
+					spec.UpdateField{FieldReference: spec.FieldReference{genderField}, ParamIndex: 1, Operator: spec.UpdateOperatorSet},
+					spec.UpdateField{FieldReference: spec.FieldReference{cityField}, ParamIndex: 2, Operator: spec.UpdateOperatorSet},
 				},
 				Mode: spec.QueryModeMany,
 				Query: spec.QuerySpec{Predicates: []spec.Predicate{
@@ -803,7 +803,7 @@ func TestParseInterfaceMethod_Update(t *testing.T) {
 			},
 			ExpectedOperation: spec.UpdateOperation{
 				Update: spec.UpdateFields{
-					{FieldReference: spec.FieldReference{consentHistoryField}, ParamIndex: 1, Operator: spec.UpdateOperatorPush},
+					spec.UpdateField{FieldReference: spec.FieldReference{consentHistoryField}, ParamIndex: 1, Operator: spec.UpdateOperatorPush},
 				},
 				Mode: spec.QueryModeMany,
 				Query: spec.QuerySpec{Predicates: []spec.Predicate{
@@ -827,7 +827,7 @@ func TestParseInterfaceMethod_Update(t *testing.T) {
 			},
 			ExpectedOperation: spec.UpdateOperation{
 				Update: spec.UpdateFields{
-					{FieldReference: spec.FieldReference{ageField}, ParamIndex: 1, Operator: spec.UpdateOperatorInc},
+					spec.UpdateField{FieldReference: spec.FieldReference{ageField}, ParamIndex: 1, Operator: spec.UpdateOperatorInc},
 				},
 				Mode: spec.QueryModeOne,
 				Query: spec.QuerySpec{Predicates: []spec.Predicate{
@@ -852,8 +852,8 @@ func TestParseInterfaceMethod_Update(t *testing.T) {
 			},
 			ExpectedOperation: spec.UpdateOperation{
 				Update: spec.UpdateFields{
-					{FieldReference: spec.FieldReference{enabledField}, ParamIndex: 1, Operator: spec.UpdateOperatorSet},
-					{FieldReference: spec.FieldReference{consentHistoryField}, ParamIndex: 2, Operator: spec.UpdateOperatorPush},
+					spec.UpdateField{FieldReference: spec.FieldReference{enabledField}, ParamIndex: 1, Operator: spec.UpdateOperatorSet},
+					spec.UpdateField{FieldReference: spec.FieldReference{consentHistoryField}, ParamIndex: 2, Operator: spec.UpdateOperatorPush},
 				},
 				Mode: spec.QueryModeMany,
 				Query: spec.QuerySpec{Predicates: []spec.Predicate{
@@ -1741,10 +1741,12 @@ func TestParseInterfaceMethod_Update_Invalid(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedError: spec.NewIncompatibleUpdateOperatorError(spec.UpdateOperatorPush, spec.FieldReference{{
-				Name: "Gender",
-				Type: code.SimpleType("Gender"),
-			}}),
+			ExpectedError: spec.NewIncompatibleUpdateOperatorError(spec.UpdateOperatorPush, spec.FieldReference{
+				code.StructField{
+					Name: "Gender",
+					Type: code.SimpleType("Gender"),
+				},
+			}),
 		},
 		{
 			Name: "inc operator in non-number field",
@@ -1760,10 +1762,12 @@ func TestParseInterfaceMethod_Update_Invalid(t *testing.T) {
 					code.SimpleType("error"),
 				},
 			},
-			ExpectedError: spec.NewIncompatibleUpdateOperatorError(spec.UpdateOperatorInc, spec.FieldReference{{
-				Name: "City",
-				Type: code.SimpleType("string"),
-			}}),
+			ExpectedError: spec.NewIncompatibleUpdateOperatorError(spec.UpdateOperatorInc, spec.FieldReference{
+				code.StructField{
+					Name: "City",
+					Type: code.SimpleType("string"),
+				},
+			}),
 		},
 		{
 			Name: "update method without query",

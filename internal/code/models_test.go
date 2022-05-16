@@ -11,8 +11,8 @@ func TestStructsByName(t *testing.T) {
 	userStruct := code.Struct{
 		Name: "UserModel",
 		Fields: code.StructFields{
-			{Name: "ID", Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
-			{Name: "Username", Type: code.SimpleType("string")},
+			code.StructField{Name: "ID", Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
+			code.StructField{Name: "Username", Type: code.SimpleType("string")},
 		},
 	}
 	structs := code.Structs{userStruct}
