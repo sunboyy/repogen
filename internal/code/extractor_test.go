@@ -64,8 +64,8 @@ type UserModel struct {
 }`,
 			ExpectedOutput: code.File{
 				PackageName: "user",
-				Structs: code.Structs{
-					code.Struct{
+				Structs: []code.Struct{
+					{
 						Name: "UserModel",
 						Fields: code.StructFields{
 							code.StructField{
@@ -108,8 +108,8 @@ type UserRepository interface {
 }`,
 			ExpectedOutput: code.File{
 				PackageName: "user",
-				Interfaces: code.Interfaces{
-					code.InterfaceType{
+				Interfaces: []code.InterfaceType{
+					{
 						Name: "UserRepository",
 						Methods: []code.Method{
 							{
@@ -229,8 +229,8 @@ type UserRepository interface {
 					{Path: "context"},
 					{Path: "go.mongodb.org/mongo-driver/bson/primitive"},
 				},
-				Structs: code.Structs{
-					code.Struct{
+				Structs: []code.Struct{
+					{
 						Name: "UserModel",
 						Fields: code.StructFields{
 							code.StructField{
@@ -252,8 +252,8 @@ type UserRepository interface {
 						},
 					},
 				},
-				Interfaces: code.Interfaces{
-					code.InterfaceType{
+				Interfaces: []code.InterfaceType{
+					{
 						Name: "UserRepository",
 						Methods: []code.Method{
 							{

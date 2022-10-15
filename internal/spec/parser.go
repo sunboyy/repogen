@@ -6,7 +6,7 @@ import (
 )
 
 // ParseInterfaceMethod returns repository method spec from declared interface method
-func ParseInterfaceMethod(structs code.Structs, structModel code.Struct, method code.Method) (MethodSpec, error) {
+func ParseInterfaceMethod(structs map[string]code.Struct, structModel code.Struct, method code.Method) (MethodSpec, error) {
 	parser := interfaceMethodParser{
 		fieldResolver: fieldResolver{
 			Structs: structs,

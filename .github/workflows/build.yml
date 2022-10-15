@@ -10,15 +10,11 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-
-    - name: Set up Go
-      uses: actions/setup-go@v2
+    - uses: actions/setup-go@v3
       with:
-        go-version: 1.17
+        go-version: 1.18
 
-    - name: Install dependencies
-      run: go get -u golang.org/x/lint/golint
+    - uses: actions/checkout@v3
 
     - name: Build
       run: go build -v ./...
@@ -26,10 +22,8 @@ jobs:
     - name: Test
       run: go test -v ./... -covermode=count -coverprofile=cover.out
 
-    - name: Vet & Lint
-      run: |
-        go vet ./...
-        golint -set_exit_status ./...
+    - name: Vet
+      run: go vet ./...
 
     - uses: codecov/codecov-action@v1
       with:

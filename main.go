@@ -27,7 +27,7 @@ func main() {
 	flag.Usage = printUsage
 
 	versionPtr := flag.Bool("version", false, "print version of repogen")
-	sourcePtr := flag.String("src", "", "source file")
+	pkgDirPtr := flag.String("pkg", ".", "package directory to scan for model struct and repository interface")
 	destPtr := flag.String("dest", "", "destination file")
 	modelPtr := flag.String("model", "", "model struct name")
 	repoPtr := flag.String("repo", "", "repository interface name")
@@ -39,10 +39,6 @@ func main() {
 		return
 	}
 
-	if *sourcePtr == "" {
-		printUsage()
-		log.Fatal("-src flag required")
-	}
 	if *modelPtr == "" {
 		printUsage()
 		log.Fatal("-model flag required")
@@ -52,7 +48,7 @@ func main() {
 		log.Fatal("-repo flag required")
 	}
 
-	code, err := generateFromRequest(*sourcePtr, *modelPtr, *repoPtr)
+	code, err := generateFromRequest(*pkgDirPtr, *modelPtr, *repoPtr)
 	if err != nil {
 		panic(err)
 	}
@@ -84,33 +80,40 @@ func printVersion() {
 	fmt.Println(version)
 }
 
-func generateFromRequest(fileName, structModelName, repositoryInterfaceName string) (string, error) {
+func generateFromRequest(pkgDir, structModelName, repositoryInterfaceName string) (string, error) {
 	fset := token.NewFileSet()
-	f, err := parser.ParseFile(fset, fileName, nil, parser.ParseComments)
+	dir, err := parser.ParseDir(fset, pkgDir, nil, parser.ParseComments)
 	if err != nil {
-		panic(err)
+		return "", err
 	}
 
-	file := code.ExtractComponents(f)
+	pkg, err := code.ParsePackage(dir)
+	if err != nil {
+		return "", err
+	}
 
-	structModel, ok := file.Structs.ByName(structModelName)
+	return generateRepository(pkg, structModelName, repositoryInterfaceName)
+}
+
+func generateRepository(pkg code.Package, structModelName, repositoryInterfaceName string) (string, error) {
+	structModel, ok := pkg.Structs[structModelName]
 	if !ok {
 		return "", errors.New("struct model not found")
 	}
 
-	intf, ok := file.Interfaces.ByName(repositoryInterfaceName)
+	intf, ok := pkg.Interfaces[repositoryInterfaceName]
 	if !ok {
 		return "", errors.New("interface model not found")
 	}
 
 	var methodSpecs []spec.MethodSpec
 	for _, method := range intf.Methods {
-		methodSpec, err := spec.ParseInterfaceMethod(file.Structs, structModel, method)
+		methodSpec, err := spec.ParseInterfaceMethod(pkg.Structs, structModel, method)
 		if err != nil {
 			return "", err
 		}
 		methodSpecs = append(methodSpecs, methodSpec)
 	}
 
-	return generator.GenerateRepository(file.PackageName, structModel, intf.Name, methodSpecs)
+	return generator.GenerateRepository(pkg.Name, structModel, intf.Name, methodSpecs)
 }

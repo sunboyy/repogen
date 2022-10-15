@@ -91,9 +91,9 @@ var (
 	}
 )
 
-var structs = code.Structs{
-	nameStruct,
-	structModel,
+var structs = map[string]code.Struct{
+	nameStruct.Name:  nameStruct,
+	structModel.Name: structModel,
 }
 
 type ParseInterfaceMethodTestCase struct {
