@@ -9,7 +9,7 @@ import (
 
 func TestStructFieldsByName(t *testing.T) {
 	idField := code.StructField{Name: "ID", Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}}
-	usernameField := code.StructField{Name: "Username", Type: code.SimpleType("string")}
+	usernameField := code.StructField{Name: "Username", Type: code.TypeString}
 	fields := code.StructFields{idField, usernameField}
 
 	t.Run("struct field found", func(t *testing.T) {
@@ -91,7 +91,7 @@ func TestTypeIsNumber(t *testing.T) {
 	testTable := []TypeIsNumberTestCase{
 		{
 			Name:     "simple type: int",
-			Type:     code.SimpleType("int"),
+			Type:     code.TypeInt,
 			IsNumber: true,
 		},
 		{
@@ -116,12 +116,12 @@ func TestTypeIsNumber(t *testing.T) {
 		},
 		{
 			Name:     "simple type: other float variants",
-			Type:     code.SimpleType("float64"),
+			Type:     code.TypeFloat64,
 			IsNumber: true,
 		},
 		{
 			Name:     "simple type: non-number primitive type",
-			Type:     code.SimpleType("string"),
+			Type:     code.TypeString,
 			IsNumber: false,
 		},
 		{
@@ -136,22 +136,22 @@ func TestTypeIsNumber(t *testing.T) {
 		},
 		{
 			Name:     "pointer type: number",
-			Type:     code.PointerType{ContainedType: code.SimpleType("int")},
+			Type:     code.PointerType{ContainedType: code.TypeInt},
 			IsNumber: true,
 		},
 		{
 			Name:     "pointer type: non-number",
-			Type:     code.PointerType{ContainedType: code.SimpleType("string")},
+			Type:     code.PointerType{ContainedType: code.TypeString},
 			IsNumber: false,
 		},
 		{
 			Name:     "array type",
-			Type:     code.ArrayType{ContainedType: code.SimpleType("int")},
+			Type:     code.ArrayType{ContainedType: code.TypeInt},
 			IsNumber: false,
 		},
 		{
 			Name:     "map type",
-			Type:     code.MapType{KeyType: code.SimpleType("int"), ValueType: code.SimpleType("float64")},
+			Type:     code.MapType{KeyType: code.TypeInt, ValueType: code.TypeFloat64},
 			IsNumber: false,
 		},
 		{

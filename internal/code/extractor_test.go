@@ -78,7 +78,7 @@ type UserModel struct {
 							},
 							code.StructField{
 								Name: "Username",
-								Type: code.SimpleType("string"),
+								Type: code.TypeString,
 								Tags: map[string][]string{
 									"bson": {"username"},
 									"json": {"username"},
@@ -120,7 +120,7 @@ type UserRepository interface {
 								},
 								Returns: []code.Type{
 									code.PointerType{ContainedType: code.SimpleType("UserModel")},
-									code.SimpleType("error"),
+									code.TypeError,
 								},
 							},
 							{
@@ -130,19 +130,19 @@ type UserRepository interface {
 								},
 								Returns: []code.Type{
 									code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-									code.SimpleType("error"),
+									code.TypeError,
 								},
 							},
 							{
 								Name: "FindByAgeBetween",
 								Params: []code.Param{
 									{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-									{Name: "fromAge", Type: code.SimpleType("int")},
-									{Name: "toAge", Type: code.SimpleType("int")},
+									{Name: "fromAge", Type: code.TypeInt},
+									{Name: "toAge", Type: code.TypeInt},
 								},
 								Returns: []code.Type{
 									code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-									code.SimpleType("error"),
+									code.TypeError,
 								},
 							},
 							{
@@ -153,19 +153,19 @@ type UserRepository interface {
 								},
 								Returns: []code.Type{
 									code.InterfaceType{},
-									code.SimpleType("error"),
+									code.TypeError,
 								},
 							},
 							{
 								Name: "UpdateAgreementByID",
 								Params: []code.Param{
 									{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-									{Name: "agreement", Type: code.MapType{KeyType: code.SimpleType("string"), ValueType: code.SimpleType("bool")}},
+									{Name: "agreement", Type: code.MapType{KeyType: code.TypeString, ValueType: code.TypeBool}},
 									{Name: "id", Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
 								},
 								Returns: []code.Type{
-									code.SimpleType("bool"),
-									code.SimpleType("error"),
+									code.TypeBool,
+									code.TypeError,
 								},
 							},
 							{
@@ -178,7 +178,7 @@ type UserRepository interface {
 												{
 													Name: "Run",
 													Params: []code.Param{
-														{Name: "arg1", Type: code.SimpleType("int")},
+														{Name: "arg1", Type: code.TypeInt},
 													},
 												},
 											},
@@ -191,7 +191,7 @@ type UserRepository interface {
 											{
 												Name: "Do",
 												Params: []code.Param{
-													{Name: "arg2", Type: code.SimpleType("string")},
+													{Name: "arg2", Type: code.TypeString},
 												},
 											},
 										},
@@ -243,7 +243,7 @@ type UserRepository interface {
 							},
 							code.StructField{
 								Name: "Username",
-								Type: code.SimpleType("string"),
+								Type: code.TypeString,
 								Tags: map[string][]string{
 									"bson": {"username"},
 									"json": {"username"},
@@ -264,7 +264,7 @@ type UserRepository interface {
 								},
 								Returns: []code.Type{
 									code.PointerType{ContainedType: code.SimpleType("UserModel")},
-									code.SimpleType("error"),
+									code.TypeError,
 								},
 							},
 							{
@@ -274,7 +274,7 @@ type UserRepository interface {
 								},
 								Returns: []code.Type{
 									code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-									code.SimpleType("error"),
+									code.TypeError,
 								},
 							},
 						},

@@ -100,6 +100,15 @@ func (t SimpleType) IsNumber() bool {
 		t == "float32" || t == "float64"
 }
 
+// commonly-used types
+const (
+	TypeBool    = SimpleType("bool")
+	TypeInt     = SimpleType("int")
+	TypeFloat64 = SimpleType("float64")
+	TypeString  = SimpleType("string")
+	TypeError   = SimpleType("error")
+)
+
 // ExternalType is a type that is called to another package
 type ExternalType struct {
 	PackageAlias string

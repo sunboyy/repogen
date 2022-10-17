@@ -44,7 +44,7 @@ func TestError(t *testing.T) {
 			Name: "IncompatibleComparatorError",
 			Error: spec.NewIncompatibleComparatorError(spec.ComparatorTrue, code.StructField{
 				Name: "Age",
-				Type: code.SimpleType("int"),
+				Type: code.TypeInt,
 			}),
 			ExpectedString: "cannot use comparator EQUAL_TRUE with struct field 'Age' of type 'int'",
 		},
@@ -55,7 +55,7 @@ func TestError(t *testing.T) {
 		},
 		{
 			Name:           "ArgumentTypeNotMatchedError",
-			Error:          spec.NewArgumentTypeNotMatchedError("Age", code.SimpleType("int"), code.SimpleType("float64")),
+			Error:          spec.NewArgumentTypeNotMatchedError("Age", code.TypeInt, code.TypeFloat64),
 			ExpectedString: "field 'Age' requires an argument of type 'int' (got 'float64')",
 		},
 		{
@@ -63,7 +63,7 @@ func TestError(t *testing.T) {
 			Error: spec.NewIncompatibleUpdateOperatorError(spec.UpdateOperatorInc, spec.FieldReference{
 				code.StructField{
 					Name: "City",
-					Type: code.SimpleType("string"),
+					Type: code.TypeString,
 				},
 			}),
 			ExpectedString: "cannot use update operator INC with struct field 'City' of type 'string'",

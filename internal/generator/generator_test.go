@@ -22,7 +22,7 @@ var (
 	}
 	ageField = code.StructField{
 		Name: "Age",
-		Type: code.SimpleType("int"),
+		Type: code.TypeInt,
 		Tags: map[string][]string{"bson": {"age"}},
 	}
 )
@@ -34,7 +34,7 @@ func TestGenerateMongoRepository(t *testing.T) {
 			idField,
 			code.StructField{
 				Name: "Username",
-				Type: code.SimpleType("string"),
+				Type: code.TypeString,
 				Tags: map[string][]string{"bson": {"username"}},
 			},
 			genderField,
@@ -49,7 +49,7 @@ func TestGenerateMongoRepository(t *testing.T) {
 				{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
 				{Name: "id", Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
 			},
-			Returns: []code.Type{code.PointerType{ContainedType: code.SimpleType("UserModel")}, code.SimpleType("error")},
+			Returns: []code.Type{code.PointerType{ContainedType: code.SimpleType("UserModel")}, code.TypeError},
 			Operation: spec.FindOperation{
 				Mode: spec.QueryModeOne,
 				Query: spec.QuerySpec{
@@ -65,11 +65,11 @@ func TestGenerateMongoRepository(t *testing.T) {
 			Params: []code.Param{
 				{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
 				{Name: "gender", Type: code.SimpleType("Gender")},
-				{Name: "age", Type: code.SimpleType("int")},
+				{Name: "age", Type: code.TypeInt},
 			},
 			Returns: []code.Type{
 				code.PointerType{ContainedType: code.SimpleType("UserModel")},
-				code.SimpleType("error"),
+				code.TypeError,
 			},
 			Operation: spec.FindOperation{
 				Mode: spec.QueryModeMany,
@@ -86,11 +86,11 @@ func TestGenerateMongoRepository(t *testing.T) {
 			Name: "FindByAgeLessThanEqualOrderByAge",
 			Params: []code.Param{
 				{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-				{Name: "age", Type: code.SimpleType("int")},
+				{Name: "age", Type: code.TypeInt},
 			},
 			Returns: []code.Type{
 				code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-				code.SimpleType("error"),
+				code.TypeError,
 			},
 			Operation: spec.FindOperation{
 				Mode: spec.QueryModeMany,
@@ -108,11 +108,11 @@ func TestGenerateMongoRepository(t *testing.T) {
 			Name: "FindByAgeGreaterThanOrderByAgeAsc",
 			Params: []code.Param{
 				{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-				{Name: "age", Type: code.SimpleType("int")},
+				{Name: "age", Type: code.TypeInt},
 			},
 			Returns: []code.Type{
 				code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-				code.SimpleType("error"),
+				code.TypeError,
 			},
 			Operation: spec.FindOperation{
 				Mode: spec.QueryModeMany,
@@ -130,11 +130,11 @@ func TestGenerateMongoRepository(t *testing.T) {
 			Name: "FindByAgeGreaterThanEqualOrderByAgeDesc",
 			Params: []code.Param{
 				{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-				{Name: "age", Type: code.SimpleType("int")},
+				{Name: "age", Type: code.TypeInt},
 			},
 			Returns: []code.Type{
 				code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-				code.SimpleType("error"),
+				code.TypeError,
 			},
 			Operation: spec.FindOperation{
 				Mode: spec.QueryModeMany,
@@ -152,12 +152,12 @@ func TestGenerateMongoRepository(t *testing.T) {
 			Name: "FindByAgeBetween",
 			Params: []code.Param{
 				{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-				{Name: "fromAge", Type: code.SimpleType("int")},
-				{Name: "toAge", Type: code.SimpleType("int")},
+				{Name: "fromAge", Type: code.TypeInt},
+				{Name: "toAge", Type: code.TypeInt},
 			},
 			Returns: []code.Type{
 				code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-				code.SimpleType("error"),
+				code.TypeError,
 			},
 			Operation: spec.FindOperation{
 				Mode: spec.QueryModeMany,
@@ -173,11 +173,11 @@ func TestGenerateMongoRepository(t *testing.T) {
 			Params: []code.Param{
 				{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
 				{Name: "gender", Type: code.SimpleType("Gender")},
-				{Name: "age", Type: code.SimpleType("int")},
+				{Name: "age", Type: code.TypeInt},
 			},
 			Returns: []code.Type{
 				code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-				code.SimpleType("error"),
+				code.TypeError,
 			},
 			Operation: spec.FindOperation{
 				Mode: spec.QueryModeMany,
