@@ -8,28 +8,14 @@ import (
 type File struct {
 	PackageName string
 	Imports     []Import
-	Structs     Structs
-	Interfaces  Interfaces
+	Structs     []Struct
+	Interfaces  []InterfaceType
 }
 
 // Import is a model for package imports
 type Import struct {
 	Name string
 	Path string
-}
-
-// Structs is a group of Struct model
-type Structs []Struct
-
-// ByName return struct with matching name. Another return value shows whether there is a struct
-// with that name exists.
-func (strs Structs) ByName(name string) (Struct, bool) {
-	for _, str := range strs {
-		if str.Name == name {
-			return str, true
-		}
-	}
-	return Struct{}, false
 }
 
 // Struct is a definition of the struct
@@ -61,20 +47,6 @@ type StructField struct {
 	Name string
 	Type Type
 	Tags map[string][]string
-}
-
-// Interfaces is a group of Interface model
-type Interfaces []InterfaceType
-
-// ByName return interface by name Another return value shows whether there is an interface
-// with that name exists.
-func (intfs Interfaces) ByName(name string) (InterfaceType, bool) {
-	for _, intf := range intfs {
-		if intf.Name == name {
-			return intf, true
-		}
-	}
-	return InterfaceType{}, false
 }
 
 // InterfaceType is a definition of the interface

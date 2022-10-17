@@ -7,36 +7,6 @@ import (
 	"github.com/sunboyy/repogen/internal/code"
 )
 
-func TestStructsByName(t *testing.T) {
-	userStruct := code.Struct{
-		Name: "UserModel",
-		Fields: code.StructFields{
-			code.StructField{Name: "ID", Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
-			code.StructField{Name: "Username", Type: code.SimpleType("string")},
-		},
-	}
-	structs := code.Structs{userStruct}
-
-	t.Run("struct found", func(t *testing.T) {
-		structModel, ok := structs.ByName("UserModel")
-
-		if !ok {
-			t.Fail()
-		}
-		if !reflect.DeepEqual(structModel, userStruct) {
-			t.Errorf("Expected = %+v\nReceived = %+v", userStruct, structModel)
-		}
-	})
-
-	t.Run("struct not found", func(t *testing.T) {
-		_, ok := structs.ByName("ProductModel")
-
-		if ok {
-			t.Fail()
-		}
-	})
-}
-
 func TestStructFieldsByName(t *testing.T) {
 	idField := code.StructField{Name: "ID", Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}}
 	usernameField := code.StructField{Name: "Username", Type: code.SimpleType("string")}
@@ -55,30 +25,6 @@ func TestStructFieldsByName(t *testing.T) {
 
 	t.Run("struct field not found", func(t *testing.T) {
 		_, ok := fields.ByName("Password")
-
-		if ok {
-			t.Fail()
-		}
-	})
-}
-
-func TestInterfacesByName(t *testing.T) {
-	userRepoIntf := code.InterfaceType{Name: "UserRepository"}
-	interfaces := code.Interfaces{userRepoIntf}
-
-	t.Run("struct field found", func(t *testing.T) {
-		intf, ok := interfaces.ByName("UserRepository")
-
-		if !ok {
-			t.Fail()
-		}
-		if !reflect.DeepEqual(intf, userRepoIntf) {
-			t.Errorf("Expected = %+v\nReceived = %+v", userRepoIntf, intf)
-		}
-	})
-
-	t.Run("struct field not found", func(t *testing.T) {
-		_, ok := interfaces.ByName("Password")
 
 		if ok {
 			t.Fail()

@@ -24,7 +24,7 @@ func (r FieldReference) ReferencingCode() string {
 }
 
 type fieldResolver struct {
-	Structs code.Structs
+	Structs map[string]code.Struct
 }
 
 func (r fieldResolver) ResolveStructField(structModel code.Struct, tokens []string) (FieldReference, bool) {
@@ -46,7 +46,7 @@ func (r fieldResolver) ResolveStructField(structModel code.Struct, tokens []stri
 			continue
 		}
 
-		childStruct, ok := r.Structs.ByName(fieldSimpleType.Code())
+		childStruct, ok := r.Structs[fieldSimpleType.Code()]
 		if !ok {
 			continue
 		}
