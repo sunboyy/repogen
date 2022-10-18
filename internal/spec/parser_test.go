@@ -15,7 +15,7 @@ var (
 	}
 	phoneNumberField = code.StructField{
 		Name: "PhoneNumber",
-		Type: code.SimpleType("string"),
+		Type: code.TypeString,
 	}
 	genderField = code.StructField{
 		Name: "Gender",
@@ -23,11 +23,11 @@ var (
 	}
 	cityField = code.StructField{
 		Name: "City",
-		Type: code.SimpleType("string"),
+		Type: code.TypeString,
 	}
 	ageField = code.StructField{
 		Name: "Age",
-		Type: code.SimpleType("int"),
+		Type: code.TypeInt,
 	}
 	nameField = code.StructField{
 		Name: "Name",
@@ -47,7 +47,7 @@ var (
 	}
 	enabledField = code.StructField{
 		Name: "Enabled",
-		Type: code.SimpleType("bool"),
+		Type: code.TypeBool,
 	}
 	consentHistoryField = code.StructField{
 		Name: "ConsentHistory",
@@ -56,11 +56,11 @@ var (
 
 	firstNameField = code.StructField{
 		Name: "First",
-		Type: code.SimpleType("string"),
+		Type: code.TypeString,
 	}
 	lastNameField = code.StructField{
 		Name: "Last",
-		Type: code.SimpleType("string"),
+		Type: code.TypeString,
 	}
 )
 
@@ -114,7 +114,7 @@ func TestParseInterfaceMethod_Insert(t *testing.T) {
 				},
 				Returns: []code.Type{
 					code.InterfaceType{},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 			},
 			ExpectedOperation: spec.InsertOperation{
@@ -131,7 +131,7 @@ func TestParseInterfaceMethod_Insert(t *testing.T) {
 				},
 				Returns: []code.Type{
 					code.ArrayType{ContainedType: code.InterfaceType{}},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 			},
 			ExpectedOperation: spec.InsertOperation{
@@ -172,7 +172,7 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 				},
 				Returns: []code.Type{
 					code.PointerType{ContainedType: code.SimpleType("UserModel")},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 			},
 			ExpectedOperation: spec.FindOperation{
@@ -188,11 +188,11 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 				Name: "FindOneByPhoneNumber",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("string")},
+					{Type: code.TypeString},
 				},
 				Returns: []code.Type{
 					code.PointerType{ContainedType: code.SimpleType("UserModel")},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 			},
 			ExpectedOperation: spec.FindOperation{
@@ -208,11 +208,11 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 				Name: "FindByCity",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("string")},
+					{Type: code.TypeString},
 				},
 				Returns: []code.Type{
 					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 			},
 			ExpectedOperation: spec.FindOperation{
@@ -228,11 +228,11 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 				Name: "FindByNameFirst",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("string")},
+					{Type: code.TypeString},
 				},
 				Returns: []code.Type{
 					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 			},
 			ExpectedOperation: spec.FindOperation{
@@ -252,7 +252,7 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 				},
 				Returns: []code.Type{
 					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 			},
 			ExpectedOperation: spec.FindOperation{
@@ -271,7 +271,7 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 				},
 				Returns: []code.Type{
 					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 			},
 			ExpectedOperation: spec.FindOperation{
@@ -284,12 +284,12 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 				Name: "FindByCityAndGender",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("string")},
+					{Type: code.TypeString},
 					{Type: code.SimpleType("Gender")},
 				},
 				Returns: []code.Type{
 					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 			},
 			ExpectedOperation: spec.FindOperation{
@@ -309,12 +309,12 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 				Name: "FindByCityOrGender",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("string")},
+					{Type: code.TypeString},
 					{Type: code.SimpleType("Gender")},
 				},
 				Returns: []code.Type{
 					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 			},
 			ExpectedOperation: spec.FindOperation{
@@ -334,11 +334,11 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 				Name: "FindByCityNot",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("string")},
+					{Type: code.TypeString},
 				},
 				Returns: []code.Type{
 					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 			},
 			ExpectedOperation: spec.FindOperation{
@@ -354,11 +354,11 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 				Name: "FindByAgeLessThan",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("int")},
+					{Type: code.TypeInt},
 				},
 				Returns: []code.Type{
 					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 			},
 			ExpectedOperation: spec.FindOperation{
@@ -374,11 +374,11 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 				Name: "FindByAgeLessThanEqual",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("int")},
+					{Type: code.TypeInt},
 				},
 				Returns: []code.Type{
 					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 			},
 			ExpectedOperation: spec.FindOperation{
@@ -394,11 +394,11 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 				Name: "FindByAgeGreaterThan",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("int")},
+					{Type: code.TypeInt},
 				},
 				Returns: []code.Type{
 					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 			},
 			ExpectedOperation: spec.FindOperation{
@@ -414,11 +414,11 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 				Name: "FindByAgeGreaterThanEqual",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("int")},
+					{Type: code.TypeInt},
 				},
 				Returns: []code.Type{
 					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 			},
 			ExpectedOperation: spec.FindOperation{
@@ -434,12 +434,12 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 				Name: "FindByAgeBetween",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("int")},
-					{Type: code.SimpleType("int")},
+					{Type: code.TypeInt},
+					{Type: code.TypeInt},
 				},
 				Returns: []code.Type{
 					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 			},
 			ExpectedOperation: spec.FindOperation{
@@ -455,11 +455,11 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 				Name: "FindByCityIn",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.ArrayType{ContainedType: code.SimpleType("string")}},
+					{Type: code.ArrayType{ContainedType: code.TypeString}},
 				},
 				Returns: []code.Type{
 					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 			},
 			ExpectedOperation: spec.FindOperation{
@@ -475,11 +475,11 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 				Name: "FindByCityNotIn",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.ArrayType{ContainedType: code.SimpleType("string")}},
+					{Type: code.ArrayType{ContainedType: code.TypeString}},
 				},
 				Returns: []code.Type{
 					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 			},
 			ExpectedOperation: spec.FindOperation{
@@ -498,7 +498,7 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 				},
 				Returns: []code.Type{
 					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 			},
 			ExpectedOperation: spec.FindOperation{
@@ -517,7 +517,7 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 				},
 				Returns: []code.Type{
 					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 			},
 			ExpectedOperation: spec.FindOperation{
@@ -533,11 +533,11 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 				Name: "FindByCityOrderByAge",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("string")},
+					{Type: code.TypeString},
 				},
 				Returns: []code.Type{
 					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 			},
 			ExpectedOperation: spec.FindOperation{
@@ -556,11 +556,11 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 				Name: "FindByCityOrderByAgeAsc",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("string")},
+					{Type: code.TypeString},
 				},
 				Returns: []code.Type{
 					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 			},
 			ExpectedOperation: spec.FindOperation{
@@ -579,11 +579,11 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 				Name: "FindByCityOrderByAgeDesc",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("string")},
+					{Type: code.TypeString},
 				},
 				Returns: []code.Type{
 					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 			},
 			ExpectedOperation: spec.FindOperation{
@@ -602,11 +602,11 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 				Name: "FindByCityOrderByNameFirst",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("string")},
+					{Type: code.TypeString},
 				},
 				Returns: []code.Type{
 					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 			},
 			ExpectedOperation: spec.FindOperation{
@@ -625,11 +625,11 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 				Name: "FindByCityOrderByCityAndAgeDesc",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("string")},
+					{Type: code.TypeString},
 				},
 				Returns: []code.Type{
 					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 			},
 			ExpectedOperation: spec.FindOperation{
@@ -677,8 +677,8 @@ func TestParseInterfaceMethod_Update(t *testing.T) {
 					{Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
 				},
 				Returns: []code.Type{
-					code.SimpleType("bool"),
-					code.SimpleType("error"),
+					code.TypeBool,
+					code.TypeError,
 				},
 			},
 			ExpectedOperation: spec.UpdateOperation{
@@ -699,8 +699,8 @@ func TestParseInterfaceMethod_Update(t *testing.T) {
 					{Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
 				},
 				Returns: []code.Type{
-					code.SimpleType("bool"),
-					code.SimpleType("error"),
+					code.TypeBool,
+					code.TypeError,
 				},
 			},
 			ExpectedOperation: spec.UpdateOperation{
@@ -723,8 +723,8 @@ func TestParseInterfaceMethod_Update(t *testing.T) {
 					{Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
 				},
 				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
+					code.TypeInt,
+					code.TypeError,
 				},
 			},
 			ExpectedOperation: spec.UpdateOperation{
@@ -743,12 +743,12 @@ func TestParseInterfaceMethod_Update(t *testing.T) {
 				Name: "UpdateNameFirstByID",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("string")},
+					{Type: code.TypeString},
 					{Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
 				},
 				Returns: []code.Type{
-					code.SimpleType("bool"),
-					code.SimpleType("error"),
+					code.TypeBool,
+					code.TypeError,
 				},
 			},
 			ExpectedOperation: spec.UpdateOperation{
@@ -768,12 +768,12 @@ func TestParseInterfaceMethod_Update(t *testing.T) {
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
 					{Type: code.SimpleType("Gender")},
-					{Type: code.SimpleType("string")},
+					{Type: code.TypeString},
 					{Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
 				},
 				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
+					code.TypeInt,
+					code.TypeError,
 				},
 			},
 			ExpectedOperation: spec.UpdateOperation{
@@ -797,8 +797,8 @@ func TestParseInterfaceMethod_Update(t *testing.T) {
 					{Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
 				},
 				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
+					code.TypeInt,
+					code.TypeError,
 				},
 			},
 			ExpectedOperation: spec.UpdateOperation{
@@ -817,12 +817,12 @@ func TestParseInterfaceMethod_Update(t *testing.T) {
 				Name: "UpdateAgeIncByID",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("int")},
+					{Type: code.TypeInt},
 					{Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
 				},
 				Returns: []code.Type{
-					code.SimpleType("bool"),
-					code.SimpleType("error"),
+					code.TypeBool,
+					code.TypeError,
 				},
 			},
 			ExpectedOperation: spec.UpdateOperation{
@@ -841,13 +841,13 @@ func TestParseInterfaceMethod_Update(t *testing.T) {
 				Name: "UpdateEnabledAndConsentHistoryPushByID",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("bool")},
+					{Type: code.TypeBool},
 					{Type: code.SimpleType("ConsentHistoryItem")},
 					{Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
 				},
 				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
+					code.TypeInt,
+					code.TypeError,
 				},
 			},
 			ExpectedOperation: spec.UpdateOperation{
@@ -894,8 +894,8 @@ func TestParseInterfaceMethod_Delete(t *testing.T) {
 					{Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
 				},
 				Returns: []code.Type{
-					code.SimpleType("bool"),
-					code.SimpleType("error"),
+					code.TypeBool,
+					code.TypeError,
 				},
 			},
 			ExpectedOperation: spec.DeleteOperation{
@@ -911,11 +911,11 @@ func TestParseInterfaceMethod_Delete(t *testing.T) {
 				Name: "DeleteOneByPhoneNumber",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("string")},
+					{Type: code.TypeString},
 				},
 				Returns: []code.Type{
-					code.SimpleType("bool"),
-					code.SimpleType("error"),
+					code.TypeBool,
+					code.TypeError,
 				},
 			},
 			ExpectedOperation: spec.DeleteOperation{
@@ -931,11 +931,11 @@ func TestParseInterfaceMethod_Delete(t *testing.T) {
 				Name: "DeleteByCity",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("string")},
+					{Type: code.TypeString},
 				},
 				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
+					code.TypeInt,
+					code.TypeError,
 				},
 			},
 			ExpectedOperation: spec.DeleteOperation{
@@ -953,8 +953,8 @@ func TestParseInterfaceMethod_Delete(t *testing.T) {
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
 				},
 				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
+					code.TypeInt,
+					code.TypeError,
 				},
 			},
 			ExpectedOperation: spec.DeleteOperation{
@@ -967,12 +967,12 @@ func TestParseInterfaceMethod_Delete(t *testing.T) {
 				Name: "DeleteByCityAndGender",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("string")},
+					{Type: code.TypeString},
 					{Type: code.SimpleType("Gender")},
 				},
 				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
+					code.TypeInt,
+					code.TypeError,
 				},
 			},
 			ExpectedOperation: spec.DeleteOperation{
@@ -992,12 +992,12 @@ func TestParseInterfaceMethod_Delete(t *testing.T) {
 				Name: "DeleteByCityOrGender",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("string")},
+					{Type: code.TypeString},
 					{Type: code.SimpleType("Gender")},
 				},
 				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
+					code.TypeInt,
+					code.TypeError,
 				},
 			},
 			ExpectedOperation: spec.DeleteOperation{
@@ -1017,11 +1017,11 @@ func TestParseInterfaceMethod_Delete(t *testing.T) {
 				Name: "DeleteByCityNot",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("string")},
+					{Type: code.TypeString},
 				},
 				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
+					code.TypeInt,
+					code.TypeError,
 				},
 			},
 			ExpectedOperation: spec.DeleteOperation{
@@ -1037,11 +1037,11 @@ func TestParseInterfaceMethod_Delete(t *testing.T) {
 				Name: "DeleteByAgeLessThan",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("int")},
+					{Type: code.TypeInt},
 				},
 				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
+					code.TypeInt,
+					code.TypeError,
 				},
 			},
 			ExpectedOperation: spec.DeleteOperation{
@@ -1057,11 +1057,11 @@ func TestParseInterfaceMethod_Delete(t *testing.T) {
 				Name: "DeleteByAgeLessThanEqual",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("int")},
+					{Type: code.TypeInt},
 				},
 				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
+					code.TypeInt,
+					code.TypeError,
 				},
 			},
 			ExpectedOperation: spec.DeleteOperation{
@@ -1077,11 +1077,11 @@ func TestParseInterfaceMethod_Delete(t *testing.T) {
 				Name: "DeleteByAgeGreaterThan",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("int")},
+					{Type: code.TypeInt},
 				},
 				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
+					code.TypeInt,
+					code.TypeError,
 				},
 			},
 			ExpectedOperation: spec.DeleteOperation{
@@ -1097,11 +1097,11 @@ func TestParseInterfaceMethod_Delete(t *testing.T) {
 				Name: "DeleteByAgeGreaterThanEqual",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("int")},
+					{Type: code.TypeInt},
 				},
 				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
+					code.TypeInt,
+					code.TypeError,
 				},
 			},
 			ExpectedOperation: spec.DeleteOperation{
@@ -1117,12 +1117,12 @@ func TestParseInterfaceMethod_Delete(t *testing.T) {
 				Name: "DeleteByAgeBetween",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("int")},
-					{Type: code.SimpleType("int")},
+					{Type: code.TypeInt},
+					{Type: code.TypeInt},
 				},
 				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
+					code.TypeInt,
+					code.TypeError,
 				},
 			},
 			ExpectedOperation: spec.DeleteOperation{
@@ -1138,11 +1138,11 @@ func TestParseInterfaceMethod_Delete(t *testing.T) {
 				Name: "DeleteByCityIn",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.ArrayType{ContainedType: code.SimpleType("string")}},
+					{Type: code.ArrayType{ContainedType: code.TypeString}},
 				},
 				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
+					code.TypeInt,
+					code.TypeError,
 				},
 			},
 			ExpectedOperation: spec.DeleteOperation{
@@ -1184,8 +1184,8 @@ func TestParseInterfaceMethod_Count(t *testing.T) {
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
 				},
 				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
+					code.TypeInt,
+					code.TypeError,
 				},
 			},
 			ExpectedOperation: spec.CountOperation{
@@ -1201,8 +1201,8 @@ func TestParseInterfaceMethod_Count(t *testing.T) {
 					{Type: code.SimpleType("Gender")},
 				},
 				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
+					code.TypeInt,
+					code.TypeError,
 				},
 			},
 			ExpectedOperation: spec.CountOperation{
@@ -1261,7 +1261,7 @@ func TestParseInterfaceMethod_Insert_Invalid(t *testing.T) {
 				Returns: []code.Type{
 					code.PointerType{ContainedType: code.SimpleType("UserModel")},
 					code.InterfaceType{},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 			},
 			ExpectedError: spec.NewOperationReturnCountUnmatchedError(2),
@@ -1272,7 +1272,7 @@ func TestParseInterfaceMethod_Insert_Invalid(t *testing.T) {
 				Name: "Insert",
 				Returns: []code.Type{
 					code.PointerType{ContainedType: code.SimpleType("UserModel")},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 			},
 			ExpectedError: spec.NewUnsupportedReturnError(code.PointerType{ContainedType: code.SimpleType("UserModel")}, 0),
@@ -1287,7 +1287,7 @@ func TestParseInterfaceMethod_Insert_Invalid(t *testing.T) {
 							{Name: "DoSomething"},
 						},
 					},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 			},
 			ExpectedError: spec.NewUnsupportedReturnError(code.InterfaceType{}, 0),
@@ -1312,7 +1312,7 @@ func TestParseInterfaceMethod_Insert_Invalid(t *testing.T) {
 				},
 				Returns: []code.Type{
 					code.InterfaceType{},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 			},
 			ExpectedError: spec.ContextParamRequiredError,
@@ -1327,7 +1327,7 @@ func TestParseInterfaceMethod_Insert_Invalid(t *testing.T) {
 				},
 				Returns: []code.Type{
 					code.InterfaceType{},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 			},
 			ExpectedError: spec.InvalidParamError,
@@ -1342,7 +1342,7 @@ func TestParseInterfaceMethod_Insert_Invalid(t *testing.T) {
 				},
 				Returns: []code.Type{
 					code.ArrayType{ContainedType: code.InterfaceType{}},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 			},
 			ExpectedError: spec.InvalidParamError,
@@ -1368,8 +1368,8 @@ func TestParseInterfaceMethod_Find_Invalid(t *testing.T) {
 				Name: "FindOneByID",
 				Returns: []code.Type{
 					code.SimpleType("UserModel"),
-					code.SimpleType("int"),
-					code.SimpleType("error"),
+					code.TypeInt,
+					code.TypeError,
 				},
 			},
 			ExpectedError: spec.NewOperationReturnCountUnmatchedError(2),
@@ -1380,7 +1380,7 @@ func TestParseInterfaceMethod_Find_Invalid(t *testing.T) {
 				Name: "FindOneByID",
 				Returns: []code.Type{
 					code.SimpleType("UserModel"),
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 			},
 			ExpectedError: spec.NewUnsupportedReturnError(code.SimpleType("UserModel"), 0),
@@ -1391,10 +1391,10 @@ func TestParseInterfaceMethod_Find_Invalid(t *testing.T) {
 				Name: "FindOneByID",
 				Returns: []code.Type{
 					code.SimpleType("UserModel"),
-					code.SimpleType("int"),
+					code.TypeInt,
 				},
 			},
-			ExpectedError: spec.NewUnsupportedReturnError(code.SimpleType("int"), 1),
+			ExpectedError: spec.NewUnsupportedReturnError(code.TypeInt, 1),
 		},
 		{
 			Name: "find method without query",
@@ -1402,7 +1402,7 @@ func TestParseInterfaceMethod_Find_Invalid(t *testing.T) {
 				Name: "Find",
 				Returns: []code.Type{
 					code.PointerType{ContainedType: code.SimpleType("UserModel")},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 			},
 			ExpectedError: spec.QueryRequiredError,
@@ -1413,7 +1413,7 @@ func TestParseInterfaceMethod_Find_Invalid(t *testing.T) {
 				Name: "FindByAndGender",
 				Returns: []code.Type{
 					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 			},
 			ExpectedError: spec.NewInvalidQueryError([]string{"And", "Gender"}),
@@ -1424,7 +1424,7 @@ func TestParseInterfaceMethod_Find_Invalid(t *testing.T) {
 				Name: "FindByGenderAnd",
 				Returns: []code.Type{
 					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 			},
 			ExpectedError: spec.NewInvalidQueryError([]string{"Gender", "And"}),
@@ -1435,7 +1435,7 @@ func TestParseInterfaceMethod_Find_Invalid(t *testing.T) {
 				Name: "FindByGenderAndAndCity",
 				Returns: []code.Type{
 					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 			},
 			ExpectedError: spec.NewInvalidQueryError([]string{"Gender", "And", "And", "City"}),
@@ -1446,7 +1446,7 @@ func TestParseInterfaceMethod_Find_Invalid(t *testing.T) {
 				Name: "FindByGenderAndCityOrAge",
 				Returns: []code.Type{
 					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 			},
 			ExpectedError: spec.NewInvalidQueryError([]string{"Gender", "And", "City", "Or", "Age"}),
@@ -1460,7 +1460,7 @@ func TestParseInterfaceMethod_Find_Invalid(t *testing.T) {
 				},
 				Returns: []code.Type{
 					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 			},
 			ExpectedError: spec.ContextParamRequiredError,
@@ -1471,12 +1471,12 @@ func TestParseInterfaceMethod_Find_Invalid(t *testing.T) {
 				Name: "FindByCity",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("string")},
-					{Type: code.SimpleType("string")},
+					{Type: code.TypeString},
+					{Type: code.TypeString},
 				},
 				Returns: []code.Type{
 					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 			},
 			ExpectedError: spec.InvalidParamError,
@@ -1487,11 +1487,11 @@ func TestParseInterfaceMethod_Find_Invalid(t *testing.T) {
 				Name: "FindByCountry",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("string")},
+					{Type: code.TypeString},
 				},
 				Returns: []code.Type{
 					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 			},
 			ExpectedError: spec.NewStructFieldNotFoundError([]string{"Country"}),
@@ -1502,11 +1502,11 @@ func TestParseInterfaceMethod_Find_Invalid(t *testing.T) {
 				Name: "FindByNameMiddle",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("string")},
+					{Type: code.TypeString},
 				},
 				Returns: []code.Type{
 					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 			},
 			ExpectedError: spec.NewStructFieldNotFoundError([]string{"Name", "Middle"}),
@@ -1517,11 +1517,11 @@ func TestParseInterfaceMethod_Find_Invalid(t *testing.T) {
 				Name: "FindByContactPhone",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("string")},
+					{Type: code.TypeString},
 				},
 				Returns: []code.Type{
 					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 			},
 			ExpectedError: spec.NewStructFieldNotFoundError([]string{"Contact", "Phone"}),
@@ -1532,11 +1532,11 @@ func TestParseInterfaceMethod_Find_Invalid(t *testing.T) {
 				Name: "FindByDefaultPaymentMethod",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("string")},
+					{Type: code.TypeString},
 				},
 				Returns: []code.Type{
 					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 			},
 			ExpectedError: spec.NewStructFieldNotFoundError([]string{"Default", "Payment", "Method"}),
@@ -1550,7 +1550,7 @@ func TestParseInterfaceMethod_Find_Invalid(t *testing.T) {
 				},
 				Returns: []code.Type{
 					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 			},
 			ExpectedError: spec.NewIncompatibleComparatorError(spec.ComparatorTrue, code.StructField{
@@ -1567,7 +1567,7 @@ func TestParseInterfaceMethod_Find_Invalid(t *testing.T) {
 				},
 				Returns: []code.Type{
 					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 			},
 			ExpectedError: spec.NewIncompatibleComparatorError(spec.ComparatorFalse, code.StructField{
@@ -1581,14 +1581,14 @@ func TestParseInterfaceMethod_Find_Invalid(t *testing.T) {
 				Name: "FindByGender",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("string")},
+					{Type: code.TypeString},
 				},
 				Returns: []code.Type{
 					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 			},
-			ExpectedError: spec.NewArgumentTypeNotMatchedError(genderField.Name, genderField.Type, code.SimpleType("string")),
+			ExpectedError: spec.NewArgumentTypeNotMatchedError(genderField.Name, genderField.Type, code.TypeString),
 		},
 		{
 			Name: "mismatched method parameter type for special case",
@@ -1596,15 +1596,15 @@ func TestParseInterfaceMethod_Find_Invalid(t *testing.T) {
 				Name: "FindByCityIn",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("string")},
+					{Type: code.TypeString},
 				},
 				Returns: []code.Type{
 					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 			},
 			ExpectedError: spec.NewArgumentTypeNotMatchedError(cityField.Name,
-				code.ArrayType{ContainedType: code.SimpleType("string")}, code.SimpleType("string")),
+				code.ArrayType{ContainedType: code.TypeString}, code.TypeString),
 		},
 		{
 			Name: "misplaced operator token (leftmost)",
@@ -1612,7 +1612,7 @@ func TestParseInterfaceMethod_Find_Invalid(t *testing.T) {
 				Name: "FindAllOrderByAndAge",
 				Returns: []code.Type{
 					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 			},
 			ExpectedError: spec.NewInvalidSortError([]string{"Order", "By", "And", "Age"}),
@@ -1623,7 +1623,7 @@ func TestParseInterfaceMethod_Find_Invalid(t *testing.T) {
 				Name: "FindAllOrderByAgeAnd",
 				Returns: []code.Type{
 					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 			},
 			ExpectedError: spec.NewInvalidSortError([]string{"Order", "By", "Age", "And"}),
@@ -1634,7 +1634,7 @@ func TestParseInterfaceMethod_Find_Invalid(t *testing.T) {
 				Name: "FindAllOrderByAgeAndAndGender",
 				Returns: []code.Type{
 					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 			},
 			ExpectedError: spec.NewInvalidSortError([]string{"Order", "By", "Age", "And", "And", "Gender"}),
@@ -1645,7 +1645,7 @@ func TestParseInterfaceMethod_Find_Invalid(t *testing.T) {
 				Name: "FindAllOrderByCountry",
 				Returns: []code.Type{
 					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 			},
 			ExpectedError: spec.NewStructFieldNotFoundError([]string{"Country"}),
@@ -1670,9 +1670,9 @@ func TestParseInterfaceMethod_Update_Invalid(t *testing.T) {
 			Method: code.Method{
 				Name: "UpdateAgeByID",
 				Returns: []code.Type{
-					code.SimpleType("bool"),
-					code.SimpleType("int"),
-					code.SimpleType("error"),
+					code.TypeBool,
+					code.TypeInt,
+					code.TypeError,
 				},
 			},
 			ExpectedError: spec.NewOperationReturnCountUnmatchedError(2),
@@ -1682,22 +1682,22 @@ func TestParseInterfaceMethod_Update_Invalid(t *testing.T) {
 			Method: code.Method{
 				Name: "UpdateAgeByID",
 				Returns: []code.Type{
-					code.SimpleType("float64"),
-					code.SimpleType("error"),
+					code.TypeFloat64,
+					code.TypeError,
 				},
 			},
-			ExpectedError: spec.NewUnsupportedReturnError(code.SimpleType("float64"), 0),
+			ExpectedError: spec.NewUnsupportedReturnError(code.TypeFloat64, 0),
 		},
 		{
 			Name: "error return not provided",
 			Method: code.Method{
 				Name: "UpdateAgeByID",
 				Returns: []code.Type{
-					code.SimpleType("bool"),
-					code.SimpleType("bool"),
+					code.TypeBool,
+					code.TypeBool,
 				},
 			},
-			ExpectedError: spec.NewUnsupportedReturnError(code.SimpleType("bool"), 1),
+			ExpectedError: spec.NewUnsupportedReturnError(code.TypeBool, 1),
 		},
 		{
 			Name: "update with no field provided",
@@ -1707,8 +1707,8 @@ func TestParseInterfaceMethod_Update_Invalid(t *testing.T) {
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
 				},
 				Returns: []code.Type{
-					code.SimpleType("bool"),
-					code.SimpleType("error"),
+					code.TypeBool,
+					code.TypeError,
 				},
 			},
 			ExpectedError: spec.InvalidUpdateFieldsError,
@@ -1721,8 +1721,8 @@ func TestParseInterfaceMethod_Update_Invalid(t *testing.T) {
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
 				},
 				Returns: []code.Type{
-					code.SimpleType("bool"),
-					code.SimpleType("error"),
+					code.TypeBool,
+					code.TypeError,
 				},
 			},
 			ExpectedError: spec.InvalidUpdateFieldsError,
@@ -1737,8 +1737,8 @@ func TestParseInterfaceMethod_Update_Invalid(t *testing.T) {
 					{Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
 				},
 				Returns: []code.Type{
-					code.SimpleType("bool"),
-					code.SimpleType("error"),
+					code.TypeBool,
+					code.TypeError,
 				},
 			},
 			ExpectedError: spec.NewIncompatibleUpdateOperatorError(spec.UpdateOperatorPush, spec.FieldReference{
@@ -1758,14 +1758,14 @@ func TestParseInterfaceMethod_Update_Invalid(t *testing.T) {
 					{Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
 				},
 				Returns: []code.Type{
-					code.SimpleType("bool"),
-					code.SimpleType("error"),
+					code.TypeBool,
+					code.TypeError,
 				},
 			},
 			ExpectedError: spec.NewIncompatibleUpdateOperatorError(spec.UpdateOperatorInc, spec.FieldReference{
 				code.StructField{
 					Name: "City",
-					Type: code.SimpleType("string"),
+					Type: code.TypeString,
 				},
 			}),
 		},
@@ -1775,11 +1775,11 @@ func TestParseInterfaceMethod_Update_Invalid(t *testing.T) {
 				Name: "UpdateCity",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("string")},
+					{Type: code.TypeString},
 				},
 				Returns: []code.Type{
-					code.SimpleType("bool"),
-					code.SimpleType("error"),
+					code.TypeBool,
+					code.TypeError,
 				},
 			},
 			ExpectedError: spec.QueryRequiredError,
@@ -1790,11 +1790,11 @@ func TestParseInterfaceMethod_Update_Invalid(t *testing.T) {
 				Name: "UpdateAgeByIDAndUsernameOrGender",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("int")},
+					{Type: code.TypeInt},
 				},
 				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
+					code.TypeInt,
+					code.TypeError,
 				},
 			},
 			ExpectedError: spec.NewInvalidQueryError([]string{"ID", "And", "Username", "Or", "Gender"}),
@@ -1809,8 +1809,8 @@ func TestParseInterfaceMethod_Update_Invalid(t *testing.T) {
 					{Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
 				},
 				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
+					code.TypeInt,
+					code.TypeError,
 				},
 			},
 			ExpectedError: spec.NewArgumentTypeNotMatchedError(consentHistoryField.Name, code.SimpleType("ConsentHistoryItem"),
@@ -1825,8 +1825,8 @@ func TestParseInterfaceMethod_Update_Invalid(t *testing.T) {
 					// {Type: code.SimpleType("Enabled")},
 				},
 				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
+					code.TypeInt,
+					code.TypeError,
 				},
 			},
 			ExpectedError: spec.InvalidUpdateFieldsError,
@@ -1837,11 +1837,11 @@ func TestParseInterfaceMethod_Update_Invalid(t *testing.T) {
 				Name: "UpdateByID",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("string")},
+					{Type: code.TypeString},
 				},
 				Returns: []code.Type{
-					code.SimpleType("bool"),
-					code.SimpleType("error"),
+					code.TypeBool,
+					code.TypeError,
 				},
 			},
 			ExpectedError: spec.InvalidUpdateFieldsError,
@@ -1851,12 +1851,12 @@ func TestParseInterfaceMethod_Update_Invalid(t *testing.T) {
 			Method: code.Method{
 				Name: "UpdateAgeByGender",
 				Params: []code.Param{
-					{Type: code.SimpleType("int")},
+					{Type: code.TypeInt},
 					{Type: code.SimpleType("Gender")},
 				},
 				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
+					code.TypeInt,
+					code.TypeError,
 				},
 			},
 			ExpectedError: spec.ContextParamRequiredError,
@@ -1867,12 +1867,12 @@ func TestParseInterfaceMethod_Update_Invalid(t *testing.T) {
 				Name: "UpdateCountryByGender",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("string")},
+					{Type: code.TypeString},
 					{Type: code.SimpleType("Gender")},
 				},
 				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
+					code.TypeInt,
+					code.TypeError,
 				},
 			},
 			ExpectedError: spec.NewStructFieldNotFoundError([]string{"Country"}),
@@ -1883,15 +1883,15 @@ func TestParseInterfaceMethod_Update_Invalid(t *testing.T) {
 				Name: "UpdateAgeByGender",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("float64")},
+					{Type: code.TypeFloat64},
 					{Type: code.SimpleType("Gender")},
 				},
 				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
+					code.TypeInt,
+					code.TypeError,
 				},
 			},
-			ExpectedError: spec.NewArgumentTypeNotMatchedError(ageField.Name, ageField.Type, code.SimpleType("float64")),
+			ExpectedError: spec.NewArgumentTypeNotMatchedError(ageField.Name, ageField.Type, code.TypeFloat64),
 		},
 		{
 			Name: "struct field does not match parameter in query",
@@ -1899,15 +1899,15 @@ func TestParseInterfaceMethod_Update_Invalid(t *testing.T) {
 				Name: "UpdateAgeByGender",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("int")},
-					{Type: code.SimpleType("string")},
+					{Type: code.TypeInt},
+					{Type: code.TypeString},
 				},
 				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
+					code.TypeInt,
+					code.TypeError,
 				},
 			},
-			ExpectedError: spec.NewArgumentTypeNotMatchedError(genderField.Name, genderField.Type, code.SimpleType("string")),
+			ExpectedError: spec.NewArgumentTypeNotMatchedError(genderField.Name, genderField.Type, code.TypeString),
 		},
 	}
 
@@ -1930,8 +1930,8 @@ func TestParseInterfaceMethod_Delete_Invalid(t *testing.T) {
 				Name: "DeleteOneByID",
 				Returns: []code.Type{
 					code.SimpleType("UserModel"),
-					code.SimpleType("int"),
-					code.SimpleType("error"),
+					code.TypeInt,
+					code.TypeError,
 				},
 			},
 			ExpectedError: spec.NewOperationReturnCountUnmatchedError(2),
@@ -1941,30 +1941,30 @@ func TestParseInterfaceMethod_Delete_Invalid(t *testing.T) {
 			Method: code.Method{
 				Name: "DeleteOneByID",
 				Returns: []code.Type{
-					code.SimpleType("float64"),
-					code.SimpleType("error"),
+					code.TypeFloat64,
+					code.TypeError,
 				},
 			},
-			ExpectedError: spec.NewUnsupportedReturnError(code.SimpleType("float64"), 0),
+			ExpectedError: spec.NewUnsupportedReturnError(code.TypeFloat64, 0),
 		},
 		{
 			Name: "error return not provided",
 			Method: code.Method{
 				Name: "DeleteOneByID",
 				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("bool"),
+					code.TypeInt,
+					code.TypeBool,
 				},
 			},
-			ExpectedError: spec.NewUnsupportedReturnError(code.SimpleType("bool"), 1),
+			ExpectedError: spec.NewUnsupportedReturnError(code.TypeBool, 1),
 		},
 		{
 			Name: "delete method without query",
 			Method: code.Method{
 				Name: "Delete",
 				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
+					code.TypeInt,
+					code.TypeError,
 				},
 			},
 			ExpectedError: spec.QueryRequiredError,
@@ -1974,8 +1974,8 @@ func TestParseInterfaceMethod_Delete_Invalid(t *testing.T) {
 			Method: code.Method{
 				Name: "DeleteByAndGender",
 				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
+					code.TypeInt,
+					code.TypeError,
 				},
 			},
 			ExpectedError: spec.NewInvalidQueryError([]string{"And", "Gender"}),
@@ -1985,8 +1985,8 @@ func TestParseInterfaceMethod_Delete_Invalid(t *testing.T) {
 			Method: code.Method{
 				Name: "DeleteByGenderAnd",
 				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
+					code.TypeInt,
+					code.TypeError,
 				},
 			},
 			ExpectedError: spec.NewInvalidQueryError([]string{"Gender", "And"}),
@@ -1996,8 +1996,8 @@ func TestParseInterfaceMethod_Delete_Invalid(t *testing.T) {
 			Method: code.Method{
 				Name: "DeleteByGenderAndAndCity",
 				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
+					code.TypeInt,
+					code.TypeError,
 				},
 			},
 			ExpectedError: spec.NewInvalidQueryError([]string{"Gender", "And", "And", "City"}),
@@ -2007,8 +2007,8 @@ func TestParseInterfaceMethod_Delete_Invalid(t *testing.T) {
 			Method: code.Method{
 				Name: "DeleteByGenderAndCityOrAge",
 				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
+					code.TypeInt,
+					code.TypeError,
 				},
 			},
 			ExpectedError: spec.NewInvalidQueryError([]string{"Gender", "And", "City", "Or", "Age"}),
@@ -2021,8 +2021,8 @@ func TestParseInterfaceMethod_Delete_Invalid(t *testing.T) {
 					{Type: code.SimpleType("Gender")},
 				},
 				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
+					code.TypeInt,
+					code.TypeError,
 				},
 			},
 			ExpectedError: spec.ContextParamRequiredError,
@@ -2033,12 +2033,12 @@ func TestParseInterfaceMethod_Delete_Invalid(t *testing.T) {
 				Name: "DeleteByCity",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("string")},
-					{Type: code.SimpleType("string")},
+					{Type: code.TypeString},
+					{Type: code.TypeString},
 				},
 				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
+					code.TypeInt,
+					code.TypeError,
 				},
 			},
 			ExpectedError: spec.InvalidParamError,
@@ -2049,11 +2049,11 @@ func TestParseInterfaceMethod_Delete_Invalid(t *testing.T) {
 				Name: "DeleteByCountry",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("string")},
+					{Type: code.TypeString},
 				},
 				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
+					code.TypeInt,
+					code.TypeError,
 				},
 			},
 			ExpectedError: spec.NewStructFieldNotFoundError([]string{"Country"}),
@@ -2064,14 +2064,14 @@ func TestParseInterfaceMethod_Delete_Invalid(t *testing.T) {
 				Name: "DeleteByGender",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("string")},
+					{Type: code.TypeString},
 				},
 				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
+					code.TypeInt,
+					code.TypeError,
 				},
 			},
-			ExpectedError: spec.NewArgumentTypeNotMatchedError("Gender", code.SimpleType("Gender"), code.SimpleType("string")),
+			ExpectedError: spec.NewArgumentTypeNotMatchedError("Gender", code.SimpleType("Gender"), code.TypeString),
 		},
 		{
 			Name: "mismatched method parameter type for special case",
@@ -2079,15 +2079,15 @@ func TestParseInterfaceMethod_Delete_Invalid(t *testing.T) {
 				Name: "DeleteByCityIn",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("string")},
+					{Type: code.TypeString},
 				},
 				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
+					code.TypeInt,
+					code.TypeError,
 				},
 			},
 			ExpectedError: spec.NewArgumentTypeNotMatchedError("City",
-				code.ArrayType{ContainedType: code.SimpleType("string")}, code.SimpleType("string")),
+				code.ArrayType{ContainedType: code.TypeString}, code.TypeString),
 		},
 	}
 
@@ -2109,9 +2109,9 @@ func TestParseInterfaceMethod_Count_Invalid(t *testing.T) {
 			Method: code.Method{
 				Name: "CountAll",
 				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
-					code.SimpleType("bool"),
+					code.TypeInt,
+					code.TypeError,
+					code.TypeBool,
 				},
 			},
 			ExpectedError: spec.NewOperationReturnCountUnmatchedError(2),
@@ -2122,7 +2122,7 @@ func TestParseInterfaceMethod_Count_Invalid(t *testing.T) {
 				Name: "CountAll",
 				Returns: []code.Type{
 					code.SimpleType("int64"),
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 			},
 			ExpectedError: spec.NewUnsupportedReturnError(code.SimpleType("int64"), 0),
@@ -2132,19 +2132,19 @@ func TestParseInterfaceMethod_Count_Invalid(t *testing.T) {
 			Method: code.Method{
 				Name: "CountAll",
 				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("bool"),
+					code.TypeInt,
+					code.TypeBool,
 				},
 			},
-			ExpectedError: spec.NewUnsupportedReturnError(code.SimpleType("bool"), 1),
+			ExpectedError: spec.NewUnsupportedReturnError(code.TypeBool, 1),
 		},
 		{
 			Name: "count method without query",
 			Method: code.Method{
 				Name: "Count",
 				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
+					code.TypeInt,
+					code.TypeError,
 				},
 			},
 			ExpectedError: spec.QueryRequiredError,
@@ -2157,8 +2157,8 @@ func TestParseInterfaceMethod_Count_Invalid(t *testing.T) {
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
 				},
 				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
+					code.TypeInt,
+					code.TypeError,
 				},
 			},
 			ExpectedError: spec.NewInvalidQueryError([]string{"By"}),
@@ -2168,8 +2168,8 @@ func TestParseInterfaceMethod_Count_Invalid(t *testing.T) {
 			Method: code.Method{
 				Name: "CountAll",
 				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
+					code.TypeInt,
+					code.TypeError,
 				},
 			},
 			ExpectedError: spec.ContextParamRequiredError,
@@ -2181,11 +2181,11 @@ func TestParseInterfaceMethod_Count_Invalid(t *testing.T) {
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
 					{Type: code.SimpleType("Gender")},
-					{Type: code.SimpleType("int")},
+					{Type: code.TypeInt},
 				},
 				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
+					code.TypeInt,
+					code.TypeError,
 				},
 			},
 			ExpectedError: spec.InvalidParamError,
@@ -2196,14 +2196,14 @@ func TestParseInterfaceMethod_Count_Invalid(t *testing.T) {
 				Name: "CountByGender",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("string")},
+					{Type: code.TypeString},
 				},
 				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
+					code.TypeInt,
+					code.TypeError,
 				},
 			},
-			ExpectedError: spec.NewArgumentTypeNotMatchedError("Gender", code.SimpleType("Gender"), code.SimpleType("string")),
+			ExpectedError: spec.NewArgumentTypeNotMatchedError("Gender", code.SimpleType("Gender"), code.TypeString),
 		},
 		{
 			Name: "struct field not found",
@@ -2211,11 +2211,11 @@ func TestParseInterfaceMethod_Count_Invalid(t *testing.T) {
 				Name: "CountByCountry",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("string")},
+					{Type: code.TypeString},
 				},
 				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
+					code.TypeInt,
+					code.TypeError,
 				},
 			},
 			ExpectedError: spec.NewStructFieldNotFoundError([]string{"Country"}),

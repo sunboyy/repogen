@@ -2,11 +2,12 @@ package mongo
 
 import (
 	"bytes"
-	"io"
+	"fmt"
 	"strings"
 	"text/template"
 
 	"github.com/sunboyy/repogen/internal/code"
+	"github.com/sunboyy/repogen/internal/codegen"
 	"github.com/sunboyy/repogen/internal/spec"
 )
 
@@ -24,55 +25,104 @@ type RepositoryGenerator struct {
 	InterfaceName string
 }
 
-// GenerateConstructor generates mongo repository struct implementation and constructor for the struct
-func (g RepositoryGenerator) GenerateConstructor(buffer io.Writer) error {
-	tmpl, err := template.New("mongo_repository_base").Parse(constructorTemplate)
-	if err != nil {
-		return err
+// Imports returns necessary imports for the mongo repository implementation.
+func (g RepositoryGenerator) Imports() [][]code.Import {
+	return [][]code.Import{
+		{
+			{Path: "context"},
+		},
+		{
+			{Path: "go.mongodb.org/mongo-driver/bson"},
+			{Path: "go.mongodb.org/mongo-driver/bson/primitive"},
+			{Path: "go.mongodb.org/mongo-driver/mongo"},
+			{Path: "go.mongodb.org/mongo-driver/mongo/options"},
+		},
 	}
-
-	tmplData := mongoConstructorTemplateData{
-		InterfaceName:  g.InterfaceName,
-		ImplStructName: g.structName(),
-	}
-
-	if err := tmpl.Execute(buffer, tmplData); err != nil {
-		return err
-	}
-
-	return nil
 }
 
-// GenerateMethod generates implementation of from provided method specification
-func (g RepositoryGenerator) GenerateMethod(methodSpec spec.MethodSpec, buffer io.Writer) error {
-	tmpl, err := template.New("mongo_repository_method").Parse(methodTemplate)
+// GenerateStruct creates codegen.StructBuilder of mongo repository
+// implementation struct.
+func (g RepositoryGenerator) GenerateStruct() codegen.StructBuilder {
+	return codegen.StructBuilder{
+		Name: g.repoImplStructName(),
+		Fields: code.StructFields{
+			{
+				Name: "collection",
+				Type: code.PointerType{
+					ContainedType: code.ExternalType{
+						PackageAlias: "mongo",
+						Name:         "Collection",
+					},
+				},
+			},
+		},
+	}
+}
+
+// GenerateConstructor creates codegen.FunctionBuilder of a constructor for
+// mongo repository implementation struct.
+func (g RepositoryGenerator) GenerateConstructor() (codegen.FunctionBuilder, error) {
+	tmpl, err := template.New("mongo_constructor_body").Parse(constructorBody)
 	if err != nil {
-		return err
+		return codegen.FunctionBuilder{}, err
+	}
+
+	tmplData := constructorBodyData{
+		ImplStructName: g.repoImplStructName(),
+	}
+
+	buffer := new(bytes.Buffer)
+	if err := tmpl.Execute(buffer, tmplData); err != nil {
+		return codegen.FunctionBuilder{}, err
+	}
+
+	return codegen.FunctionBuilder{
+		Name: "New" + g.InterfaceName,
+		Params: []code.Param{
+			{
+				Name: "collection",
+				Type: code.PointerType{
+					ContainedType: code.ExternalType{
+						PackageAlias: "mongo",
+						Name:         "Collection",
+					},
+				},
+			},
+		},
+		Returns: []code.Type{
+			code.SimpleType(g.InterfaceName),
+		},
+		Body: buffer.String(),
+	}, nil
+}
+
+// GenerateMethod creates codegen.MethodBuilder of repository method from the
+// provided method specification.
+func (g RepositoryGenerator) GenerateMethod(methodSpec spec.MethodSpec) (codegen.MethodBuilder, error) {
+	var params []code.Param
+	for i, param := range methodSpec.Params {
+		params = append(params, code.Param{
+			Name: fmt.Sprintf("arg%d", i),
+			Type: param.Type,
+		})
 	}
 
 	implementation, err := g.generateMethodImplementation(methodSpec)
 	if err != nil {
-		return err
+		return codegen.MethodBuilder{}, err
 	}
 
-	var paramTypes []code.Type
-	for _, param := range methodSpec.Params {
-		paramTypes = append(paramTypes, param.Type)
-	}
-
-	tmplData := mongoMethodTemplateData{
-		StructName:     g.structName(),
-		MethodName:     methodSpec.Name,
-		ParamTypes:     paramTypes,
-		ReturnTypes:    methodSpec.Returns,
-		Implementation: implementation,
-	}
-
-	if err := tmpl.Execute(buffer, tmplData); err != nil {
-		return err
-	}
-
-	return nil
+	return codegen.MethodBuilder{
+		Receiver: codegen.MethodReceiver{
+			Name:    "r",
+			Type:    code.SimpleType(g.repoImplStructName()),
+			Pointer: true,
+		},
+		Name:    methodSpec.Name,
+		Params:  params,
+		Returns: methodSpec.Returns,
+		Body:    implementation,
+	}, nil
 }
 
 func (g RepositoryGenerator) generateMethodImplementation(methodSpec spec.MethodSpec) (string, error) {
@@ -275,7 +325,7 @@ func (g RepositoryGenerator) bsonTagFromField(field code.StructField) (string, e
 	return bsonTag[0], nil
 }
 
-func (g RepositoryGenerator) structName() string {
+func (g RepositoryGenerator) repoImplStructName() string {
 	return g.InterfaceName + "Mongo"
 }
 

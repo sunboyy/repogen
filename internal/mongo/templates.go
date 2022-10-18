@@ -1,75 +1,15 @@
 package mongo
 
 import (
-	"fmt"
-	"strings"
-
-	"github.com/sunboyy/repogen/internal/code"
 	"github.com/sunboyy/repogen/internal/spec"
 )
 
-const constructorTemplate = `
-import (
-	"context"
-
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
-)
-
-func New{{.InterfaceName}}(collection *mongo.Collection) {{.InterfaceName}} {
-	return &{{.ImplStructName}}{
+const constructorBody = `	return &{{.ImplStructName}}{
 		collection: collection,
-	}
-}
+	}`
 
-type {{.ImplStructName}} struct {
-	collection *mongo.Collection
-}
-`
-
-type mongoConstructorTemplateData struct {
-	InterfaceName  string
+type constructorBodyData struct {
 	ImplStructName string
-}
-
-const methodTemplate = `
-func (r *{{.StructName}}) {{.MethodName}}({{.Parameters}}){{.Returns}} {
-{{.Implementation}}
-}
-`
-
-type mongoMethodTemplateData struct {
-	StructName     string
-	MethodName     string
-	ParamTypes     []code.Type
-	ReturnTypes    []code.Type
-	Implementation string
-}
-
-func (data mongoMethodTemplateData) Parameters() string {
-	var params []string
-	for i, paramType := range data.ParamTypes {
-		params = append(params, fmt.Sprintf("arg%d %s", i, paramType.Code()))
-	}
-	return strings.Join(params, ", ")
-}
-
-func (data mongoMethodTemplateData) Returns() string {
-	if len(data.ReturnTypes) == 0 {
-		return ""
-	}
-
-	if len(data.ReturnTypes) == 1 {
-		return fmt.Sprintf(" %s", data.ReturnTypes[0].Code())
-	}
-
-	var returns []string
-	for _, returnType := range data.ReturnTypes {
-		returns = append(returns, returnType.Code())
-	}
-	return fmt.Sprintf(" (%s)", strings.Join(returns, ", "))
 }
 
 const insertOneTemplate = `	result, err := r.collection.InsertOne(arg0, arg1)

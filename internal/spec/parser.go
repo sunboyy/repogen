@@ -85,7 +85,7 @@ func (p interfaceMethodParser) extractInsertReturns(returns []code.Type) (QueryM
 		return "", NewOperationReturnCountUnmatchedError(2)
 	}
 
-	if returns[1] != code.SimpleType("error") {
+	if returns[1] != code.TypeError {
 		return "", NewUnsupportedReturnError(returns[1], 1)
 	}
 
@@ -203,7 +203,7 @@ func (p interfaceMethodParser) extractModelOrSliceReturns(returns []code.Type) (
 		return "", NewOperationReturnCountUnmatchedError(2)
 	}
 
-	if returns[1] != code.SimpleType("error") {
+	if returns[1] != code.TypeError {
 		return "", NewUnsupportedReturnError(returns[1], 1)
 	}
 
@@ -318,11 +318,11 @@ func (p interfaceMethodParser) validateCountReturns(returns []code.Type) error {
 		return NewOperationReturnCountUnmatchedError(2)
 	}
 
-	if returns[0] != code.SimpleType("int") {
+	if returns[0] != code.TypeInt {
 		return NewUnsupportedReturnError(returns[0], 0)
 	}
 
-	if returns[1] != code.SimpleType("error") {
+	if returns[1] != code.TypeError {
 		return NewUnsupportedReturnError(returns[1], 1)
 	}
 
@@ -334,16 +334,16 @@ func (p interfaceMethodParser) extractIntOrBoolReturns(returns []code.Type) (Que
 		return "", NewOperationReturnCountUnmatchedError(2)
 	}
 
-	if returns[1] != code.SimpleType("error") {
+	if returns[1] != code.TypeError {
 		return "", NewUnsupportedReturnError(returns[1], 1)
 	}
 
 	simpleType, ok := returns[0].(code.SimpleType)
 	if ok {
-		if simpleType == code.SimpleType("bool") {
+		if simpleType == code.TypeBool {
 			return QueryModeOne, nil
 		}
-		if simpleType == code.SimpleType("int") {
+		if simpleType == code.TypeInt {
 			return QueryModeMany, nil
 		}
 	}
@@ -367,7 +367,7 @@ func (p interfaceMethodParser) validateQueryFromParams(params []code.Param, quer
 	var currentParamIndex int
 	for _, predicate := range querySpec.Predicates {
 		if (predicate.Comparator == ComparatorTrue || predicate.Comparator == ComparatorFalse) &&
-			predicate.FieldReference.ReferencedField().Type != code.SimpleType("bool") {
+			predicate.FieldReference.ReferencedField().Type != code.TypeBool {
 			return NewIncompatibleComparatorError(predicate.Comparator,
 				predicate.FieldReference.ReferencedField())
 		}

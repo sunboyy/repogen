@@ -1,10 +1,12 @@
 package mongo_test
 
 import (
-	"bytes"
+	"fmt"
+	"reflect"
 	"testing"
 
 	"github.com/sunboyy/repogen/internal/code"
+	"github.com/sunboyy/repogen/internal/codegen"
 	"github.com/sunboyy/repogen/internal/mongo"
 	"github.com/sunboyy/repogen/internal/spec"
 	"github.com/sunboyy/repogen/internal/testutils"
@@ -23,7 +25,7 @@ var (
 	}
 	ageField = code.StructField{
 		Name: "Age",
-		Type: code.SimpleType("int"),
+		Type: code.TypeInt,
 		Tags: map[string][]string{"bson": {"age"}},
 	}
 	nameField = code.StructField{
@@ -38,17 +40,17 @@ var (
 	}
 	enabledField = code.StructField{
 		Name: "Enabled",
-		Type: code.SimpleType("bool"),
+		Type: code.TypeBool,
 		Tags: map[string][]string{"bson": {"enabled"}},
 	}
 	accessTokenField = code.StructField{
 		Name: "AccessToken",
-		Type: code.SimpleType("string"),
+		Type: code.TypeString,
 	}
 
 	firstNameField = code.StructField{
 		Name: "First",
-		Type: code.SimpleType("string"),
+		Type: code.TypeString,
 		Tags: map[string][]string{"bson": {"first"}},
 	}
 )
@@ -59,7 +61,7 @@ var userModel = code.Struct{
 		idField,
 		code.StructField{
 			Name: "Username",
-			Type: code.SimpleType("string"),
+			Type: code.TypeString,
 			Tags: map[string][]string{"bson": {"username"}},
 		},
 		genderField,
@@ -71,37 +73,107 @@ var userModel = code.Struct{
 	},
 }
 
-const expectedConstructorResult = `
-import (
-	"context"
-
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
-)
-
-func NewUserRepository(collection *mongo.Collection) UserRepository {
-	return &UserRepositoryMongo{
+const expectedConstructorBody = `	return &UserRepositoryMongo{
 		collection: collection,
+	}`
+
+func TestImports(t *testing.T) {
+	generator := mongo.NewGenerator(userModel, "UserRepository")
+	expected := [][]code.Import{
+		{
+			{Path: "context"},
+		},
+		{
+			{Path: "go.mongodb.org/mongo-driver/bson"},
+			{Path: "go.mongodb.org/mongo-driver/bson/primitive"},
+			{Path: "go.mongodb.org/mongo-driver/mongo"},
+			{Path: "go.mongodb.org/mongo-driver/mongo/options"},
+		},
+	}
+
+	actual := generator.Imports()
+
+	if !reflect.DeepEqual(expected, actual) {
+		t.Errorf("incorrect imports: expected %+v, got %+v", expected, actual)
 	}
 }
 
-type UserRepositoryMongo struct {
-	collection *mongo.Collection
+func TestGenerateStruct(t *testing.T) {
+	generator := mongo.NewGenerator(userModel, "UserRepository")
+	expected := codegen.StructBuilder{
+		Name: "UserRepositoryMongo",
+		Fields: []code.StructField{
+			{
+				Name: "collection",
+				Type: code.PointerType{
+					ContainedType: code.ExternalType{
+						PackageAlias: "mongo",
+						Name:         "Collection",
+					},
+				},
+			},
+		},
+	}
+
+	actual := generator.GenerateStruct()
+
+	if expected.Name != actual.Name {
+		t.Errorf(
+			"incorrect struct name: expected %s, got %s",
+			expected.Name,
+			actual.Name,
+		)
+	}
+	if !reflect.DeepEqual(expected.Fields, actual.Fields) {
+		t.Errorf(
+			"incorrect struct fields: expected %+v, got %+v",
+			expected.Fields,
+			actual.Fields,
+		)
+	}
 }
-`
 
 func TestGenerateConstructor(t *testing.T) {
 	generator := mongo.NewGenerator(userModel, "UserRepository")
-	buffer := new(bytes.Buffer)
+	expected := codegen.FunctionBuilder{
+		Name: "NewUserRepository",
+		Params: []code.Param{
+			{
+				Name: "collection",
+				Type: code.PointerType{
+					ContainedType: code.ExternalType{
+						PackageAlias: "mongo",
+						Name:         "Collection",
+					},
+				},
+			},
+		},
+		Returns: []code.Type{
+			code.SimpleType("UserRepository"),
+		},
+		Body: expectedConstructorBody,
+	}
 
-	err := generator.GenerateConstructor(buffer)
+	actual, err := generator.GenerateConstructor()
 
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
-	if err := testutils.ExpectMultiLineString(expectedConstructorResult, buffer.String()); err != nil {
+	if expected.Name != actual.Name {
+		t.Errorf(
+			"incorrect function name: expected %s, got %s",
+			expected.Name,
+			actual.Name,
+		)
+	}
+	if !reflect.DeepEqual(expected.Params, actual.Params) {
+		t.Errorf(
+			"incorrect struct params: expected %+v, got %+v",
+			expected.Params,
+			actual.Params,
+		)
+	}
+	if err := testutils.ExpectMultiLineString(expected.Body, actual.Body); err != nil {
 		t.Error(err)
 	}
 }
@@ -109,7 +181,7 @@ func TestGenerateConstructor(t *testing.T) {
 type GenerateMethodTestCase struct {
 	Name         string
 	MethodSpec   spec.MethodSpec
-	ExpectedCode string
+	ExpectedBody string
 }
 
 func TestGenerateMethod_Insert(t *testing.T) {
@@ -124,21 +196,17 @@ func TestGenerateMethod_Insert(t *testing.T) {
 				},
 				Returns: []code.Type{
 					code.InterfaceType{},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 				Operation: spec.InsertOperation{
 					Mode: spec.QueryModeOne,
 				},
 			},
-			ExpectedCode: `
-func (r *UserRepositoryMongo) InsertOne(arg0 context.Context, arg1 *UserModel) (interface{}, error) {
-	result, err := r.collection.InsertOne(arg0, arg1)
+			ExpectedBody: `	result, err := r.collection.InsertOne(arg0, arg1)
 	if err != nil {
 		return nil, err
 	}
-	return result.InsertedID, nil
-}
-`,
+	return result.InsertedID, nil`,
 		},
 		{
 			Name: "insert many method",
@@ -152,15 +220,13 @@ func (r *UserRepositoryMongo) InsertOne(arg0 context.Context, arg1 *UserModel) (
 				},
 				Returns: []code.Type{
 					code.ArrayType{ContainedType: code.InterfaceType{}},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 				Operation: spec.InsertOperation{
 					Mode: spec.QueryModeMany,
 				},
 			},
-			ExpectedCode: `
-func (r *UserRepositoryMongo) Insert(arg0 context.Context, arg1 []*UserModel) ([]interface{}, error) {
-	var entities []interface{}
+			ExpectedBody: `	var entities []interface{}
 	for _, model := range arg1 {
 		entities = append(entities, model)
 	}
@@ -168,23 +234,66 @@ func (r *UserRepositoryMongo) Insert(arg0 context.Context, arg1 []*UserModel) ([
 	if err != nil {
 		return nil, err
 	}
-	return result.InsertedIDs, nil
-}
-`,
+	return result.InsertedIDs, nil`,
 		},
 	}
 
 	for _, testCase := range testTable {
 		t.Run(testCase.Name, func(t *testing.T) {
 			generator := mongo.NewGenerator(userModel, "UserRepository")
-			buffer := new(bytes.Buffer)
+			var expectedParams []code.Param
+			for i, param := range testCase.MethodSpec.Params {
+				expectedParams = append(expectedParams, code.Param{
+					Name: fmt.Sprintf("arg%d", i),
+					Type: param.Type,
+				})
+			}
+			expected := codegen.MethodBuilder{
+				Receiver: codegen.MethodReceiver{
+					Name:    "r",
+					Type:    "UserRepositoryMongo",
+					Pointer: true,
+				},
+				Name:    testCase.MethodSpec.Name,
+				Params:  expectedParams,
+				Returns: testCase.MethodSpec.Returns,
+				Body:    testCase.ExpectedBody,
+			}
 
-			err := generator.GenerateMethod(testCase.MethodSpec, buffer)
+			actual, err := generator.GenerateMethod(testCase.MethodSpec)
 
 			if err != nil {
-				t.Error(err)
+				t.Fatal(err)
 			}
-			if err := testutils.ExpectMultiLineString(testCase.ExpectedCode, buffer.String()); err != nil {
+			if expected.Receiver != actual.Receiver {
+				t.Errorf(
+					"incorrect method receiver: expected %+v, got %+v",
+					expected.Receiver,
+					actual.Receiver,
+				)
+			}
+			if expected.Name != actual.Name {
+				t.Errorf(
+					"incorrect method name: expected %s, got %s",
+					expected.Name,
+					actual.Name,
+				)
+			}
+			if !reflect.DeepEqual(expected.Params, actual.Params) {
+				t.Errorf(
+					"incorrect struct params: expected %+v, got %+v",
+					expected.Params,
+					actual.Params,
+				)
+			}
+			if !reflect.DeepEqual(expected.Returns, actual.Returns) {
+				t.Errorf(
+					"incorrect struct returns: expected %+v, got %+v",
+					expected.Returns,
+					actual.Returns,
+				)
+			}
+			if err := testutils.ExpectMultiLineString(expected.Body, actual.Body); err != nil {
 				t.Error(err)
 			}
 		})
@@ -203,7 +312,7 @@ func TestGenerateMethod_Find(t *testing.T) {
 				},
 				Returns: []code.Type{
 					code.PointerType{ContainedType: code.SimpleType("UserModel")},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 				Operation: spec.FindOperation{
 					Mode: spec.QueryModeOne,
@@ -214,18 +323,14 @@ func TestGenerateMethod_Find(t *testing.T) {
 					},
 				},
 			},
-			ExpectedCode: `
-func (r *UserRepositoryMongo) FindByID(arg0 context.Context, arg1 primitive.ObjectID) (*UserModel, error) {
-	var entity UserModel
+			ExpectedBody: `	var entity UserModel
 	if err := r.collection.FindOne(arg0, bson.M{
 		"_id": arg1,
 	}, options.FindOne().SetSort(bson.M{
 	})).Decode(&entity); err != nil {
 		return nil, err
 	}
-	return &entity, nil
-}
-`,
+	return &entity, nil`,
 		},
 		{
 			Name: "simple find many method",
@@ -237,7 +342,7 @@ func (r *UserRepositoryMongo) FindByID(arg0 context.Context, arg1 primitive.Obje
 				},
 				Returns: []code.Type{
 					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 				Operation: spec.FindOperation{
 					Mode: spec.QueryModeMany,
@@ -248,9 +353,7 @@ func (r *UserRepositoryMongo) FindByID(arg0 context.Context, arg1 primitive.Obje
 					},
 				},
 			},
-			ExpectedCode: `
-func (r *UserRepositoryMongo) FindByGender(arg0 context.Context, arg1 Gender) ([]*UserModel, error) {
-	cursor, err := r.collection.Find(arg0, bson.M{
+			ExpectedBody: `	cursor, err := r.collection.Find(arg0, bson.M{
 		"gender": arg1,
 	}, options.Find().SetSort(bson.M{
 	}))
@@ -261,9 +364,7 @@ func (r *UserRepositoryMongo) FindByGender(arg0 context.Context, arg1 Gender) ([
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}
-	return entities, nil
-}
-`,
+	return entities, nil`,
 		},
 		{
 			Name: "find with deep field reference",
@@ -271,11 +372,11 @@ func (r *UserRepositoryMongo) FindByGender(arg0 context.Context, arg1 Gender) ([
 				Name: "FindByNameFirst",
 				Params: []code.Param{
 					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Name: "firstName", Type: code.SimpleType("string")},
+					{Name: "firstName", Type: code.TypeString},
 				},
 				Returns: []code.Type{
 					code.PointerType{ContainedType: code.SimpleType("UserModel")},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 				Operation: spec.FindOperation{
 					Mode: spec.QueryModeOne,
@@ -290,18 +391,14 @@ func (r *UserRepositoryMongo) FindByGender(arg0 context.Context, arg1 Gender) ([
 					},
 				},
 			},
-			ExpectedCode: `
-func (r *UserRepositoryMongo) FindByNameFirst(arg0 context.Context, arg1 string) (*UserModel, error) {
-	var entity UserModel
+			ExpectedBody: `	var entity UserModel
 	if err := r.collection.FindOne(arg0, bson.M{
 		"name.first": arg1,
 	}, options.FindOne().SetSort(bson.M{
 	})).Decode(&entity); err != nil {
 		return nil, err
 	}
-	return &entity, nil
-}
-`,
+	return &entity, nil`,
 		},
 		{
 			Name: "find with And operator",
@@ -310,11 +407,11 @@ func (r *UserRepositoryMongo) FindByNameFirst(arg0 context.Context, arg1 string)
 				Params: []code.Param{
 					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
 					{Name: "gender", Type: code.SimpleType("Gender")},
-					{Name: "age", Type: code.SimpleType("int")},
+					{Name: "age", Type: code.TypeInt},
 				},
 				Returns: []code.Type{
 					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 				Operation: spec.FindOperation{
 					Mode: spec.QueryModeMany,
@@ -327,9 +424,7 @@ func (r *UserRepositoryMongo) FindByNameFirst(arg0 context.Context, arg1 string)
 					},
 				},
 			},
-			ExpectedCode: `
-func (r *UserRepositoryMongo) FindByGenderAndAge(arg0 context.Context, arg1 Gender, arg2 int) ([]*UserModel, error) {
-	cursor, err := r.collection.Find(arg0, bson.M{
+			ExpectedBody: `	cursor, err := r.collection.Find(arg0, bson.M{
 		"$and": []bson.M{
 			{"gender": arg1},
 			{"age": arg2},
@@ -343,9 +438,7 @@ func (r *UserRepositoryMongo) FindByGenderAndAge(arg0 context.Context, arg1 Gend
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}
-	return entities, nil
-}
-`,
+	return entities, nil`,
 		},
 		{
 			Name: "find with Or operator",
@@ -354,11 +447,11 @@ func (r *UserRepositoryMongo) FindByGenderAndAge(arg0 context.Context, arg1 Gend
 				Params: []code.Param{
 					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
 					{Name: "gender", Type: code.SimpleType("Gender")},
-					{Name: "age", Type: code.SimpleType("int")},
+					{Name: "age", Type: code.TypeInt},
 				},
 				Returns: []code.Type{
 					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 				Operation: spec.FindOperation{
 					Mode: spec.QueryModeMany,
@@ -371,9 +464,7 @@ func (r *UserRepositoryMongo) FindByGenderAndAge(arg0 context.Context, arg1 Gend
 					},
 				},
 			},
-			ExpectedCode: `
-func (r *UserRepositoryMongo) FindByGenderOrAge(arg0 context.Context, arg1 Gender, arg2 int) ([]*UserModel, error) {
-	cursor, err := r.collection.Find(arg0, bson.M{
+			ExpectedBody: `	cursor, err := r.collection.Find(arg0, bson.M{
 		"$or": []bson.M{
 			{"gender": arg1},
 			{"age": arg2},
@@ -387,9 +478,7 @@ func (r *UserRepositoryMongo) FindByGenderOrAge(arg0 context.Context, arg1 Gende
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}
-	return entities, nil
-}
-`,
+	return entities, nil`,
 		},
 		{
 			Name: "find with Not comparator",
@@ -401,7 +490,7 @@ func (r *UserRepositoryMongo) FindByGenderOrAge(arg0 context.Context, arg1 Gende
 				},
 				Returns: []code.Type{
 					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 				Operation: spec.FindOperation{
 					Mode: spec.QueryModeMany,
@@ -412,9 +501,7 @@ func (r *UserRepositoryMongo) FindByGenderOrAge(arg0 context.Context, arg1 Gende
 					},
 				},
 			},
-			ExpectedCode: `
-func (r *UserRepositoryMongo) FindByGenderNot(arg0 context.Context, arg1 Gender) ([]*UserModel, error) {
-	cursor, err := r.collection.Find(arg0, bson.M{
+			ExpectedBody: `	cursor, err := r.collection.Find(arg0, bson.M{
 		"gender": bson.M{"$ne": arg1},
 	}, options.Find().SetSort(bson.M{
 	}))
@@ -425,9 +512,7 @@ func (r *UserRepositoryMongo) FindByGenderNot(arg0 context.Context, arg1 Gender)
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}
-	return entities, nil
-}
-`,
+	return entities, nil`,
 		},
 		{
 			Name: "find with LessThan comparator",
@@ -435,11 +520,11 @@ func (r *UserRepositoryMongo) FindByGenderNot(arg0 context.Context, arg1 Gender)
 				Name: "FindByAgeLessThan",
 				Params: []code.Param{
 					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Name: "age", Type: code.SimpleType("int")},
+					{Name: "age", Type: code.TypeInt},
 				},
 				Returns: []code.Type{
 					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 				Operation: spec.FindOperation{
 					Mode: spec.QueryModeMany,
@@ -450,9 +535,7 @@ func (r *UserRepositoryMongo) FindByGenderNot(arg0 context.Context, arg1 Gender)
 					},
 				},
 			},
-			ExpectedCode: `
-func (r *UserRepositoryMongo) FindByAgeLessThan(arg0 context.Context, arg1 int) ([]*UserModel, error) {
-	cursor, err := r.collection.Find(arg0, bson.M{
+			ExpectedBody: `	cursor, err := r.collection.Find(arg0, bson.M{
 		"age": bson.M{"$lt": arg1},
 	}, options.Find().SetSort(bson.M{
 	}))
@@ -463,9 +546,7 @@ func (r *UserRepositoryMongo) FindByAgeLessThan(arg0 context.Context, arg1 int) 
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}
-	return entities, nil
-}
-`,
+	return entities, nil`,
 		},
 		{
 			Name: "find with LessThanEqual comparator",
@@ -473,11 +554,11 @@ func (r *UserRepositoryMongo) FindByAgeLessThan(arg0 context.Context, arg1 int) 
 				Name: "FindByAgeLessThanEqual",
 				Params: []code.Param{
 					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Name: "age", Type: code.SimpleType("int")},
+					{Name: "age", Type: code.TypeInt},
 				},
 				Returns: []code.Type{
 					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 				Operation: spec.FindOperation{
 					Mode: spec.QueryModeMany,
@@ -488,9 +569,7 @@ func (r *UserRepositoryMongo) FindByAgeLessThan(arg0 context.Context, arg1 int) 
 					},
 				},
 			},
-			ExpectedCode: `
-func (r *UserRepositoryMongo) FindByAgeLessThanEqual(arg0 context.Context, arg1 int) ([]*UserModel, error) {
-	cursor, err := r.collection.Find(arg0, bson.M{
+			ExpectedBody: `	cursor, err := r.collection.Find(arg0, bson.M{
 		"age": bson.M{"$lte": arg1},
 	}, options.Find().SetSort(bson.M{
 	}))
@@ -501,9 +580,7 @@ func (r *UserRepositoryMongo) FindByAgeLessThanEqual(arg0 context.Context, arg1 
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}
-	return entities, nil
-}
-`,
+	return entities, nil`,
 		},
 		{
 			Name: "find with GreaterThan comparator",
@@ -511,11 +588,11 @@ func (r *UserRepositoryMongo) FindByAgeLessThanEqual(arg0 context.Context, arg1 
 				Name: "FindByAgeGreaterThan",
 				Params: []code.Param{
 					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Name: "age", Type: code.SimpleType("int")},
+					{Name: "age", Type: code.TypeInt},
 				},
 				Returns: []code.Type{
 					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 				Operation: spec.FindOperation{
 					Mode: spec.QueryModeMany,
@@ -526,9 +603,7 @@ func (r *UserRepositoryMongo) FindByAgeLessThanEqual(arg0 context.Context, arg1 
 					},
 				},
 			},
-			ExpectedCode: `
-func (r *UserRepositoryMongo) FindByAgeGreaterThan(arg0 context.Context, arg1 int) ([]*UserModel, error) {
-	cursor, err := r.collection.Find(arg0, bson.M{
+			ExpectedBody: `	cursor, err := r.collection.Find(arg0, bson.M{
 		"age": bson.M{"$gt": arg1},
 	}, options.Find().SetSort(bson.M{
 	}))
@@ -539,9 +614,7 @@ func (r *UserRepositoryMongo) FindByAgeGreaterThan(arg0 context.Context, arg1 in
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}
-	return entities, nil
-}
-`,
+	return entities, nil`,
 		},
 		{
 			Name: "find with GreaterThanEqual comparator",
@@ -549,11 +622,11 @@ func (r *UserRepositoryMongo) FindByAgeGreaterThan(arg0 context.Context, arg1 in
 				Name: "FindByAgeGreaterThanEqual",
 				Params: []code.Param{
 					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Name: "age", Type: code.SimpleType("int")},
+					{Name: "age", Type: code.TypeInt},
 				},
 				Returns: []code.Type{
 					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 				Operation: spec.FindOperation{
 					Mode: spec.QueryModeMany,
@@ -564,9 +637,7 @@ func (r *UserRepositoryMongo) FindByAgeGreaterThan(arg0 context.Context, arg1 in
 					},
 				},
 			},
-			ExpectedCode: `
-func (r *UserRepositoryMongo) FindByAgeGreaterThanEqual(arg0 context.Context, arg1 int) ([]*UserModel, error) {
-	cursor, err := r.collection.Find(arg0, bson.M{
+			ExpectedBody: `	cursor, err := r.collection.Find(arg0, bson.M{
 		"age": bson.M{"$gte": arg1},
 	}, options.Find().SetSort(bson.M{
 	}))
@@ -577,9 +648,7 @@ func (r *UserRepositoryMongo) FindByAgeGreaterThanEqual(arg0 context.Context, ar
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}
-	return entities, nil
-}
-`,
+	return entities, nil`,
 		},
 		{
 			Name: "find with Between comparator",
@@ -587,12 +656,12 @@ func (r *UserRepositoryMongo) FindByAgeGreaterThanEqual(arg0 context.Context, ar
 				Name: "FindByAgeBetween",
 				Params: []code.Param{
 					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Name: "fromAge", Type: code.SimpleType("int")},
-					{Name: "toAge", Type: code.SimpleType("int")},
+					{Name: "fromAge", Type: code.TypeInt},
+					{Name: "toAge", Type: code.TypeInt},
 				},
 				Returns: []code.Type{
 					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 				Operation: spec.FindOperation{
 					Mode: spec.QueryModeMany,
@@ -603,9 +672,7 @@ func (r *UserRepositoryMongo) FindByAgeGreaterThanEqual(arg0 context.Context, ar
 					},
 				},
 			},
-			ExpectedCode: `
-func (r *UserRepositoryMongo) FindByAgeBetween(arg0 context.Context, arg1 int, arg2 int) ([]*UserModel, error) {
-	cursor, err := r.collection.Find(arg0, bson.M{
+			ExpectedBody: `	cursor, err := r.collection.Find(arg0, bson.M{
 		"age": bson.M{"$gte": arg1, "$lte": arg2},
 	}, options.Find().SetSort(bson.M{
 	}))
@@ -616,9 +683,7 @@ func (r *UserRepositoryMongo) FindByAgeBetween(arg0 context.Context, arg1 int, a
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}
-	return entities, nil
-}
-`,
+	return entities, nil`,
 		},
 		{
 			Name: "find with In comparator",
@@ -630,7 +695,7 @@ func (r *UserRepositoryMongo) FindByAgeBetween(arg0 context.Context, arg1 int, a
 				},
 				Returns: []code.Type{
 					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 				Operation: spec.FindOperation{
 					Mode: spec.QueryModeMany,
@@ -641,9 +706,7 @@ func (r *UserRepositoryMongo) FindByAgeBetween(arg0 context.Context, arg1 int, a
 					},
 				},
 			},
-			ExpectedCode: `
-func (r *UserRepositoryMongo) FindByGenderIn(arg0 context.Context, arg1 []Gender) ([]*UserModel, error) {
-	cursor, err := r.collection.Find(arg0, bson.M{
+			ExpectedBody: `	cursor, err := r.collection.Find(arg0, bson.M{
 		"gender": bson.M{"$in": arg1},
 	}, options.Find().SetSort(bson.M{
 	}))
@@ -654,9 +717,7 @@ func (r *UserRepositoryMongo) FindByGenderIn(arg0 context.Context, arg1 []Gender
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}
-	return entities, nil
-}
-`,
+	return entities, nil`,
 		},
 		{
 			Name: "find with NotIn comparator",
@@ -668,7 +729,7 @@ func (r *UserRepositoryMongo) FindByGenderIn(arg0 context.Context, arg1 []Gender
 				},
 				Returns: []code.Type{
 					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 				Operation: spec.FindOperation{
 					Mode: spec.QueryModeMany,
@@ -679,9 +740,7 @@ func (r *UserRepositoryMongo) FindByGenderIn(arg0 context.Context, arg1 []Gender
 					},
 				},
 			},
-			ExpectedCode: `
-func (r *UserRepositoryMongo) FindByGenderNotIn(arg0 context.Context, arg1 []Gender) ([]*UserModel, error) {
-	cursor, err := r.collection.Find(arg0, bson.M{
+			ExpectedBody: `	cursor, err := r.collection.Find(arg0, bson.M{
 		"gender": bson.M{"$nin": arg1},
 	}, options.Find().SetSort(bson.M{
 	}))
@@ -692,9 +751,7 @@ func (r *UserRepositoryMongo) FindByGenderNotIn(arg0 context.Context, arg1 []Gen
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}
-	return entities, nil
-}
-`,
+	return entities, nil`,
 		},
 		{
 			Name: "find with True comparator",
@@ -705,7 +762,7 @@ func (r *UserRepositoryMongo) FindByGenderNotIn(arg0 context.Context, arg1 []Gen
 				},
 				Returns: []code.Type{
 					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 				Operation: spec.FindOperation{
 					Mode: spec.QueryModeMany,
@@ -716,9 +773,7 @@ func (r *UserRepositoryMongo) FindByGenderNotIn(arg0 context.Context, arg1 []Gen
 					},
 				},
 			},
-			ExpectedCode: `
-func (r *UserRepositoryMongo) FindByEnabledTrue(arg0 context.Context) ([]*UserModel, error) {
-	cursor, err := r.collection.Find(arg0, bson.M{
+			ExpectedBody: `	cursor, err := r.collection.Find(arg0, bson.M{
 		"enabled": true,
 	}, options.Find().SetSort(bson.M{
 	}))
@@ -729,9 +784,7 @@ func (r *UserRepositoryMongo) FindByEnabledTrue(arg0 context.Context) ([]*UserMo
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}
-	return entities, nil
-}
-`,
+	return entities, nil`,
 		},
 		{
 			Name: "find with False comparator",
@@ -742,7 +795,7 @@ func (r *UserRepositoryMongo) FindByEnabledTrue(arg0 context.Context) ([]*UserMo
 				},
 				Returns: []code.Type{
 					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 				Operation: spec.FindOperation{
 					Mode: spec.QueryModeMany,
@@ -753,9 +806,7 @@ func (r *UserRepositoryMongo) FindByEnabledTrue(arg0 context.Context) ([]*UserMo
 					},
 				},
 			},
-			ExpectedCode: `
-func (r *UserRepositoryMongo) FindByEnabledFalse(arg0 context.Context) ([]*UserModel, error) {
-	cursor, err := r.collection.Find(arg0, bson.M{
+			ExpectedBody: `	cursor, err := r.collection.Find(arg0, bson.M{
 		"enabled": false,
 	}, options.Find().SetSort(bson.M{
 	}))
@@ -766,9 +817,7 @@ func (r *UserRepositoryMongo) FindByEnabledFalse(arg0 context.Context) ([]*UserM
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}
-	return entities, nil
-}
-`,
+	return entities, nil`,
 		},
 		{
 			Name: "find with sort ascending",
@@ -779,7 +828,7 @@ func (r *UserRepositoryMongo) FindByEnabledFalse(arg0 context.Context) ([]*UserM
 				},
 				Returns: []code.Type{
 					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 				Operation: spec.FindOperation{
 					Mode: spec.QueryModeMany,
@@ -788,9 +837,7 @@ func (r *UserRepositoryMongo) FindByEnabledFalse(arg0 context.Context) ([]*UserM
 					},
 				},
 			},
-			ExpectedCode: `
-func (r *UserRepositoryMongo) FindAllOrderByAge(arg0 context.Context) ([]*UserModel, error) {
-	cursor, err := r.collection.Find(arg0, bson.M{
+			ExpectedBody: `	cursor, err := r.collection.Find(arg0, bson.M{
 
 	}, options.Find().SetSort(bson.M{
 		"age": 1,
@@ -802,9 +849,7 @@ func (r *UserRepositoryMongo) FindAllOrderByAge(arg0 context.Context) ([]*UserMo
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}
-	return entities, nil
-}
-`,
+	return entities, nil`,
 		},
 		{
 			Name: "find with sort descending",
@@ -815,7 +860,7 @@ func (r *UserRepositoryMongo) FindAllOrderByAge(arg0 context.Context) ([]*UserMo
 				},
 				Returns: []code.Type{
 					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 				Operation: spec.FindOperation{
 					Mode: spec.QueryModeMany,
@@ -824,9 +869,7 @@ func (r *UserRepositoryMongo) FindAllOrderByAge(arg0 context.Context) ([]*UserMo
 					},
 				},
 			},
-			ExpectedCode: `
-func (r *UserRepositoryMongo) FindAllOrderByAgeDesc(arg0 context.Context) ([]*UserModel, error) {
-	cursor, err := r.collection.Find(arg0, bson.M{
+			ExpectedBody: `	cursor, err := r.collection.Find(arg0, bson.M{
 
 	}, options.Find().SetSort(bson.M{
 		"age": -1,
@@ -838,9 +881,7 @@ func (r *UserRepositoryMongo) FindAllOrderByAgeDesc(arg0 context.Context) ([]*Us
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}
-	return entities, nil
-}
-`,
+	return entities, nil`,
 		},
 		{
 			Name: "find with deep sort ascending",
@@ -851,7 +892,7 @@ func (r *UserRepositoryMongo) FindAllOrderByAgeDesc(arg0 context.Context) ([]*Us
 				},
 				Returns: []code.Type{
 					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 				Operation: spec.FindOperation{
 					Mode: spec.QueryModeMany,
@@ -860,9 +901,7 @@ func (r *UserRepositoryMongo) FindAllOrderByAgeDesc(arg0 context.Context) ([]*Us
 					},
 				},
 			},
-			ExpectedCode: `
-func (r *UserRepositoryMongo) FindAllOrderByNameFirst(arg0 context.Context) ([]*UserModel, error) {
-	cursor, err := r.collection.Find(arg0, bson.M{
+			ExpectedBody: `	cursor, err := r.collection.Find(arg0, bson.M{
 
 	}, options.Find().SetSort(bson.M{
 		"name.first": 1,
@@ -874,9 +913,7 @@ func (r *UserRepositoryMongo) FindAllOrderByNameFirst(arg0 context.Context) ([]*
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}
-	return entities, nil
-}
-`,
+	return entities, nil`,
 		},
 		{
 			Name: "find with multiple sorts",
@@ -887,7 +924,7 @@ func (r *UserRepositoryMongo) FindAllOrderByNameFirst(arg0 context.Context) ([]*
 				},
 				Returns: []code.Type{
 					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 				Operation: spec.FindOperation{
 					Mode: spec.QueryModeMany,
@@ -897,9 +934,7 @@ func (r *UserRepositoryMongo) FindAllOrderByNameFirst(arg0 context.Context) ([]*
 					},
 				},
 			},
-			ExpectedCode: `
-func (r *UserRepositoryMongo) FindAllOrderByGenderAndAgeDesc(arg0 context.Context) ([]*UserModel, error) {
-	cursor, err := r.collection.Find(arg0, bson.M{
+			ExpectedBody: `	cursor, err := r.collection.Find(arg0, bson.M{
 
 	}, options.Find().SetSort(bson.M{
 		"gender": 1,
@@ -912,23 +947,66 @@ func (r *UserRepositoryMongo) FindAllOrderByGenderAndAgeDesc(arg0 context.Contex
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}
-	return entities, nil
-}
-`,
+	return entities, nil`,
 		},
 	}
 
 	for _, testCase := range testTable {
 		t.Run(testCase.Name, func(t *testing.T) {
 			generator := mongo.NewGenerator(userModel, "UserRepository")
-			buffer := new(bytes.Buffer)
+			var expectedParams []code.Param
+			for i, param := range testCase.MethodSpec.Params {
+				expectedParams = append(expectedParams, code.Param{
+					Name: fmt.Sprintf("arg%d", i),
+					Type: param.Type,
+				})
+			}
+			expected := codegen.MethodBuilder{
+				Receiver: codegen.MethodReceiver{
+					Name:    "r",
+					Type:    "UserRepositoryMongo",
+					Pointer: true,
+				},
+				Name:    testCase.MethodSpec.Name,
+				Params:  expectedParams,
+				Returns: testCase.MethodSpec.Returns,
+				Body:    testCase.ExpectedBody,
+			}
 
-			err := generator.GenerateMethod(testCase.MethodSpec, buffer)
+			actual, err := generator.GenerateMethod(testCase.MethodSpec)
 
 			if err != nil {
-				t.Error(err)
+				t.Fatal(err)
 			}
-			if err := testutils.ExpectMultiLineString(testCase.ExpectedCode, buffer.String()); err != nil {
+			if expected.Receiver != actual.Receiver {
+				t.Errorf(
+					"incorrect method receiver: expected %+v, got %+v",
+					expected.Receiver,
+					actual.Receiver,
+				)
+			}
+			if expected.Name != actual.Name {
+				t.Errorf(
+					"incorrect method name: expected %s, got %s",
+					expected.Name,
+					actual.Name,
+				)
+			}
+			if !reflect.DeepEqual(expected.Params, actual.Params) {
+				t.Errorf(
+					"incorrect struct params: expected %+v, got %+v",
+					expected.Params,
+					actual.Params,
+				)
+			}
+			if !reflect.DeepEqual(expected.Returns, actual.Returns) {
+				t.Errorf(
+					"incorrect struct returns: expected %+v, got %+v",
+					expected.Returns,
+					actual.Returns,
+				)
+			}
+			if err := testutils.ExpectMultiLineString(expected.Body, actual.Body); err != nil {
 				t.Error(err)
 			}
 		})
@@ -947,8 +1025,8 @@ func TestGenerateMethod_Update(t *testing.T) {
 					{Name: "id", Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
 				},
 				Returns: []code.Type{
-					code.SimpleType("bool"),
-					code.SimpleType("error"),
+					code.TypeBool,
+					code.TypeError,
 				},
 				Operation: spec.UpdateOperation{
 					Update: spec.UpdateModel{},
@@ -960,9 +1038,7 @@ func TestGenerateMethod_Update(t *testing.T) {
 					},
 				},
 			},
-			ExpectedCode: `
-func (r *UserRepositoryMongo) UpdateByID(arg0 context.Context, arg1 *UserModel, arg2 primitive.ObjectID) (bool, error) {
-	result, err := r.collection.UpdateOne(arg0, bson.M{
+			ExpectedBody: `	result, err := r.collection.UpdateOne(arg0, bson.M{
 		"_id": arg2,
 	}, bson.M{
 		"$set": arg1,
@@ -970,9 +1046,7 @@ func (r *UserRepositoryMongo) UpdateByID(arg0 context.Context, arg1 *UserModel, 
 	if err != nil {
 		return false, err
 	}
-	return result.MatchedCount > 0, err
-}
-`,
+	return result.MatchedCount > 0, err`,
 		},
 		{
 			Name: "simple update one method",
@@ -980,12 +1054,12 @@ func (r *UserRepositoryMongo) UpdateByID(arg0 context.Context, arg1 *UserModel, 
 				Name: "UpdateAgeByID",
 				Params: []code.Param{
 					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Name: "age", Type: code.SimpleType("int")},
+					{Name: "age", Type: code.TypeInt},
 					{Name: "id", Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
 				},
 				Returns: []code.Type{
-					code.SimpleType("bool"),
-					code.SimpleType("error"),
+					code.TypeBool,
+					code.TypeError,
 				},
 				Operation: spec.UpdateOperation{
 					Update: spec.UpdateFields{
@@ -999,9 +1073,7 @@ func (r *UserRepositoryMongo) UpdateByID(arg0 context.Context, arg1 *UserModel, 
 					},
 				},
 			},
-			ExpectedCode: `
-func (r *UserRepositoryMongo) UpdateAgeByID(arg0 context.Context, arg1 int, arg2 primitive.ObjectID) (bool, error) {
-	result, err := r.collection.UpdateOne(arg0, bson.M{
+			ExpectedBody: `	result, err := r.collection.UpdateOne(arg0, bson.M{
 		"_id": arg2,
 	}, bson.M{
 		"$set": bson.M{
@@ -1011,9 +1083,7 @@ func (r *UserRepositoryMongo) UpdateAgeByID(arg0 context.Context, arg1 int, arg2
 	if err != nil {
 		return false, err
 	}
-	return result.MatchedCount > 0, err
-}
-`,
+	return result.MatchedCount > 0, err`,
 		},
 		{
 			Name: "simple update many method",
@@ -1021,12 +1091,12 @@ func (r *UserRepositoryMongo) UpdateAgeByID(arg0 context.Context, arg1 int, arg2
 				Name: "UpdateAgeByGender",
 				Params: []code.Param{
 					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Name: "age", Type: code.SimpleType("int")},
+					{Name: "age", Type: code.TypeInt},
 					{Name: "gender", Type: code.SimpleType("Gender")},
 				},
 				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
+					code.TypeInt,
+					code.TypeError,
 				},
 				Operation: spec.UpdateOperation{
 					Update: spec.UpdateFields{
@@ -1040,9 +1110,7 @@ func (r *UserRepositoryMongo) UpdateAgeByID(arg0 context.Context, arg1 int, arg2
 					},
 				},
 			},
-			ExpectedCode: `
-func (r *UserRepositoryMongo) UpdateAgeByGender(arg0 context.Context, arg1 int, arg2 Gender) (int, error) {
-	result, err := r.collection.UpdateMany(arg0, bson.M{
+			ExpectedBody: `	result, err := r.collection.UpdateMany(arg0, bson.M{
 		"gender": arg2,
 	}, bson.M{
 		"$set": bson.M{
@@ -1052,9 +1120,7 @@ func (r *UserRepositoryMongo) UpdateAgeByGender(arg0 context.Context, arg1 int, 
 	if err != nil {
 		return 0, err
 	}
-	return int(result.MatchedCount), err
-}
-`,
+	return int(result.MatchedCount), err`,
 		},
 		{
 			Name: "simple update push method",
@@ -1066,8 +1132,8 @@ func (r *UserRepositoryMongo) UpdateAgeByGender(arg0 context.Context, arg1 int, 
 					{Name: "id", Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
 				},
 				Returns: []code.Type{
-					code.SimpleType("bool"),
-					code.SimpleType("error"),
+					code.TypeBool,
+					code.TypeError,
 				},
 				Operation: spec.UpdateOperation{
 					Update: spec.UpdateFields{
@@ -1081,9 +1147,7 @@ func (r *UserRepositoryMongo) UpdateAgeByGender(arg0 context.Context, arg1 int, 
 					},
 				},
 			},
-			ExpectedCode: `
-func (r *UserRepositoryMongo) UpdateConsentHistoryPushByID(arg0 context.Context, arg1 ConsentHistory, arg2 primitive.ObjectID) (bool, error) {
-	result, err := r.collection.UpdateOne(arg0, bson.M{
+			ExpectedBody: `	result, err := r.collection.UpdateOne(arg0, bson.M{
 		"_id": arg2,
 	}, bson.M{
 		"$push": bson.M{
@@ -1093,9 +1157,7 @@ func (r *UserRepositoryMongo) UpdateConsentHistoryPushByID(arg0 context.Context,
 	if err != nil {
 		return false, err
 	}
-	return result.MatchedCount > 0, err
-}
-`,
+	return result.MatchedCount > 0, err`,
 		},
 		{
 			Name: "simple update inc method",
@@ -1103,12 +1165,12 @@ func (r *UserRepositoryMongo) UpdateConsentHistoryPushByID(arg0 context.Context,
 				Name: "UpdateAgeIncByID",
 				Params: []code.Param{
 					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Name: "age", Type: code.SimpleType("int")},
+					{Name: "age", Type: code.TypeInt},
 					{Name: "id", Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
 				},
 				Returns: []code.Type{
-					code.SimpleType("bool"),
-					code.SimpleType("error"),
+					code.TypeBool,
+					code.TypeError,
 				},
 				Operation: spec.UpdateOperation{
 					Update: spec.UpdateFields{
@@ -1122,9 +1184,7 @@ func (r *UserRepositoryMongo) UpdateConsentHistoryPushByID(arg0 context.Context,
 					},
 				},
 			},
-			ExpectedCode: `
-func (r *UserRepositoryMongo) UpdateAgeIncByID(arg0 context.Context, arg1 int, arg2 primitive.ObjectID) (bool, error) {
-	result, err := r.collection.UpdateOne(arg0, bson.M{
+			ExpectedBody: `	result, err := r.collection.UpdateOne(arg0, bson.M{
 		"_id": arg2,
 	}, bson.M{
 		"$inc": bson.M{
@@ -1134,9 +1194,7 @@ func (r *UserRepositoryMongo) UpdateAgeIncByID(arg0 context.Context, arg1 int, a
 	if err != nil {
 		return false, err
 	}
-	return result.MatchedCount > 0, err
-}
-`,
+	return result.MatchedCount > 0, err`,
 		},
 		{
 			Name: "simple update set and push method",
@@ -1144,13 +1202,13 @@ func (r *UserRepositoryMongo) UpdateAgeIncByID(arg0 context.Context, arg1 int, a
 				Name: "UpdateEnabledAndConsentHistoryPushByID",
 				Params: []code.Param{
 					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Name: "enabled", Type: code.SimpleType("bool")},
+					{Name: "enabled", Type: code.TypeBool},
 					{Name: "consentHistory", Type: code.SimpleType("ConsentHistory")},
 					{Name: "gender", Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
 				},
 				Returns: []code.Type{
-					code.SimpleType("bool"),
-					code.SimpleType("error"),
+					code.TypeBool,
+					code.TypeError,
 				},
 				Operation: spec.UpdateOperation{
 					Update: spec.UpdateFields{
@@ -1165,9 +1223,7 @@ func (r *UserRepositoryMongo) UpdateAgeIncByID(arg0 context.Context, arg1 int, a
 					},
 				},
 			},
-			ExpectedCode: `
-func (r *UserRepositoryMongo) UpdateEnabledAndConsentHistoryPushByID(arg0 context.Context, arg1 bool, arg2 ConsentHistory, arg3 primitive.ObjectID) (bool, error) {
-	result, err := r.collection.UpdateOne(arg0, bson.M{
+			ExpectedBody: `	result, err := r.collection.UpdateOne(arg0, bson.M{
 		"_id": arg3,
 	}, bson.M{
 		"$push": bson.M{
@@ -1180,9 +1236,7 @@ func (r *UserRepositoryMongo) UpdateEnabledAndConsentHistoryPushByID(arg0 contex
 	if err != nil {
 		return false, err
 	}
-	return result.MatchedCount > 0, err
-}
-`,
+	return result.MatchedCount > 0, err`,
 		},
 		{
 			Name: "update with deeply referenced field",
@@ -1190,12 +1244,12 @@ func (r *UserRepositoryMongo) UpdateEnabledAndConsentHistoryPushByID(arg0 contex
 				Name: "UpdateNameFirstByID",
 				Params: []code.Param{
 					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Name: "firstName", Type: code.SimpleType("string")},
+					{Name: "firstName", Type: code.TypeString},
 					{Name: "id", Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
 				},
 				Returns: []code.Type{
-					code.SimpleType("bool"),
-					code.SimpleType("error"),
+					code.TypeBool,
+					code.TypeError,
 				},
 				Operation: spec.UpdateOperation{
 					Update: spec.UpdateFields{
@@ -1209,9 +1263,7 @@ func (r *UserRepositoryMongo) UpdateEnabledAndConsentHistoryPushByID(arg0 contex
 					},
 				},
 			},
-			ExpectedCode: `
-func (r *UserRepositoryMongo) UpdateNameFirstByID(arg0 context.Context, arg1 string, arg2 primitive.ObjectID) (bool, error) {
-	result, err := r.collection.UpdateOne(arg0, bson.M{
+			ExpectedBody: `	result, err := r.collection.UpdateOne(arg0, bson.M{
 		"_id": arg2,
 	}, bson.M{
 		"$set": bson.M{
@@ -1221,23 +1273,66 @@ func (r *UserRepositoryMongo) UpdateNameFirstByID(arg0 context.Context, arg1 str
 	if err != nil {
 		return false, err
 	}
-	return result.MatchedCount > 0, err
-}
-`,
+	return result.MatchedCount > 0, err`,
 		},
 	}
 
 	for _, testCase := range testTable {
 		t.Run(testCase.Name, func(t *testing.T) {
 			generator := mongo.NewGenerator(userModel, "UserRepository")
-			buffer := new(bytes.Buffer)
+			var expectedParams []code.Param
+			for i, param := range testCase.MethodSpec.Params {
+				expectedParams = append(expectedParams, code.Param{
+					Name: fmt.Sprintf("arg%d", i),
+					Type: param.Type,
+				})
+			}
+			expected := codegen.MethodBuilder{
+				Receiver: codegen.MethodReceiver{
+					Name:    "r",
+					Type:    "UserRepositoryMongo",
+					Pointer: true,
+				},
+				Name:    testCase.MethodSpec.Name,
+				Params:  expectedParams,
+				Returns: testCase.MethodSpec.Returns,
+				Body:    testCase.ExpectedBody,
+			}
 
-			err := generator.GenerateMethod(testCase.MethodSpec, buffer)
+			actual, err := generator.GenerateMethod(testCase.MethodSpec)
 
 			if err != nil {
-				t.Error(err)
+				t.Fatal(err)
 			}
-			if err := testutils.ExpectMultiLineString(testCase.ExpectedCode, buffer.String()); err != nil {
+			if expected.Receiver != actual.Receiver {
+				t.Errorf(
+					"incorrect method receiver: expected %+v, got %+v",
+					expected.Receiver,
+					actual.Receiver,
+				)
+			}
+			if expected.Name != actual.Name {
+				t.Errorf(
+					"incorrect method name: expected %s, got %s",
+					expected.Name,
+					actual.Name,
+				)
+			}
+			if !reflect.DeepEqual(expected.Params, actual.Params) {
+				t.Errorf(
+					"incorrect struct params: expected %+v, got %+v",
+					expected.Params,
+					actual.Params,
+				)
+			}
+			if !reflect.DeepEqual(expected.Returns, actual.Returns) {
+				t.Errorf(
+					"incorrect struct returns: expected %+v, got %+v",
+					expected.Returns,
+					actual.Returns,
+				)
+			}
+			if err := testutils.ExpectMultiLineString(expected.Body, actual.Body); err != nil {
 				t.Error(err)
 			}
 		})
@@ -1254,7 +1349,7 @@ func TestGenerateMethod_Delete(t *testing.T) {
 					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
 					{Name: "id", Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
 				},
-				Returns: []code.Type{code.SimpleType("bool"), code.SimpleType("error")},
+				Returns: []code.Type{code.TypeBool, code.TypeError},
 				Operation: spec.DeleteOperation{
 					Mode: spec.QueryModeOne,
 					Query: spec.QuerySpec{
@@ -1264,17 +1359,13 @@ func TestGenerateMethod_Delete(t *testing.T) {
 					},
 				},
 			},
-			ExpectedCode: `
-func (r *UserRepositoryMongo) DeleteByID(arg0 context.Context, arg1 primitive.ObjectID) (bool, error) {
-	result, err := r.collection.DeleteOne(arg0, bson.M{
+			ExpectedBody: `	result, err := r.collection.DeleteOne(arg0, bson.M{
 		"_id": arg1,
 	})
 	if err != nil {
 		return false, err
 	}
-	return result.DeletedCount > 0, nil
-}
-`,
+	return result.DeletedCount > 0, nil`,
 		},
 		{
 			Name: "simple delete many method",
@@ -1285,8 +1376,8 @@ func (r *UserRepositoryMongo) DeleteByID(arg0 context.Context, arg1 primitive.Ob
 					{Name: "gender", Type: code.SimpleType("Gender")},
 				},
 				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
+					code.TypeInt,
+					code.TypeError,
 				},
 				Operation: spec.DeleteOperation{
 					Mode: spec.QueryModeMany,
@@ -1297,17 +1388,13 @@ func (r *UserRepositoryMongo) DeleteByID(arg0 context.Context, arg1 primitive.Ob
 					},
 				},
 			},
-			ExpectedCode: `
-func (r *UserRepositoryMongo) DeleteByGender(arg0 context.Context, arg1 Gender) (int, error) {
-	result, err := r.collection.DeleteMany(arg0, bson.M{
+			ExpectedBody: `	result, err := r.collection.DeleteMany(arg0, bson.M{
 		"gender": arg1,
 	})
 	if err != nil {
 		return 0, err
 	}
-	return int(result.DeletedCount), nil
-}
-`,
+	return int(result.DeletedCount), nil`,
 		},
 		{
 			Name: "delete with And operator",
@@ -1316,11 +1403,11 @@ func (r *UserRepositoryMongo) DeleteByGender(arg0 context.Context, arg1 Gender) 
 				Params: []code.Param{
 					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
 					{Name: "gender", Type: code.SimpleType("Gender")},
-					{Name: "age", Type: code.SimpleType("int")},
+					{Name: "age", Type: code.TypeInt},
 				},
 				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
+					code.TypeInt,
+					code.TypeError,
 				},
 				Operation: spec.DeleteOperation{
 					Mode: spec.QueryModeMany,
@@ -1333,9 +1420,7 @@ func (r *UserRepositoryMongo) DeleteByGender(arg0 context.Context, arg1 Gender) 
 					},
 				},
 			},
-			ExpectedCode: `
-func (r *UserRepositoryMongo) DeleteByGenderAndAge(arg0 context.Context, arg1 Gender, arg2 int) (int, error) {
-	result, err := r.collection.DeleteMany(arg0, bson.M{
+			ExpectedBody: `	result, err := r.collection.DeleteMany(arg0, bson.M{
 		"$and": []bson.M{
 			{"gender": arg1},
 			{"age": arg2},
@@ -1344,9 +1429,7 @@ func (r *UserRepositoryMongo) DeleteByGenderAndAge(arg0 context.Context, arg1 Ge
 	if err != nil {
 		return 0, err
 	}
-	return int(result.DeletedCount), nil
-}
-`,
+	return int(result.DeletedCount), nil`,
 		},
 		{
 			Name: "delete with Or operator",
@@ -1355,11 +1438,11 @@ func (r *UserRepositoryMongo) DeleteByGenderAndAge(arg0 context.Context, arg1 Ge
 				Params: []code.Param{
 					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
 					{Name: "gender", Type: code.SimpleType("Gender")},
-					{Name: "age", Type: code.SimpleType("int")},
+					{Name: "age", Type: code.TypeInt},
 				},
 				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
+					code.TypeInt,
+					code.TypeError,
 				},
 				Operation: spec.DeleteOperation{
 					Mode: spec.QueryModeMany,
@@ -1372,9 +1455,7 @@ func (r *UserRepositoryMongo) DeleteByGenderAndAge(arg0 context.Context, arg1 Ge
 					},
 				},
 			},
-			ExpectedCode: `
-func (r *UserRepositoryMongo) DeleteByGenderOrAge(arg0 context.Context, arg1 Gender, arg2 int) (int, error) {
-	result, err := r.collection.DeleteMany(arg0, bson.M{
+			ExpectedBody: `	result, err := r.collection.DeleteMany(arg0, bson.M{
 		"$or": []bson.M{
 			{"gender": arg1},
 			{"age": arg2},
@@ -1383,9 +1464,7 @@ func (r *UserRepositoryMongo) DeleteByGenderOrAge(arg0 context.Context, arg1 Gen
 	if err != nil {
 		return 0, err
 	}
-	return int(result.DeletedCount), nil
-}
-`,
+	return int(result.DeletedCount), nil`,
 		},
 		{
 			Name: "delete with Not comparator",
@@ -1396,8 +1475,8 @@ func (r *UserRepositoryMongo) DeleteByGenderOrAge(arg0 context.Context, arg1 Gen
 					{Name: "gender", Type: code.SimpleType("Gender")},
 				},
 				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
+					code.TypeInt,
+					code.TypeError,
 				},
 				Operation: spec.DeleteOperation{
 					Mode: spec.QueryModeMany,
@@ -1408,17 +1487,13 @@ func (r *UserRepositoryMongo) DeleteByGenderOrAge(arg0 context.Context, arg1 Gen
 					},
 				},
 			},
-			ExpectedCode: `
-func (r *UserRepositoryMongo) DeleteByGenderNot(arg0 context.Context, arg1 Gender) (int, error) {
-	result, err := r.collection.DeleteMany(arg0, bson.M{
+			ExpectedBody: `	result, err := r.collection.DeleteMany(arg0, bson.M{
 		"gender": bson.M{"$ne": arg1},
 	})
 	if err != nil {
 		return 0, err
 	}
-	return int(result.DeletedCount), nil
-}
-`,
+	return int(result.DeletedCount), nil`,
 		},
 		{
 			Name: "delete with LessThan comparator",
@@ -1426,11 +1501,11 @@ func (r *UserRepositoryMongo) DeleteByGenderNot(arg0 context.Context, arg1 Gende
 				Name: "DeleteByAgeLessThan",
 				Params: []code.Param{
 					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Name: "age", Type: code.SimpleType("int")},
+					{Name: "age", Type: code.TypeInt},
 				},
 				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
+					code.TypeInt,
+					code.TypeError,
 				},
 				Operation: spec.DeleteOperation{
 					Mode: spec.QueryModeMany,
@@ -1441,17 +1516,13 @@ func (r *UserRepositoryMongo) DeleteByGenderNot(arg0 context.Context, arg1 Gende
 					},
 				},
 			},
-			ExpectedCode: `
-func (r *UserRepositoryMongo) DeleteByAgeLessThan(arg0 context.Context, arg1 int) (int, error) {
-	result, err := r.collection.DeleteMany(arg0, bson.M{
+			ExpectedBody: `	result, err := r.collection.DeleteMany(arg0, bson.M{
 		"age": bson.M{"$lt": arg1},
 	})
 	if err != nil {
 		return 0, err
 	}
-	return int(result.DeletedCount), nil
-}
-`,
+	return int(result.DeletedCount), nil`,
 		},
 		{
 			Name: "delete with LessThanEqual comparator",
@@ -1459,11 +1530,11 @@ func (r *UserRepositoryMongo) DeleteByAgeLessThan(arg0 context.Context, arg1 int
 				Name: "DeleteByAgeLessThanEqual",
 				Params: []code.Param{
 					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Name: "age", Type: code.SimpleType("int")},
+					{Name: "age", Type: code.TypeInt},
 				},
 				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
+					code.TypeInt,
+					code.TypeError,
 				},
 				Operation: spec.DeleteOperation{
 					Mode: spec.QueryModeMany,
@@ -1474,17 +1545,13 @@ func (r *UserRepositoryMongo) DeleteByAgeLessThan(arg0 context.Context, arg1 int
 					},
 				},
 			},
-			ExpectedCode: `
-func (r *UserRepositoryMongo) DeleteByAgeLessThanEqual(arg0 context.Context, arg1 int) (int, error) {
-	result, err := r.collection.DeleteMany(arg0, bson.M{
+			ExpectedBody: `	result, err := r.collection.DeleteMany(arg0, bson.M{
 		"age": bson.M{"$lte": arg1},
 	})
 	if err != nil {
 		return 0, err
 	}
-	return int(result.DeletedCount), nil
-}
-`,
+	return int(result.DeletedCount), nil`,
 		},
 		{
 			Name: "delete with GreaterThan comparator",
@@ -1492,11 +1559,11 @@ func (r *UserRepositoryMongo) DeleteByAgeLessThanEqual(arg0 context.Context, arg
 				Name: "DeleteByAgeGreaterThan",
 				Params: []code.Param{
 					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Name: "age", Type: code.SimpleType("int")},
+					{Name: "age", Type: code.TypeInt},
 				},
 				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
+					code.TypeInt,
+					code.TypeError,
 				},
 				Operation: spec.DeleteOperation{
 					Mode: spec.QueryModeMany,
@@ -1507,17 +1574,13 @@ func (r *UserRepositoryMongo) DeleteByAgeLessThanEqual(arg0 context.Context, arg
 					},
 				},
 			},
-			ExpectedCode: `
-func (r *UserRepositoryMongo) DeleteByAgeGreaterThan(arg0 context.Context, arg1 int) (int, error) {
-	result, err := r.collection.DeleteMany(arg0, bson.M{
+			ExpectedBody: `	result, err := r.collection.DeleteMany(arg0, bson.M{
 		"age": bson.M{"$gt": arg1},
 	})
 	if err != nil {
 		return 0, err
 	}
-	return int(result.DeletedCount), nil
-}
-`,
+	return int(result.DeletedCount), nil`,
 		},
 		{
 			Name: "delete with GreaterThanEqual comparator",
@@ -1525,11 +1588,11 @@ func (r *UserRepositoryMongo) DeleteByAgeGreaterThan(arg0 context.Context, arg1 
 				Name: "DeleteByAgeGreaterThanEqual",
 				Params: []code.Param{
 					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Name: "age", Type: code.SimpleType("int")},
+					{Name: "age", Type: code.TypeInt},
 				},
 				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
+					code.TypeInt,
+					code.TypeError,
 				},
 				Operation: spec.DeleteOperation{
 					Mode: spec.QueryModeMany,
@@ -1540,17 +1603,13 @@ func (r *UserRepositoryMongo) DeleteByAgeGreaterThan(arg0 context.Context, arg1 
 					},
 				},
 			},
-			ExpectedCode: `
-func (r *UserRepositoryMongo) DeleteByAgeGreaterThanEqual(arg0 context.Context, arg1 int) (int, error) {
-	result, err := r.collection.DeleteMany(arg0, bson.M{
+			ExpectedBody: `	result, err := r.collection.DeleteMany(arg0, bson.M{
 		"age": bson.M{"$gte": arg1},
 	})
 	if err != nil {
 		return 0, err
 	}
-	return int(result.DeletedCount), nil
-}
-`,
+	return int(result.DeletedCount), nil`,
 		},
 		{
 			Name: "delete with Between comparator",
@@ -1558,12 +1617,12 @@ func (r *UserRepositoryMongo) DeleteByAgeGreaterThanEqual(arg0 context.Context, 
 				Name: "DeleteByAgeBetween",
 				Params: []code.Param{
 					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Name: "fromAge", Type: code.SimpleType("int")},
-					{Name: "toAge", Type: code.SimpleType("int")},
+					{Name: "fromAge", Type: code.TypeInt},
+					{Name: "toAge", Type: code.TypeInt},
 				},
 				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
+					code.TypeInt,
+					code.TypeError,
 				},
 				Operation: spec.DeleteOperation{
 					Mode: spec.QueryModeMany,
@@ -1574,17 +1633,13 @@ func (r *UserRepositoryMongo) DeleteByAgeGreaterThanEqual(arg0 context.Context, 
 					},
 				},
 			},
-			ExpectedCode: `
-func (r *UserRepositoryMongo) DeleteByAgeBetween(arg0 context.Context, arg1 int, arg2 int) (int, error) {
-	result, err := r.collection.DeleteMany(arg0, bson.M{
+			ExpectedBody: `	result, err := r.collection.DeleteMany(arg0, bson.M{
 		"age": bson.M{"$gte": arg1, "$lte": arg2},
 	})
 	if err != nil {
 		return 0, err
 	}
-	return int(result.DeletedCount), nil
-}
-`,
+	return int(result.DeletedCount), nil`,
 		},
 		{
 			Name: "delete with In comparator",
@@ -1595,8 +1650,8 @@ func (r *UserRepositoryMongo) DeleteByAgeBetween(arg0 context.Context, arg1 int,
 					{Name: "gender", Type: code.ArrayType{ContainedType: code.SimpleType("Gender")}},
 				},
 				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
+					code.TypeInt,
+					code.TypeError,
 				},
 				Operation: spec.DeleteOperation{
 					Mode: spec.QueryModeMany,
@@ -1607,31 +1662,72 @@ func (r *UserRepositoryMongo) DeleteByAgeBetween(arg0 context.Context, arg1 int,
 					},
 				},
 			},
-			ExpectedCode: `
-func (r *UserRepositoryMongo) DeleteByGenderIn(arg0 context.Context, arg1 []Gender) (int, error) {
-	result, err := r.collection.DeleteMany(arg0, bson.M{
+			ExpectedBody: `	result, err := r.collection.DeleteMany(arg0, bson.M{
 		"gender": bson.M{"$in": arg1},
 	})
 	if err != nil {
 		return 0, err
 	}
-	return int(result.DeletedCount), nil
-}
-`,
+	return int(result.DeletedCount), nil`,
 		},
 	}
 
 	for _, testCase := range testTable {
 		t.Run(testCase.Name, func(t *testing.T) {
 			generator := mongo.NewGenerator(userModel, "UserRepository")
-			buffer := new(bytes.Buffer)
+			var expectedParams []code.Param
+			for i, param := range testCase.MethodSpec.Params {
+				expectedParams = append(expectedParams, code.Param{
+					Name: fmt.Sprintf("arg%d", i),
+					Type: param.Type,
+				})
+			}
+			expected := codegen.MethodBuilder{
+				Receiver: codegen.MethodReceiver{
+					Name:    "r",
+					Type:    "UserRepositoryMongo",
+					Pointer: true,
+				},
+				Name:    testCase.MethodSpec.Name,
+				Params:  expectedParams,
+				Returns: testCase.MethodSpec.Returns,
+				Body:    testCase.ExpectedBody,
+			}
 
-			err := generator.GenerateMethod(testCase.MethodSpec, buffer)
+			actual, err := generator.GenerateMethod(testCase.MethodSpec)
 
 			if err != nil {
-				t.Error(err)
+				t.Fatal(err)
 			}
-			if err := testutils.ExpectMultiLineString(testCase.ExpectedCode, buffer.String()); err != nil {
+			if expected.Receiver != actual.Receiver {
+				t.Errorf(
+					"incorrect method receiver: expected %+v, got %+v",
+					expected.Receiver,
+					actual.Receiver,
+				)
+			}
+			if expected.Name != actual.Name {
+				t.Errorf(
+					"incorrect method name: expected %s, got %s",
+					expected.Name,
+					actual.Name,
+				)
+			}
+			if !reflect.DeepEqual(expected.Params, actual.Params) {
+				t.Errorf(
+					"incorrect struct params: expected %+v, got %+v",
+					expected.Params,
+					actual.Params,
+				)
+			}
+			if !reflect.DeepEqual(expected.Returns, actual.Returns) {
+				t.Errorf(
+					"incorrect struct returns: expected %+v, got %+v",
+					expected.Returns,
+					actual.Returns,
+				)
+			}
+			if err := testutils.ExpectMultiLineString(expected.Body, actual.Body); err != nil {
 				t.Error(err)
 			}
 		})
@@ -1649,8 +1745,8 @@ func TestGenerateMethod_Count(t *testing.T) {
 					{Type: code.SimpleType("Gender")},
 				},
 				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
+					code.TypeInt,
+					code.TypeError,
 				},
 				Operation: spec.CountOperation{
 					Query: spec.QuerySpec{
@@ -1660,17 +1756,13 @@ func TestGenerateMethod_Count(t *testing.T) {
 					},
 				},
 			},
-			ExpectedCode: `
-func (r *UserRepositoryMongo) CountByGender(arg0 context.Context, arg1 Gender) (int, error) {
-	count, err := r.collection.CountDocuments(arg0, bson.M{
+			ExpectedBody: `	count, err := r.collection.CountDocuments(arg0, bson.M{
 		"gender": arg1,
 	})
 	if err != nil {
 		return 0, err
 	}
-	return int(count), nil
-}
-`,
+	return int(count), nil`,
 		},
 		{
 			Name: "count with And operator",
@@ -1679,11 +1771,11 @@ func (r *UserRepositoryMongo) CountByGender(arg0 context.Context, arg1 Gender) (
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
 					{Type: code.SimpleType("Gender")},
-					{Type: code.SimpleType("int")},
+					{Type: code.TypeInt},
 				},
 				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
+					code.TypeInt,
+					code.TypeError,
 				},
 				Operation: spec.CountOperation{
 					Query: spec.QuerySpec{
@@ -1695,9 +1787,7 @@ func (r *UserRepositoryMongo) CountByGender(arg0 context.Context, arg1 Gender) (
 					},
 				},
 			},
-			ExpectedCode: `
-func (r *UserRepositoryMongo) CountByGenderAndCity(arg0 context.Context, arg1 Gender, arg2 int) (int, error) {
-	count, err := r.collection.CountDocuments(arg0, bson.M{
+			ExpectedBody: `	count, err := r.collection.CountDocuments(arg0, bson.M{
 		"$and": []bson.M{
 			{"gender": arg1},
 			{"age": arg2},
@@ -1706,9 +1796,7 @@ func (r *UserRepositoryMongo) CountByGenderAndCity(arg0 context.Context, arg1 Ge
 	if err != nil {
 		return 0, err
 	}
-	return int(count), nil
-}
-`,
+	return int(count), nil`,
 		},
 		{
 			Name: "count with Or operator",
@@ -1717,11 +1805,11 @@ func (r *UserRepositoryMongo) CountByGenderAndCity(arg0 context.Context, arg1 Ge
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
 					{Type: code.SimpleType("Gender")},
-					{Type: code.SimpleType("int")},
+					{Type: code.TypeInt},
 				},
 				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
+					code.TypeInt,
+					code.TypeError,
 				},
 				Operation: spec.CountOperation{
 					Query: spec.QuerySpec{
@@ -1733,9 +1821,7 @@ func (r *UserRepositoryMongo) CountByGenderAndCity(arg0 context.Context, arg1 Ge
 					},
 				},
 			},
-			ExpectedCode: `
-func (r *UserRepositoryMongo) CountByGenderOrCity(arg0 context.Context, arg1 Gender, arg2 int) (int, error) {
-	count, err := r.collection.CountDocuments(arg0, bson.M{
+			ExpectedBody: `	count, err := r.collection.CountDocuments(arg0, bson.M{
 		"$or": []bson.M{
 			{"gender": arg1},
 			{"age": arg2},
@@ -1744,9 +1830,7 @@ func (r *UserRepositoryMongo) CountByGenderOrCity(arg0 context.Context, arg1 Gen
 	if err != nil {
 		return 0, err
 	}
-	return int(count), nil
-}
-`,
+	return int(count), nil`,
 		},
 		{
 			Name: "count with Not comparator",
@@ -1757,8 +1841,8 @@ func (r *UserRepositoryMongo) CountByGenderOrCity(arg0 context.Context, arg1 Gen
 					{Type: code.SimpleType("Gender")},
 				},
 				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
+					code.TypeInt,
+					code.TypeError,
 				},
 				Operation: spec.CountOperation{
 					Query: spec.QuerySpec{
@@ -1768,17 +1852,13 @@ func (r *UserRepositoryMongo) CountByGenderOrCity(arg0 context.Context, arg1 Gen
 					},
 				},
 			},
-			ExpectedCode: `
-func (r *UserRepositoryMongo) CountByGenderNot(arg0 context.Context, arg1 Gender) (int, error) {
-	count, err := r.collection.CountDocuments(arg0, bson.M{
+			ExpectedBody: `	count, err := r.collection.CountDocuments(arg0, bson.M{
 		"gender": bson.M{"$ne": arg1},
 	})
 	if err != nil {
 		return 0, err
 	}
-	return int(count), nil
-}
-`,
+	return int(count), nil`,
 		},
 		{
 			Name: "count with LessThan comparator",
@@ -1786,11 +1866,11 @@ func (r *UserRepositoryMongo) CountByGenderNot(arg0 context.Context, arg1 Gender
 				Name: "CountByAgeLessThan",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("int")},
+					{Type: code.TypeInt},
 				},
 				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
+					code.TypeInt,
+					code.TypeError,
 				},
 				Operation: spec.CountOperation{
 					Query: spec.QuerySpec{
@@ -1800,17 +1880,13 @@ func (r *UserRepositoryMongo) CountByGenderNot(arg0 context.Context, arg1 Gender
 					},
 				},
 			},
-			ExpectedCode: `
-func (r *UserRepositoryMongo) CountByAgeLessThan(arg0 context.Context, arg1 int) (int, error) {
-	count, err := r.collection.CountDocuments(arg0, bson.M{
+			ExpectedBody: `	count, err := r.collection.CountDocuments(arg0, bson.M{
 		"age": bson.M{"$lt": arg1},
 	})
 	if err != nil {
 		return 0, err
 	}
-	return int(count), nil
-}
-`,
+	return int(count), nil`,
 		},
 		{
 			Name: "count with LessThanEqual comparator",
@@ -1818,11 +1894,11 @@ func (r *UserRepositoryMongo) CountByAgeLessThan(arg0 context.Context, arg1 int)
 				Name: "CountByAgeLessThanEqual",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("int")},
+					{Type: code.TypeInt},
 				},
 				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
+					code.TypeInt,
+					code.TypeError,
 				},
 				Operation: spec.CountOperation{
 					Query: spec.QuerySpec{
@@ -1832,17 +1908,13 @@ func (r *UserRepositoryMongo) CountByAgeLessThan(arg0 context.Context, arg1 int)
 					},
 				},
 			},
-			ExpectedCode: `
-func (r *UserRepositoryMongo) CountByAgeLessThanEqual(arg0 context.Context, arg1 int) (int, error) {
-	count, err := r.collection.CountDocuments(arg0, bson.M{
+			ExpectedBody: `	count, err := r.collection.CountDocuments(arg0, bson.M{
 		"age": bson.M{"$lte": arg1},
 	})
 	if err != nil {
 		return 0, err
 	}
-	return int(count), nil
-}
-`,
+	return int(count), nil`,
 		},
 		{
 			Name: "count with GreaterThan comparator",
@@ -1850,11 +1922,11 @@ func (r *UserRepositoryMongo) CountByAgeLessThanEqual(arg0 context.Context, arg1
 				Name: "CountByAgeGreaterThan",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("int")},
+					{Type: code.TypeInt},
 				},
 				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
+					code.TypeInt,
+					code.TypeError,
 				},
 				Operation: spec.CountOperation{
 					Query: spec.QuerySpec{
@@ -1864,17 +1936,13 @@ func (r *UserRepositoryMongo) CountByAgeLessThanEqual(arg0 context.Context, arg1
 					},
 				},
 			},
-			ExpectedCode: `
-func (r *UserRepositoryMongo) CountByAgeGreaterThan(arg0 context.Context, arg1 int) (int, error) {
-	count, err := r.collection.CountDocuments(arg0, bson.M{
+			ExpectedBody: `	count, err := r.collection.CountDocuments(arg0, bson.M{
 		"age": bson.M{"$gt": arg1},
 	})
 	if err != nil {
 		return 0, err
 	}
-	return int(count), nil
-}
-`,
+	return int(count), nil`,
 		},
 		{
 			Name: "count with GreaterThanEqual comparator",
@@ -1882,11 +1950,11 @@ func (r *UserRepositoryMongo) CountByAgeGreaterThan(arg0 context.Context, arg1 i
 				Name: "CountByAgeGreaterThanEqual",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("int")},
+					{Type: code.TypeInt},
 				},
 				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
+					code.TypeInt,
+					code.TypeError,
 				},
 				Operation: spec.CountOperation{
 					Query: spec.QuerySpec{
@@ -1896,17 +1964,13 @@ func (r *UserRepositoryMongo) CountByAgeGreaterThan(arg0 context.Context, arg1 i
 					},
 				},
 			},
-			ExpectedCode: `
-func (r *UserRepositoryMongo) CountByAgeGreaterThanEqual(arg0 context.Context, arg1 int) (int, error) {
-	count, err := r.collection.CountDocuments(arg0, bson.M{
+			ExpectedBody: `	count, err := r.collection.CountDocuments(arg0, bson.M{
 		"age": bson.M{"$gte": arg1},
 	})
 	if err != nil {
 		return 0, err
 	}
-	return int(count), nil
-}
-`,
+	return int(count), nil`,
 		},
 		{
 			Name: "count with Between comparator",
@@ -1914,12 +1978,12 @@ func (r *UserRepositoryMongo) CountByAgeGreaterThanEqual(arg0 context.Context, a
 				Name: "CountByAgeBetween",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("int")},
-					{Type: code.SimpleType("int")},
+					{Type: code.TypeInt},
+					{Type: code.TypeInt},
 				},
 				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
+					code.TypeInt,
+					code.TypeError,
 				},
 				Operation: spec.CountOperation{
 					Query: spec.QuerySpec{
@@ -1929,17 +1993,13 @@ func (r *UserRepositoryMongo) CountByAgeGreaterThanEqual(arg0 context.Context, a
 					},
 				},
 			},
-			ExpectedCode: `
-func (r *UserRepositoryMongo) CountByAgeBetween(arg0 context.Context, arg1 int, arg2 int) (int, error) {
-	count, err := r.collection.CountDocuments(arg0, bson.M{
+			ExpectedBody: `	count, err := r.collection.CountDocuments(arg0, bson.M{
 		"age": bson.M{"$gte": arg1, "$lte": arg2},
 	})
 	if err != nil {
 		return 0, err
 	}
-	return int(count), nil
-}
-`,
+	return int(count), nil`,
 		},
 		{
 			Name: "count with In comparator",
@@ -1947,11 +2007,11 @@ func (r *UserRepositoryMongo) CountByAgeBetween(arg0 context.Context, arg1 int, 
 				Name: "CountByAgeIn",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.ArrayType{ContainedType: code.SimpleType("int")}},
+					{Type: code.ArrayType{ContainedType: code.TypeInt}},
 				},
 				Returns: []code.Type{
-					code.SimpleType("int"),
-					code.SimpleType("error"),
+					code.TypeInt,
+					code.TypeError,
 				},
 				Operation: spec.CountOperation{
 					Query: spec.QuerySpec{
@@ -1961,31 +2021,72 @@ func (r *UserRepositoryMongo) CountByAgeBetween(arg0 context.Context, arg1 int, 
 					},
 				},
 			},
-			ExpectedCode: `
-func (r *UserRepositoryMongo) CountByAgeIn(arg0 context.Context, arg1 []int) (int, error) {
-	count, err := r.collection.CountDocuments(arg0, bson.M{
+			ExpectedBody: `	count, err := r.collection.CountDocuments(arg0, bson.M{
 		"age": bson.M{"$in": arg1},
 	})
 	if err != nil {
 		return 0, err
 	}
-	return int(count), nil
-}
-`,
+	return int(count), nil`,
 		},
 	}
 
 	for _, testCase := range testTable {
 		t.Run(testCase.Name, func(t *testing.T) {
 			generator := mongo.NewGenerator(userModel, "UserRepository")
-			buffer := new(bytes.Buffer)
+			var expectedParams []code.Param
+			for i, param := range testCase.MethodSpec.Params {
+				expectedParams = append(expectedParams, code.Param{
+					Name: fmt.Sprintf("arg%d", i),
+					Type: param.Type,
+				})
+			}
+			expected := codegen.MethodBuilder{
+				Receiver: codegen.MethodReceiver{
+					Name:    "r",
+					Type:    "UserRepositoryMongo",
+					Pointer: true,
+				},
+				Name:    testCase.MethodSpec.Name,
+				Params:  expectedParams,
+				Returns: testCase.MethodSpec.Returns,
+				Body:    testCase.ExpectedBody,
+			}
 
-			err := generator.GenerateMethod(testCase.MethodSpec, buffer)
+			actual, err := generator.GenerateMethod(testCase.MethodSpec)
 
 			if err != nil {
-				t.Error(err)
+				t.Fatal(err)
 			}
-			if err := testutils.ExpectMultiLineString(testCase.ExpectedCode, buffer.String()); err != nil {
+			if expected.Receiver != actual.Receiver {
+				t.Errorf(
+					"incorrect method receiver: expected %+v, got %+v",
+					expected.Receiver,
+					actual.Receiver,
+				)
+			}
+			if expected.Name != actual.Name {
+				t.Errorf(
+					"incorrect method name: expected %s, got %s",
+					expected.Name,
+					actual.Name,
+				)
+			}
+			if !reflect.DeepEqual(expected.Params, actual.Params) {
+				t.Errorf(
+					"incorrect struct params: expected %+v, got %+v",
+					expected.Params,
+					actual.Params,
+				)
+			}
+			if !reflect.DeepEqual(expected.Returns, actual.Returns) {
+				t.Errorf(
+					"incorrect struct returns: expected %+v, got %+v",
+					expected.Returns,
+					actual.Returns,
+				)
+			}
+			if err := testutils.ExpectMultiLineString(expected.Body, actual.Body); err != nil {
 				t.Error(err)
 			}
 		})
@@ -2017,7 +2118,7 @@ func TestGenerateMethod_Invalid(t *testing.T) {
 				},
 				Returns: []code.Type{
 					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 				Operation: StubOperation{},
 			},
@@ -2029,11 +2130,11 @@ func TestGenerateMethod_Invalid(t *testing.T) {
 				Name: "FindByAccessToken",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("string")},
+					{Type: code.TypeString},
 				},
 				Returns: []code.Type{
 					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 				Operation: spec.FindOperation{
 					Mode: spec.QueryModeOne,
@@ -2055,7 +2156,7 @@ func TestGenerateMethod_Invalid(t *testing.T) {
 				},
 				Returns: []code.Type{
 					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.SimpleType("error"),
+					code.TypeError,
 				},
 				Operation: spec.FindOperation{
 					Mode: spec.QueryModeOne,
@@ -2072,12 +2173,12 @@ func TestGenerateMethod_Invalid(t *testing.T) {
 				Name: "UpdateAccessTokenByID",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("string")},
+					{Type: code.TypeString},
 					{Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
 				},
 				Returns: []code.Type{
-					code.SimpleType("bool"),
-					code.SimpleType("error"),
+					code.TypeBool,
+					code.TypeError,
 				},
 				Operation: spec.UpdateOperation{
 					Update: spec.UpdateFields{
@@ -2099,12 +2200,12 @@ func TestGenerateMethod_Invalid(t *testing.T) {
 				Name: "UpdateAgeByID",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("int")},
+					{Type: code.TypeInt},
 					{Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
 				},
 				Returns: []code.Type{
-					code.SimpleType("bool"),
-					code.SimpleType("error"),
+					code.TypeBool,
+					code.TypeError,
 				},
 				Operation: spec.UpdateOperation{
 					Update: StubUpdate{},
@@ -2124,12 +2225,12 @@ func TestGenerateMethod_Invalid(t *testing.T) {
 				Name: "UpdateConsentHistoryAppendByID",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("int")},
+					{Type: code.TypeInt},
 					{Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
 				},
 				Returns: []code.Type{
-					code.SimpleType("bool"),
-					code.SimpleType("error"),
+					code.TypeBool,
+					code.TypeError,
 				},
 				Operation: spec.UpdateOperation{
 					Update: spec.UpdateFields{
@@ -2150,9 +2251,8 @@ func TestGenerateMethod_Invalid(t *testing.T) {
 	for _, testCase := range testTable {
 		t.Run(testCase.Name, func(t *testing.T) {
 			generator := mongo.NewGenerator(userModel, "UserRepository")
-			buffer := new(bytes.Buffer)
 
-			err := generator.GenerateMethod(testCase.Method, buffer)
+			_, err := generator.GenerateMethod(testCase.Method)
 
 			if err != testCase.ExpectedError {
 				t.Errorf("\nExpected = %+v\nReceived = %+v", testCase.ExpectedError, err)
