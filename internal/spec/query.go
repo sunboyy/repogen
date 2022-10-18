@@ -46,7 +46,8 @@ const (
 	ComparatorFalse            Comparator = "EQUAL_FALSE"
 )
 
-// ArgumentTypeFromFieldType returns a type of required argument from the given struct field type
+// ArgumentTypeFromFieldType returns a type of required argument from the given
+// struct field type.
 func (c Comparator) ArgumentTypeFromFieldType(t code.Type) code.Type {
 	switch c {
 	case ComparatorIn, ComparatorNotIn:
@@ -56,7 +57,8 @@ func (c Comparator) ArgumentTypeFromFieldType(t code.Type) code.Type {
 	}
 }
 
-// NumberOfArguments returns the number of arguments required to perform the comparison
+// NumberOfArguments returns the number of arguments required to perform the
+// comparison.
 func (c Comparator) NumberOfArguments() int {
 	switch c {
 	case ComparatorBetween:
@@ -82,7 +84,7 @@ type queryParser struct {
 
 func (p queryParser) parseQuery(rawTokens []string, paramIndex int) (QuerySpec, error) {
 	if len(rawTokens) == 0 {
-		return QuerySpec{}, QueryRequiredError
+		return QuerySpec{}, ErrQueryRequired
 	}
 
 	tokens := rawTokens

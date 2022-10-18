@@ -19,7 +19,8 @@ func NewGenerator(structModel code.Struct, interfaceName string) RepositoryGener
 	}
 }
 
-// RepositoryGenerator provides repository constructor and method generation from provided specification
+// RepositoryGenerator is a MongoDB repository generator that provides
+// necessary information required to construct an implementation.
 type RepositoryGenerator struct {
 	StructModel   code.Struct
 	InterfaceName string

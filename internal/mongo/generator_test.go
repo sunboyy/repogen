@@ -1,6 +1,7 @@
 package mongo_test
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"testing"
@@ -318,7 +319,11 @@ func TestGenerateMethod_Find(t *testing.T) {
 					Mode: spec.QueryModeOne,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorEqual, FieldReference: spec.FieldReference{idField}, ParamIndex: 1},
+							{
+								Comparator:     spec.ComparatorEqual,
+								FieldReference: spec.FieldReference{idField},
+								ParamIndex:     1,
+							},
 						},
 					},
 				},
@@ -348,7 +353,11 @@ func TestGenerateMethod_Find(t *testing.T) {
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorEqual, FieldReference: spec.FieldReference{genderField}, ParamIndex: 1},
+							{
+								Comparator:     spec.ComparatorEqual,
+								FieldReference: spec.FieldReference{genderField},
+								ParamIndex:     1,
+							},
 						},
 					},
 				},
@@ -418,8 +427,16 @@ func TestGenerateMethod_Find(t *testing.T) {
 					Query: spec.QuerySpec{
 						Operator: spec.OperatorAnd,
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorEqual, FieldReference: spec.FieldReference{genderField}, ParamIndex: 1},
-							{Comparator: spec.ComparatorEqual, FieldReference: spec.FieldReference{ageField}, ParamIndex: 2},
+							{
+								Comparator:     spec.ComparatorEqual,
+								FieldReference: spec.FieldReference{genderField},
+								ParamIndex:     1,
+							},
+							{
+								Comparator:     spec.ComparatorEqual,
+								FieldReference: spec.FieldReference{ageField},
+								ParamIndex:     2,
+							},
 						},
 					},
 				},
@@ -458,8 +475,16 @@ func TestGenerateMethod_Find(t *testing.T) {
 					Query: spec.QuerySpec{
 						Operator: spec.OperatorOr,
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorEqual, FieldReference: spec.FieldReference{genderField}, ParamIndex: 1},
-							{Comparator: spec.ComparatorEqual, FieldReference: spec.FieldReference{ageField}, ParamIndex: 2},
+							{
+								Comparator:     spec.ComparatorEqual,
+								FieldReference: spec.FieldReference{genderField},
+								ParamIndex:     1,
+							},
+							{
+								Comparator:     spec.ComparatorEqual,
+								FieldReference: spec.FieldReference{ageField},
+								ParamIndex:     2,
+							},
 						},
 					},
 				},
@@ -496,7 +521,11 @@ func TestGenerateMethod_Find(t *testing.T) {
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorNot, FieldReference: spec.FieldReference{genderField}, ParamIndex: 1},
+							{
+								Comparator:     spec.ComparatorNot,
+								FieldReference: spec.FieldReference{genderField},
+								ParamIndex:     1,
+							},
 						},
 					},
 				},
@@ -530,7 +559,11 @@ func TestGenerateMethod_Find(t *testing.T) {
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorLessThan, FieldReference: spec.FieldReference{ageField}, ParamIndex: 1},
+							{
+								Comparator:     spec.ComparatorLessThan,
+								FieldReference: spec.FieldReference{ageField},
+								ParamIndex:     1,
+							},
 						},
 					},
 				},
@@ -564,7 +597,11 @@ func TestGenerateMethod_Find(t *testing.T) {
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorLessThanEqual, FieldReference: spec.FieldReference{ageField}, ParamIndex: 1},
+							{
+								Comparator:     spec.ComparatorLessThanEqual,
+								FieldReference: spec.FieldReference{ageField},
+								ParamIndex:     1,
+							},
 						},
 					},
 				},
@@ -598,7 +635,11 @@ func TestGenerateMethod_Find(t *testing.T) {
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorGreaterThan, FieldReference: spec.FieldReference{ageField}, ParamIndex: 1},
+							{
+								Comparator:     spec.ComparatorGreaterThan,
+								FieldReference: spec.FieldReference{ageField},
+								ParamIndex:     1,
+							},
 						},
 					},
 				},
@@ -632,7 +673,11 @@ func TestGenerateMethod_Find(t *testing.T) {
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorGreaterThanEqual, FieldReference: spec.FieldReference{ageField}, ParamIndex: 1},
+							{
+								Comparator:     spec.ComparatorGreaterThanEqual,
+								FieldReference: spec.FieldReference{ageField},
+								ParamIndex:     1,
+							},
 						},
 					},
 				},
@@ -667,7 +712,11 @@ func TestGenerateMethod_Find(t *testing.T) {
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorBetween, FieldReference: spec.FieldReference{ageField}, ParamIndex: 1},
+							{
+								Comparator:     spec.ComparatorBetween,
+								FieldReference: spec.FieldReference{ageField},
+								ParamIndex:     1,
+							},
 						},
 					},
 				},
@@ -701,7 +750,11 @@ func TestGenerateMethod_Find(t *testing.T) {
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorIn, FieldReference: spec.FieldReference{genderField}, ParamIndex: 1},
+							{
+								Comparator:     spec.ComparatorIn,
+								FieldReference: spec.FieldReference{genderField},
+								ParamIndex:     1,
+							},
 						},
 					},
 				},
@@ -735,7 +788,11 @@ func TestGenerateMethod_Find(t *testing.T) {
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorNotIn, FieldReference: spec.FieldReference{genderField}, ParamIndex: 1},
+							{
+								Comparator:     spec.ComparatorNotIn,
+								FieldReference: spec.FieldReference{genderField},
+								ParamIndex:     1,
+							},
 						},
 					},
 				},
@@ -768,7 +825,11 @@ func TestGenerateMethod_Find(t *testing.T) {
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorTrue, FieldReference: spec.FieldReference{enabledField}, ParamIndex: 1},
+							{
+								Comparator:     spec.ComparatorTrue,
+								FieldReference: spec.FieldReference{enabledField},
+								ParamIndex:     1,
+							},
 						},
 					},
 				},
@@ -801,7 +862,11 @@ func TestGenerateMethod_Find(t *testing.T) {
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorFalse, FieldReference: spec.FieldReference{enabledField}, ParamIndex: 1},
+							{
+								Comparator:     spec.ComparatorFalse,
+								FieldReference: spec.FieldReference{enabledField},
+								ParamIndex:     1,
+							},
 						},
 					},
 				},
@@ -897,7 +962,10 @@ func TestGenerateMethod_Find(t *testing.T) {
 				Operation: spec.FindOperation{
 					Mode: spec.QueryModeMany,
 					Sorts: []spec.Sort{
-						{FieldReference: spec.FieldReference{nameField, firstNameField}, Ordering: spec.OrderingAscending},
+						{
+							FieldReference: spec.FieldReference{nameField, firstNameField},
+							Ordering:       spec.OrderingAscending,
+						},
 					},
 				},
 			},
@@ -1033,7 +1101,11 @@ func TestGenerateMethod_Update(t *testing.T) {
 					Mode:   spec.QueryModeOne,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{FieldReference: spec.FieldReference{idField}, Comparator: spec.ComparatorEqual, ParamIndex: 2},
+							{
+								FieldReference: spec.FieldReference{idField},
+								Comparator:     spec.ComparatorEqual,
+								ParamIndex:     2,
+							},
 						},
 					},
 				},
@@ -1063,12 +1135,20 @@ func TestGenerateMethod_Update(t *testing.T) {
 				},
 				Operation: spec.UpdateOperation{
 					Update: spec.UpdateFields{
-						spec.UpdateField{FieldReference: spec.FieldReference{ageField}, ParamIndex: 1, Operator: spec.UpdateOperatorSet},
+						spec.UpdateField{
+							FieldReference: spec.FieldReference{ageField},
+							ParamIndex:     1,
+							Operator:       spec.UpdateOperatorSet,
+						},
 					},
 					Mode: spec.QueryModeOne,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{FieldReference: spec.FieldReference{idField}, Comparator: spec.ComparatorEqual, ParamIndex: 2},
+							{
+								FieldReference: spec.FieldReference{idField},
+								Comparator:     spec.ComparatorEqual,
+								ParamIndex:     2,
+							},
 						},
 					},
 				},
@@ -1100,12 +1180,20 @@ func TestGenerateMethod_Update(t *testing.T) {
 				},
 				Operation: spec.UpdateOperation{
 					Update: spec.UpdateFields{
-						spec.UpdateField{FieldReference: spec.FieldReference{ageField}, ParamIndex: 1, Operator: spec.UpdateOperatorSet},
+						spec.UpdateField{
+							FieldReference: spec.FieldReference{ageField},
+							ParamIndex:     1,
+							Operator:       spec.UpdateOperatorSet,
+						},
 					},
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{FieldReference: spec.FieldReference{genderField}, Comparator: spec.ComparatorEqual, ParamIndex: 2},
+							{
+								FieldReference: spec.FieldReference{genderField},
+								Comparator:     spec.ComparatorEqual,
+								ParamIndex:     2,
+							},
 						},
 					},
 				},
@@ -1137,12 +1225,20 @@ func TestGenerateMethod_Update(t *testing.T) {
 				},
 				Operation: spec.UpdateOperation{
 					Update: spec.UpdateFields{
-						spec.UpdateField{FieldReference: spec.FieldReference{consentHistoryField}, ParamIndex: 1, Operator: spec.UpdateOperatorPush},
+						spec.UpdateField{
+							FieldReference: spec.FieldReference{consentHistoryField},
+							ParamIndex:     1,
+							Operator:       spec.UpdateOperatorPush,
+						},
 					},
 					Mode: spec.QueryModeOne,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{FieldReference: spec.FieldReference{idField}, Comparator: spec.ComparatorEqual, ParamIndex: 2},
+							{
+								FieldReference: spec.FieldReference{idField},
+								Comparator:     spec.ComparatorEqual,
+								ParamIndex:     2,
+							},
 						},
 					},
 				},
@@ -1174,12 +1270,20 @@ func TestGenerateMethod_Update(t *testing.T) {
 				},
 				Operation: spec.UpdateOperation{
 					Update: spec.UpdateFields{
-						spec.UpdateField{FieldReference: spec.FieldReference{ageField}, ParamIndex: 1, Operator: spec.UpdateOperatorInc},
+						spec.UpdateField{
+							FieldReference: spec.FieldReference{ageField},
+							ParamIndex:     1,
+							Operator:       spec.UpdateOperatorInc,
+						},
 					},
 					Mode: spec.QueryModeOne,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{FieldReference: spec.FieldReference{idField}, Comparator: spec.ComparatorEqual, ParamIndex: 2},
+							{
+								FieldReference: spec.FieldReference{idField},
+								Comparator:     spec.ComparatorEqual,
+								ParamIndex:     2,
+							},
 						},
 					},
 				},
@@ -1212,13 +1316,25 @@ func TestGenerateMethod_Update(t *testing.T) {
 				},
 				Operation: spec.UpdateOperation{
 					Update: spec.UpdateFields{
-						spec.UpdateField{FieldReference: spec.FieldReference{enabledField}, ParamIndex: 1, Operator: spec.UpdateOperatorSet},
-						spec.UpdateField{FieldReference: spec.FieldReference{consentHistoryField}, ParamIndex: 2, Operator: spec.UpdateOperatorPush},
+						spec.UpdateField{
+							FieldReference: spec.FieldReference{enabledField},
+							ParamIndex:     1,
+							Operator:       spec.UpdateOperatorSet,
+						},
+						spec.UpdateField{
+							FieldReference: spec.FieldReference{consentHistoryField},
+							ParamIndex:     2,
+							Operator:       spec.UpdateOperatorPush,
+						},
 					},
 					Mode: spec.QueryModeOne,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{FieldReference: spec.FieldReference{idField}, Comparator: spec.ComparatorEqual, ParamIndex: 3},
+							{
+								FieldReference: spec.FieldReference{idField},
+								Comparator:     spec.ComparatorEqual,
+								ParamIndex:     3,
+							},
 						},
 					},
 				},
@@ -1253,12 +1369,20 @@ func TestGenerateMethod_Update(t *testing.T) {
 				},
 				Operation: spec.UpdateOperation{
 					Update: spec.UpdateFields{
-						spec.UpdateField{FieldReference: spec.FieldReference{nameField, firstNameField}, ParamIndex: 1, Operator: spec.UpdateOperatorSet},
+						spec.UpdateField{
+							FieldReference: spec.FieldReference{nameField, firstNameField},
+							ParamIndex:     1,
+							Operator:       spec.UpdateOperatorSet,
+						},
 					},
 					Mode: spec.QueryModeOne,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{FieldReference: spec.FieldReference{idField}, Comparator: spec.ComparatorEqual, ParamIndex: 2},
+							{
+								FieldReference: spec.FieldReference{idField},
+								Comparator:     spec.ComparatorEqual,
+								ParamIndex:     2,
+							},
 						},
 					},
 				},
@@ -1354,7 +1478,11 @@ func TestGenerateMethod_Delete(t *testing.T) {
 					Mode: spec.QueryModeOne,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorEqual, FieldReference: spec.FieldReference{idField}, ParamIndex: 1},
+							{
+								Comparator:     spec.ComparatorEqual,
+								FieldReference: spec.FieldReference{idField},
+								ParamIndex:     1,
+							},
 						},
 					},
 				},
@@ -1383,7 +1511,11 @@ func TestGenerateMethod_Delete(t *testing.T) {
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorEqual, FieldReference: spec.FieldReference{genderField}, ParamIndex: 1},
+							{
+								Comparator:     spec.ComparatorEqual,
+								FieldReference: spec.FieldReference{genderField},
+								ParamIndex:     1,
+							},
 						},
 					},
 				},
@@ -1414,8 +1546,16 @@ func TestGenerateMethod_Delete(t *testing.T) {
 					Query: spec.QuerySpec{
 						Operator: spec.OperatorAnd,
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorEqual, FieldReference: spec.FieldReference{genderField}, ParamIndex: 1},
-							{Comparator: spec.ComparatorEqual, FieldReference: spec.FieldReference{ageField}, ParamIndex: 2},
+							{
+								Comparator:     spec.ComparatorEqual,
+								FieldReference: spec.FieldReference{genderField},
+								ParamIndex:     1,
+							},
+							{
+								Comparator:     spec.ComparatorEqual,
+								FieldReference: spec.FieldReference{ageField},
+								ParamIndex:     2,
+							},
 						},
 					},
 				},
@@ -1449,8 +1589,16 @@ func TestGenerateMethod_Delete(t *testing.T) {
 					Query: spec.QuerySpec{
 						Operator: spec.OperatorOr,
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorEqual, FieldReference: spec.FieldReference{genderField}, ParamIndex: 1},
-							{Comparator: spec.ComparatorEqual, FieldReference: spec.FieldReference{ageField}, ParamIndex: 2},
+							{
+								Comparator:     spec.ComparatorEqual,
+								FieldReference: spec.FieldReference{genderField},
+								ParamIndex:     1,
+							},
+							{
+								Comparator:     spec.ComparatorEqual,
+								FieldReference: spec.FieldReference{ageField},
+								ParamIndex:     2,
+							},
 						},
 					},
 				},
@@ -1482,7 +1630,11 @@ func TestGenerateMethod_Delete(t *testing.T) {
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorNot, FieldReference: spec.FieldReference{genderField}, ParamIndex: 1},
+							{
+								Comparator:     spec.ComparatorNot,
+								FieldReference: spec.FieldReference{genderField},
+								ParamIndex:     1,
+							},
 						},
 					},
 				},
@@ -1511,7 +1663,11 @@ func TestGenerateMethod_Delete(t *testing.T) {
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorLessThan, FieldReference: spec.FieldReference{ageField}, ParamIndex: 1},
+							{
+								Comparator:     spec.ComparatorLessThan,
+								FieldReference: spec.FieldReference{ageField},
+								ParamIndex:     1,
+							},
 						},
 					},
 				},
@@ -1540,7 +1696,11 @@ func TestGenerateMethod_Delete(t *testing.T) {
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorLessThanEqual, FieldReference: spec.FieldReference{ageField}, ParamIndex: 1},
+							{
+								Comparator:     spec.ComparatorLessThanEqual,
+								FieldReference: spec.FieldReference{ageField},
+								ParamIndex:     1,
+							},
 						},
 					},
 				},
@@ -1569,7 +1729,11 @@ func TestGenerateMethod_Delete(t *testing.T) {
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorGreaterThan, FieldReference: spec.FieldReference{ageField}, ParamIndex: 1},
+							{
+								Comparator:     spec.ComparatorGreaterThan,
+								FieldReference: spec.FieldReference{ageField},
+								ParamIndex:     1,
+							},
 						},
 					},
 				},
@@ -1598,7 +1762,11 @@ func TestGenerateMethod_Delete(t *testing.T) {
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorGreaterThanEqual, FieldReference: spec.FieldReference{ageField}, ParamIndex: 1},
+							{
+								Comparator:     spec.ComparatorGreaterThanEqual,
+								FieldReference: spec.FieldReference{ageField},
+								ParamIndex:     1,
+							},
 						},
 					},
 				},
@@ -1628,7 +1796,11 @@ func TestGenerateMethod_Delete(t *testing.T) {
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorBetween, FieldReference: spec.FieldReference{ageField}, ParamIndex: 1},
+							{
+								Comparator:     spec.ComparatorBetween,
+								FieldReference: spec.FieldReference{ageField},
+								ParamIndex:     1,
+							},
 						},
 					},
 				},
@@ -1657,7 +1829,11 @@ func TestGenerateMethod_Delete(t *testing.T) {
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{Comparator: spec.ComparatorIn, FieldReference: spec.FieldReference{genderField}, ParamIndex: 1},
+							{
+								Comparator:     spec.ComparatorIn,
+								FieldReference: spec.FieldReference{genderField},
+								ParamIndex:     1,
+							},
 						},
 					},
 				},
@@ -1751,7 +1927,11 @@ func TestGenerateMethod_Count(t *testing.T) {
 				Operation: spec.CountOperation{
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{FieldReference: spec.FieldReference{genderField}, Comparator: spec.ComparatorEqual, ParamIndex: 1},
+							{
+								FieldReference: spec.FieldReference{genderField},
+								Comparator:     spec.ComparatorEqual,
+								ParamIndex:     1,
+							},
 						},
 					},
 				},
@@ -1781,8 +1961,16 @@ func TestGenerateMethod_Count(t *testing.T) {
 					Query: spec.QuerySpec{
 						Operator: spec.OperatorAnd,
 						Predicates: []spec.Predicate{
-							{FieldReference: spec.FieldReference{genderField}, Comparator: spec.ComparatorEqual, ParamIndex: 1},
-							{FieldReference: spec.FieldReference{ageField}, Comparator: spec.ComparatorEqual, ParamIndex: 2},
+							{
+								FieldReference: spec.FieldReference{genderField},
+								Comparator:     spec.ComparatorEqual,
+								ParamIndex:     1,
+							},
+							{
+								FieldReference: spec.FieldReference{ageField},
+								Comparator:     spec.ComparatorEqual,
+								ParamIndex:     2,
+							},
 						},
 					},
 				},
@@ -1815,8 +2003,16 @@ func TestGenerateMethod_Count(t *testing.T) {
 					Query: spec.QuerySpec{
 						Operator: spec.OperatorOr,
 						Predicates: []spec.Predicate{
-							{FieldReference: spec.FieldReference{genderField}, Comparator: spec.ComparatorEqual, ParamIndex: 1},
-							{FieldReference: spec.FieldReference{ageField}, Comparator: spec.ComparatorEqual, ParamIndex: 2},
+							{
+								FieldReference: spec.FieldReference{genderField},
+								Comparator:     spec.ComparatorEqual,
+								ParamIndex:     1,
+							},
+							{
+								FieldReference: spec.FieldReference{ageField},
+								Comparator:     spec.ComparatorEqual,
+								ParamIndex:     2,
+							},
 						},
 					},
 				},
@@ -1847,7 +2043,11 @@ func TestGenerateMethod_Count(t *testing.T) {
 				Operation: spec.CountOperation{
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{FieldReference: spec.FieldReference{genderField}, Comparator: spec.ComparatorNot, ParamIndex: 1},
+							{
+								FieldReference: spec.FieldReference{genderField},
+								Comparator:     spec.ComparatorNot,
+								ParamIndex:     1,
+							},
 						},
 					},
 				},
@@ -1875,7 +2075,11 @@ func TestGenerateMethod_Count(t *testing.T) {
 				Operation: spec.CountOperation{
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{FieldReference: spec.FieldReference{ageField}, Comparator: spec.ComparatorLessThan, ParamIndex: 1},
+							{
+								FieldReference: spec.FieldReference{ageField},
+								Comparator:     spec.ComparatorLessThan,
+								ParamIndex:     1,
+							},
 						},
 					},
 				},
@@ -1903,7 +2107,11 @@ func TestGenerateMethod_Count(t *testing.T) {
 				Operation: spec.CountOperation{
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{FieldReference: spec.FieldReference{ageField}, Comparator: spec.ComparatorLessThanEqual, ParamIndex: 1},
+							{
+								FieldReference: spec.FieldReference{ageField},
+								Comparator:     spec.ComparatorLessThanEqual,
+								ParamIndex:     1,
+							},
 						},
 					},
 				},
@@ -1931,7 +2139,11 @@ func TestGenerateMethod_Count(t *testing.T) {
 				Operation: spec.CountOperation{
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{FieldReference: spec.FieldReference{ageField}, Comparator: spec.ComparatorGreaterThan, ParamIndex: 1},
+							{
+								FieldReference: spec.FieldReference{ageField},
+								Comparator:     spec.ComparatorGreaterThan,
+								ParamIndex:     1,
+							},
 						},
 					},
 				},
@@ -1959,7 +2171,11 @@ func TestGenerateMethod_Count(t *testing.T) {
 				Operation: spec.CountOperation{
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{FieldReference: spec.FieldReference{ageField}, Comparator: spec.ComparatorGreaterThanEqual, ParamIndex: 1},
+							{
+								FieldReference: spec.FieldReference{ageField},
+								Comparator:     spec.ComparatorGreaterThanEqual,
+								ParamIndex:     1,
+							},
 						},
 					},
 				},
@@ -1988,7 +2204,11 @@ func TestGenerateMethod_Count(t *testing.T) {
 				Operation: spec.CountOperation{
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{FieldReference: spec.FieldReference{ageField}, Comparator: spec.ComparatorBetween, ParamIndex: 1},
+							{
+								FieldReference: spec.FieldReference{ageField},
+								Comparator:     spec.ComparatorBetween,
+								ParamIndex:     1,
+							},
 						},
 					},
 				},
@@ -2016,7 +2236,11 @@ func TestGenerateMethod_Count(t *testing.T) {
 				Operation: spec.CountOperation{
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{FieldReference: spec.FieldReference{ageField}, Comparator: spec.ComparatorIn, ParamIndex: 1},
+							{
+								FieldReference: spec.FieldReference{ageField},
+								Comparator:     spec.ComparatorIn,
+								ParamIndex:     1,
+							},
 						},
 					},
 				},
@@ -2140,7 +2364,11 @@ func TestGenerateMethod_Invalid(t *testing.T) {
 					Mode: spec.QueryModeOne,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{FieldReference: spec.FieldReference{accessTokenField}, Comparator: spec.ComparatorEqual, ParamIndex: 1},
+							{
+								FieldReference: spec.FieldReference{accessTokenField},
+								Comparator:     spec.ComparatorEqual,
+								ParamIndex:     1,
+							},
 						},
 					},
 				},
@@ -2182,12 +2410,20 @@ func TestGenerateMethod_Invalid(t *testing.T) {
 				},
 				Operation: spec.UpdateOperation{
 					Update: spec.UpdateFields{
-						spec.UpdateField{FieldReference: spec.FieldReference{accessTokenField}, ParamIndex: 1, Operator: spec.UpdateOperatorSet},
+						spec.UpdateField{
+							FieldReference: spec.FieldReference{accessTokenField},
+							ParamIndex:     1,
+							Operator:       spec.UpdateOperatorSet,
+						},
 					},
 					Mode: spec.QueryModeOne,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{FieldReference: spec.FieldReference{idField}, Comparator: spec.ComparatorEqual, ParamIndex: 2},
+							{
+								FieldReference: spec.FieldReference{idField},
+								Comparator:     spec.ComparatorEqual,
+								ParamIndex:     2,
+							},
 						},
 					},
 				},
@@ -2212,7 +2448,11 @@ func TestGenerateMethod_Invalid(t *testing.T) {
 					Mode:   spec.QueryModeOne,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{FieldReference: spec.FieldReference{idField}, Comparator: spec.ComparatorEqual, ParamIndex: 2},
+							{
+								FieldReference: spec.FieldReference{idField},
+								Comparator:     spec.ComparatorEqual,
+								ParamIndex:     2,
+							},
 						},
 					},
 				},
@@ -2234,12 +2474,20 @@ func TestGenerateMethod_Invalid(t *testing.T) {
 				},
 				Operation: spec.UpdateOperation{
 					Update: spec.UpdateFields{
-						spec.UpdateField{FieldReference: spec.FieldReference{consentHistoryField}, ParamIndex: 1, Operator: "APPEND"},
+						spec.UpdateField{
+							FieldReference: spec.FieldReference{consentHistoryField},
+							ParamIndex:     1,
+							Operator:       "APPEND",
+						},
 					},
 					Mode: spec.QueryModeOne,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
-							{FieldReference: spec.FieldReference{idField}, Comparator: spec.ComparatorEqual, ParamIndex: 2},
+							{
+								FieldReference: spec.FieldReference{idField},
+								Comparator:     spec.ComparatorEqual,
+								ParamIndex:     2,
+							},
 						},
 					},
 				},
@@ -2254,7 +2502,7 @@ func TestGenerateMethod_Invalid(t *testing.T) {
 
 			_, err := generator.GenerateMethod(testCase.Method)
 
-			if err != testCase.ExpectedError {
+			if !errors.Is(err, testCase.ExpectedError) {
 				t.Errorf("\nExpected = %+v\nReceived = %+v", testCase.ExpectedError, err)
 			}
 		})

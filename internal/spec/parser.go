@@ -5,8 +5,11 @@ import (
 	"github.com/sunboyy/repogen/internal/code"
 )
 
-// ParseInterfaceMethod returns repository method spec from declared interface method
-func ParseInterfaceMethod(structs map[string]code.Struct, structModel code.Struct, method code.Method) (MethodSpec, error) {
+// ParseInterfaceMethod returns repository method spec from declared interface
+// method.
+func ParseInterfaceMethod(structs map[string]code.Struct, structModel code.Struct,
+	method code.Method) (MethodSpec, error) {
+
 	parser := interfaceMethodParser{
 		fieldResolver: fieldResolver{
 			Structs: structs,
@@ -67,12 +70,12 @@ func (p interfaceMethodParser) parseInsertOperation(tokens []string) (Operation,
 
 	pointerType := code.PointerType{ContainedType: p.StructModel.ReferencedType()}
 	if mode == QueryModeOne && p.Method.Params[1].Type != pointerType {
-		return nil, InvalidParamError
+		return nil, ErrInvalidParam
 	}
 
 	arrayType := code.ArrayType{ContainedType: pointerType}
 	if mode == QueryModeMany && p.Method.Params[1].Type != arrayType {
-		return nil, InvalidParamError
+		return nil, ErrInvalidParam
 	}
 
 	return InsertOperation{
@@ -354,14 +357,14 @@ func (p interfaceMethodParser) extractIntOrBoolReturns(returns []code.Type) (Que
 func (p interfaceMethodParser) validateContextParam() error {
 	contextType := code.ExternalType{PackageAlias: "context", Name: "Context"}
 	if len(p.Method.Params) == 0 || p.Method.Params[0].Type != contextType {
-		return ContextParamRequiredError
+		return ErrContextParamRequired
 	}
 	return nil
 }
 
 func (p interfaceMethodParser) validateQueryFromParams(params []code.Param, querySpec QuerySpec) error {
 	if querySpec.NumberOfArguments() != len(params) {
-		return InvalidParamError
+		return ErrInvalidParam
 	}
 
 	var currentParamIndex int
@@ -373,7 +376,9 @@ func (p interfaceMethodParser) validateQueryFromParams(params []code.Param, quer
 		}
 
 		for i := 0; i < predicate.Comparator.NumberOfArguments(); i++ {
-			requiredType := predicate.Comparator.ArgumentTypeFromFieldType(predicate.FieldReference.ReferencedField().Type)
+			requiredType := predicate.Comparator.ArgumentTypeFromFieldType(
+				predicate.FieldReference.ReferencedField().Type,
+			)
 
 			if params[currentParamIndex].Type != requiredType {
 				return NewArgumentTypeNotMatchedError(predicate.FieldReference.ReferencingCode(), requiredType,

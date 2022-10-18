@@ -47,14 +47,16 @@ func (u UpdateFields) NumberOfArguments() int {
 	return len(u)
 }
 
-// UpdateField stores mapping between field name in the model and the parameter index
+// UpdateField stores mapping between field name in the model and the parameter
+// index.
 type UpdateField struct {
 	FieldReference FieldReference
 	ParamIndex     int
 	Operator       UpdateOperator
 }
 
-// UpdateOperator is a custom type that declares update operator to be used in an update operation
+// UpdateOperator is a custom type that declares update operator to be used in
+// an update operation
 type UpdateOperator string
 
 // UpdateOperator constants
@@ -117,14 +119,14 @@ func (p interfaceMethodParser) parseUpdate(tokens []string) (Update, error) {
 	if len(tokens) == 0 {
 		requiredType := code.PointerType{ContainedType: p.StructModel.ReferencedType()}
 		if len(p.Method.Params) <= 1 || p.Method.Params[1].Type != requiredType {
-			return nil, InvalidUpdateFieldsError
+			return nil, ErrInvalidUpdateFields
 		}
 		return UpdateModel{}, nil
 	}
 
 	updateFieldTokens, ok := splitByAnd(tokens)
 	if !ok {
-		return nil, InvalidUpdateFieldsError
+		return nil, ErrInvalidUpdateFields
 	}
 
 	var updateFields UpdateFields
@@ -142,7 +144,7 @@ func (p interfaceMethodParser) parseUpdate(tokens []string) (Update, error) {
 
 	for _, field := range updateFields {
 		if len(p.Method.Params) < field.ParamIndex+field.Operator.NumberOfArguments() {
-			return nil, InvalidUpdateFieldsError
+			return nil, ErrInvalidUpdateFields
 		}
 
 		requiredType := field.Operator.ArgumentType(field.FieldReference.ReferencedField().Type)
@@ -158,7 +160,9 @@ func (p interfaceMethodParser) parseUpdate(tokens []string) (Update, error) {
 	return updateFields, nil
 }
 
-func (p interfaceMethodParser) parseUpdateField(t []string, paramIndex int) (UpdateField, error) {
+func (p interfaceMethodParser) parseUpdateField(t []string,
+	paramIndex int) (UpdateField, error) {
+
 	if len(t) > 1 && t[len(t)-1] == "Push" {
 		return p.createUpdateField(t[:len(t)-1], UpdateOperatorPush, paramIndex)
 	}
@@ -168,7 +172,9 @@ func (p interfaceMethodParser) parseUpdateField(t []string, paramIndex int) (Upd
 	return p.createUpdateField(t, UpdateOperatorSet, paramIndex)
 }
 
-func (p interfaceMethodParser) createUpdateField(t []string, operator UpdateOperator, paramIndex int) (UpdateField, error) {
+func (p interfaceMethodParser) createUpdateField(t []string,
+	operator UpdateOperator, paramIndex int) (UpdateField, error) {
+
 	fieldReference, ok := p.fieldResolver.ResolveStructField(p.StructModel, t)
 	if !ok {
 		return UpdateField{}, NewStructFieldNotFoundError(t)
