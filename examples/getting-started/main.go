@@ -12,7 +12,7 @@ import (
 // Replace these values with your own connection option. This connection option is hard-coded for easy
 // demonstration. Make sure not to hard-code the credentials in the production code.
 const (
-	connectionString = "mongodb://lineman:lineman@localhost:27017"
+	connectionString = "mongodb://admin:password@localhost:27017"
 	databaseName     = "repogen_examples"
 	collectionName   = "gettingstarted_user"
 )

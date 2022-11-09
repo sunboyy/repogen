@@ -584,6 +584,52 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 			},
 		},
 		{
+			Name: "FindByArgExists method",
+			Method: code.Method{
+				Name: "FindByReferrerExists",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+				},
+				Returns: []code.Type{
+					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+					code.TypeError,
+				},
+			},
+			ExpectedOperation: spec.FindOperation{
+				Mode: spec.QueryModeMany,
+				Query: spec.QuerySpec{Predicates: []spec.Predicate{
+					{
+						FieldReference: spec.FieldReference{referrerField},
+						Comparator:     spec.ComparatorExists,
+						ParamIndex:     1,
+					},
+				}},
+			},
+		},
+		{
+			Name: "FindByArgNotExists method",
+			Method: code.Method{
+				Name: "FindByReferrerNotExists",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+				},
+				Returns: []code.Type{
+					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+					code.TypeError,
+				},
+			},
+			ExpectedOperation: spec.FindOperation{
+				Mode: spec.QueryModeMany,
+				Query: spec.QuerySpec{Predicates: []spec.Predicate{
+					{
+						FieldReference: spec.FieldReference{referrerField},
+						Comparator:     spec.ComparatorNotExists,
+						ParamIndex:     1,
+					},
+				}},
+			},
+		},
+		{
 			Name: "FindByArgOrderByArg method",
 			Method: code.Method{
 				Name: "FindByCityOrderByAge",
