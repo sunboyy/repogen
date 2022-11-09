@@ -24,7 +24,7 @@ func ParsePackage(pkgs map[string]*ast.Package) (Package, error) {
 }
 
 // Package stores package name, struct and interface implementations as a result
-// from ParsePackage
+// from ParsePackage.
 type Package struct {
 	Name       string
 	Structs    map[string]Struct

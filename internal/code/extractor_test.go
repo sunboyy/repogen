@@ -129,27 +129,50 @@ type UserRepository interface {
 									{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
 								},
 								Returns: []code.Type{
-									code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+									code.ArrayType{
+										ContainedType: code.PointerType{
+											ContainedType: code.SimpleType("UserModel"),
+										},
+									},
 									code.TypeError,
 								},
 							},
 							{
 								Name: "FindByAgeBetween",
 								Params: []code.Param{
-									{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-									{Name: "fromAge", Type: code.TypeInt},
-									{Name: "toAge", Type: code.TypeInt},
+									{
+										Name: "ctx",
+										Type: code.ExternalType{PackageAlias: "context", Name: "Context"},
+									},
+									{
+										Name: "fromAge",
+										Type: code.TypeInt,
+									},
+									{
+										Name: "toAge",
+										Type: code.TypeInt,
+									},
 								},
 								Returns: []code.Type{
-									code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+									code.ArrayType{
+										ContainedType: code.PointerType{
+											ContainedType: code.SimpleType("UserModel"),
+										},
+									},
 									code.TypeError,
 								},
 							},
 							{
 								Name: "InsertOne",
 								Params: []code.Param{
-									{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-									{Name: "user", Type: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+									{
+										Name: "ctx",
+										Type: code.ExternalType{PackageAlias: "context", Name: "Context"},
+									},
+									{
+										Name: "user",
+										Type: code.PointerType{ContainedType: code.SimpleType("UserModel")},
+									},
 								},
 								Returns: []code.Type{
 									code.InterfaceType{},
@@ -159,9 +182,18 @@ type UserRepository interface {
 							{
 								Name: "UpdateAgreementByID",
 								Params: []code.Param{
-									{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-									{Name: "agreement", Type: code.MapType{KeyType: code.TypeString, ValueType: code.TypeBool}},
-									{Name: "id", Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
+									{
+										Name: "ctx",
+										Type: code.ExternalType{PackageAlias: "context", Name: "Context"},
+									},
+									{
+										Name: "agreement",
+										Type: code.MapType{KeyType: code.TypeString, ValueType: code.TypeBool},
+									},
+									{
+										Name: "id",
+										Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"},
+									},
 								},
 								Returns: []code.Type{
 									code.TypeBool,
@@ -273,7 +305,9 @@ type UserRepository interface {
 									{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
 								},
 								Returns: []code.Type{
-									code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+									code.ArrayType{
+										ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")},
+									},
 									code.TypeError,
 								},
 							},

@@ -1,6 +1,7 @@
 package spec_test
 
 import (
+	"errors"
 	"reflect"
 	"testing"
 
@@ -126,8 +127,19 @@ func TestParseInterfaceMethod_Insert(t *testing.T) {
 			Method: code.Method{
 				Name: "InsertMany",
 				Params: []code.Param{
-					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}}},
+					{
+						Type: code.ExternalType{
+							PackageAlias: "context",
+							Name:         "Context",
+						},
+					},
+					{
+						Type: code.ArrayType{
+							ContainedType: code.PointerType{
+								ContainedType: code.SimpleType("UserModel"),
+							},
+						},
+					},
 				},
 				Returns: []code.Type{
 					code.ArrayType{ContainedType: code.InterfaceType{}},
@@ -198,7 +210,11 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 			ExpectedOperation: spec.FindOperation{
 				Mode: spec.QueryModeOne,
 				Query: spec.QuerySpec{Predicates: []spec.Predicate{
-					{FieldReference: spec.FieldReference{phoneNumberField}, Comparator: spec.ComparatorEqual, ParamIndex: 1},
+					{
+						FieldReference: spec.FieldReference{phoneNumberField},
+						Comparator:     spec.ComparatorEqual,
+						ParamIndex:     1,
+					},
 				}},
 			},
 		},
@@ -238,7 +254,11 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 			ExpectedOperation: spec.FindOperation{
 				Mode: spec.QueryModeMany,
 				Query: spec.QuerySpec{Predicates: []spec.Predicate{
-					{FieldReference: spec.FieldReference{nameField, firstNameField}, Comparator: spec.ComparatorEqual, ParamIndex: 1},
+					{
+						FieldReference: spec.FieldReference{nameField, firstNameField},
+						Comparator:     spec.ComparatorEqual,
+						ParamIndex:     1,
+					},
 				}},
 			},
 		},
@@ -258,7 +278,11 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 			ExpectedOperation: spec.FindOperation{
 				Mode: spec.QueryModeMany,
 				Query: spec.QuerySpec{Predicates: []spec.Predicate{
-					{FieldReference: spec.FieldReference{referrerField, idField}, Comparator: spec.ComparatorEqual, ParamIndex: 1},
+					{
+						FieldReference: spec.FieldReference{referrerField, idField},
+						Comparator:     spec.ComparatorEqual,
+						ParamIndex:     1,
+					},
 				}},
 			},
 		},
@@ -297,8 +321,16 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 				Query: spec.QuerySpec{
 					Operator: spec.OperatorAnd,
 					Predicates: []spec.Predicate{
-						{FieldReference: spec.FieldReference{cityField}, Comparator: spec.ComparatorEqual, ParamIndex: 1},
-						{FieldReference: spec.FieldReference{genderField}, Comparator: spec.ComparatorEqual, ParamIndex: 2},
+						{
+							FieldReference: spec.FieldReference{cityField},
+							Comparator:     spec.ComparatorEqual,
+							ParamIndex:     1,
+						},
+						{
+							FieldReference: spec.FieldReference{genderField},
+							Comparator:     spec.ComparatorEqual,
+							ParamIndex:     2,
+						},
 					},
 				},
 			},
@@ -322,8 +354,16 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 				Query: spec.QuerySpec{
 					Operator: spec.OperatorOr,
 					Predicates: []spec.Predicate{
-						{FieldReference: spec.FieldReference{cityField}, Comparator: spec.ComparatorEqual, ParamIndex: 1},
-						{FieldReference: spec.FieldReference{genderField}, Comparator: spec.ComparatorEqual, ParamIndex: 2},
+						{
+							FieldReference: spec.FieldReference{cityField},
+							Comparator:     spec.ComparatorEqual,
+							ParamIndex:     1,
+						},
+						{
+							FieldReference: spec.FieldReference{genderField},
+							Comparator:     spec.ComparatorEqual,
+							ParamIndex:     2,
+						},
 					},
 				},
 			},
@@ -384,7 +424,11 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 			ExpectedOperation: spec.FindOperation{
 				Mode: spec.QueryModeMany,
 				Query: spec.QuerySpec{Predicates: []spec.Predicate{
-					{FieldReference: spec.FieldReference{ageField}, Comparator: spec.ComparatorLessThanEqual, ParamIndex: 1},
+					{
+						FieldReference: spec.FieldReference{ageField},
+						Comparator:     spec.ComparatorLessThanEqual,
+						ParamIndex:     1,
+					},
 				}},
 			},
 		},
@@ -404,7 +448,11 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 			ExpectedOperation: spec.FindOperation{
 				Mode: spec.QueryModeMany,
 				Query: spec.QuerySpec{Predicates: []spec.Predicate{
-					{FieldReference: spec.FieldReference{ageField}, Comparator: spec.ComparatorGreaterThan, ParamIndex: 1},
+					{
+						FieldReference: spec.FieldReference{ageField},
+						Comparator:     spec.ComparatorGreaterThan,
+						ParamIndex:     1,
+					},
 				}},
 			},
 		},
@@ -424,7 +472,11 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 			ExpectedOperation: spec.FindOperation{
 				Mode: spec.QueryModeMany,
 				Query: spec.QuerySpec{Predicates: []spec.Predicate{
-					{FieldReference: spec.FieldReference{ageField}, Comparator: spec.ComparatorGreaterThanEqual, ParamIndex: 1},
+					{
+						FieldReference: spec.FieldReference{ageField},
+						Comparator:     spec.ComparatorGreaterThanEqual,
+						ParamIndex:     1,
+					},
 				}},
 			},
 		},
@@ -523,7 +575,11 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 			ExpectedOperation: spec.FindOperation{
 				Mode: spec.QueryModeMany,
 				Query: spec.QuerySpec{Predicates: []spec.Predicate{
-					{FieldReference: spec.FieldReference{enabledField}, Comparator: spec.ComparatorFalse, ParamIndex: 1},
+					{
+						FieldReference: spec.FieldReference{enabledField},
+						Comparator:     spec.ComparatorFalse,
+						ParamIndex:     1,
+					},
 				}},
 			},
 		},
@@ -705,11 +761,19 @@ func TestParseInterfaceMethod_Update(t *testing.T) {
 			},
 			ExpectedOperation: spec.UpdateOperation{
 				Update: spec.UpdateFields{
-					spec.UpdateField{FieldReference: spec.FieldReference{genderField}, ParamIndex: 1, Operator: spec.UpdateOperatorSet},
+					spec.UpdateField{
+						FieldReference: spec.FieldReference{genderField},
+						ParamIndex:     1,
+						Operator:       spec.UpdateOperatorSet,
+					},
 				},
 				Mode: spec.QueryModeOne,
 				Query: spec.QuerySpec{Predicates: []spec.Predicate{
-					{FieldReference: spec.FieldReference{idField}, Comparator: spec.ComparatorEqual, ParamIndex: 2},
+					{
+						FieldReference: spec.FieldReference{idField},
+						Comparator:     spec.ComparatorEqual,
+						ParamIndex:     2,
+					},
 				}},
 			},
 		},
@@ -729,11 +793,19 @@ func TestParseInterfaceMethod_Update(t *testing.T) {
 			},
 			ExpectedOperation: spec.UpdateOperation{
 				Update: spec.UpdateFields{
-					spec.UpdateField{FieldReference: spec.FieldReference{genderField}, ParamIndex: 1, Operator: spec.UpdateOperatorSet},
+					spec.UpdateField{
+						FieldReference: spec.FieldReference{genderField},
+						ParamIndex:     1,
+						Operator:       spec.UpdateOperatorSet,
+					},
 				},
 				Mode: spec.QueryModeMany,
 				Query: spec.QuerySpec{Predicates: []spec.Predicate{
-					{FieldReference: spec.FieldReference{idField}, Comparator: spec.ComparatorEqual, ParamIndex: 2},
+					{
+						FieldReference: spec.FieldReference{idField},
+						Comparator:     spec.ComparatorEqual,
+						ParamIndex:     2,
+					},
 				}},
 			},
 		},
@@ -753,11 +825,19 @@ func TestParseInterfaceMethod_Update(t *testing.T) {
 			},
 			ExpectedOperation: spec.UpdateOperation{
 				Update: spec.UpdateFields{
-					spec.UpdateField{FieldReference: spec.FieldReference{nameField, firstNameField}, ParamIndex: 1, Operator: spec.UpdateOperatorSet},
+					spec.UpdateField{
+						FieldReference: spec.FieldReference{nameField, firstNameField},
+						ParamIndex:     1,
+						Operator:       spec.UpdateOperatorSet,
+					},
 				},
 				Mode: spec.QueryModeOne,
 				Query: spec.QuerySpec{Predicates: []spec.Predicate{
-					{FieldReference: spec.FieldReference{idField}, Comparator: spec.ComparatorEqual, ParamIndex: 2},
+					{
+						FieldReference: spec.FieldReference{idField},
+						Comparator:     spec.ComparatorEqual,
+						ParamIndex:     2,
+					},
 				}},
 			},
 		},
@@ -778,8 +858,16 @@ func TestParseInterfaceMethod_Update(t *testing.T) {
 			},
 			ExpectedOperation: spec.UpdateOperation{
 				Update: spec.UpdateFields{
-					spec.UpdateField{FieldReference: spec.FieldReference{genderField}, ParamIndex: 1, Operator: spec.UpdateOperatorSet},
-					spec.UpdateField{FieldReference: spec.FieldReference{cityField}, ParamIndex: 2, Operator: spec.UpdateOperatorSet},
+					spec.UpdateField{
+						FieldReference: spec.FieldReference{genderField},
+						ParamIndex:     1,
+						Operator:       spec.UpdateOperatorSet,
+					},
+					spec.UpdateField{
+						FieldReference: spec.FieldReference{cityField},
+						ParamIndex:     2,
+						Operator:       spec.UpdateOperatorSet,
+					},
 				},
 				Mode: spec.QueryModeMany,
 				Query: spec.QuerySpec{Predicates: []spec.Predicate{
@@ -803,11 +891,19 @@ func TestParseInterfaceMethod_Update(t *testing.T) {
 			},
 			ExpectedOperation: spec.UpdateOperation{
 				Update: spec.UpdateFields{
-					spec.UpdateField{FieldReference: spec.FieldReference{consentHistoryField}, ParamIndex: 1, Operator: spec.UpdateOperatorPush},
+					spec.UpdateField{
+						FieldReference: spec.FieldReference{consentHistoryField},
+						ParamIndex:     1,
+						Operator:       spec.UpdateOperatorPush,
+					},
 				},
 				Mode: spec.QueryModeMany,
 				Query: spec.QuerySpec{Predicates: []spec.Predicate{
-					{FieldReference: spec.FieldReference{idField}, Comparator: spec.ComparatorEqual, ParamIndex: 2},
+					{
+						FieldReference: spec.FieldReference{idField},
+						Comparator:     spec.ComparatorEqual,
+						ParamIndex:     2,
+					},
 				}},
 			},
 		},
@@ -827,11 +923,19 @@ func TestParseInterfaceMethod_Update(t *testing.T) {
 			},
 			ExpectedOperation: spec.UpdateOperation{
 				Update: spec.UpdateFields{
-					spec.UpdateField{FieldReference: spec.FieldReference{ageField}, ParamIndex: 1, Operator: spec.UpdateOperatorInc},
+					spec.UpdateField{
+						FieldReference: spec.FieldReference{ageField},
+						ParamIndex:     1,
+						Operator:       spec.UpdateOperatorInc,
+					},
 				},
 				Mode: spec.QueryModeOne,
 				Query: spec.QuerySpec{Predicates: []spec.Predicate{
-					{FieldReference: spec.FieldReference{idField}, Comparator: spec.ComparatorEqual, ParamIndex: 2},
+					{
+						FieldReference: spec.FieldReference{idField},
+						Comparator:     spec.ComparatorEqual,
+						ParamIndex:     2,
+					},
 				}},
 			},
 		},
@@ -852,8 +956,16 @@ func TestParseInterfaceMethod_Update(t *testing.T) {
 			},
 			ExpectedOperation: spec.UpdateOperation{
 				Update: spec.UpdateFields{
-					spec.UpdateField{FieldReference: spec.FieldReference{enabledField}, ParamIndex: 1, Operator: spec.UpdateOperatorSet},
-					spec.UpdateField{FieldReference: spec.FieldReference{consentHistoryField}, ParamIndex: 2, Operator: spec.UpdateOperatorPush},
+					spec.UpdateField{
+						FieldReference: spec.FieldReference{enabledField},
+						ParamIndex:     1,
+						Operator:       spec.UpdateOperatorSet,
+					},
+					spec.UpdateField{
+						FieldReference: spec.FieldReference{consentHistoryField},
+						ParamIndex:     2,
+						Operator:       spec.UpdateOperatorPush,
+					},
 				},
 				Mode: spec.QueryModeMany,
 				Query: spec.QuerySpec{Predicates: []spec.Predicate{
@@ -921,7 +1033,11 @@ func TestParseInterfaceMethod_Delete(t *testing.T) {
 			ExpectedOperation: spec.DeleteOperation{
 				Mode: spec.QueryModeOne,
 				Query: spec.QuerySpec{Predicates: []spec.Predicate{
-					{FieldReference: spec.FieldReference{phoneNumberField}, Comparator: spec.ComparatorEqual, ParamIndex: 1},
+					{
+						FieldReference: spec.FieldReference{phoneNumberField},
+						Comparator:     spec.ComparatorEqual,
+						ParamIndex:     1,
+					},
 				}},
 			},
 		},
@@ -980,8 +1096,16 @@ func TestParseInterfaceMethod_Delete(t *testing.T) {
 				Query: spec.QuerySpec{
 					Operator: spec.OperatorAnd,
 					Predicates: []spec.Predicate{
-						{FieldReference: spec.FieldReference{cityField}, Comparator: spec.ComparatorEqual, ParamIndex: 1},
-						{FieldReference: spec.FieldReference{genderField}, Comparator: spec.ComparatorEqual, ParamIndex: 2},
+						{
+							FieldReference: spec.FieldReference{cityField},
+							Comparator:     spec.ComparatorEqual,
+							ParamIndex:     1,
+						},
+						{
+							FieldReference: spec.FieldReference{genderField},
+							Comparator:     spec.ComparatorEqual,
+							ParamIndex:     2,
+						},
 					},
 				},
 			},
@@ -1005,8 +1129,16 @@ func TestParseInterfaceMethod_Delete(t *testing.T) {
 				Query: spec.QuerySpec{
 					Operator: spec.OperatorOr,
 					Predicates: []spec.Predicate{
-						{FieldReference: spec.FieldReference{cityField}, Comparator: spec.ComparatorEqual, ParamIndex: 1},
-						{FieldReference: spec.FieldReference{genderField}, Comparator: spec.ComparatorEqual, ParamIndex: 2},
+						{
+							FieldReference: spec.FieldReference{cityField},
+							Comparator:     spec.ComparatorEqual,
+							ParamIndex:     1,
+						},
+						{
+							FieldReference: spec.FieldReference{genderField},
+							Comparator:     spec.ComparatorEqual,
+							ParamIndex:     2,
+						},
 					},
 				},
 			},
@@ -1067,7 +1199,11 @@ func TestParseInterfaceMethod_Delete(t *testing.T) {
 			ExpectedOperation: spec.DeleteOperation{
 				Mode: spec.QueryModeMany,
 				Query: spec.QuerySpec{Predicates: []spec.Predicate{
-					{FieldReference: spec.FieldReference{ageField}, Comparator: spec.ComparatorLessThanEqual, ParamIndex: 1},
+					{
+						FieldReference: spec.FieldReference{ageField},
+						Comparator:     spec.ComparatorLessThanEqual,
+						ParamIndex:     1,
+					},
 				}},
 			},
 		},
@@ -1087,7 +1223,11 @@ func TestParseInterfaceMethod_Delete(t *testing.T) {
 			ExpectedOperation: spec.DeleteOperation{
 				Mode: spec.QueryModeMany,
 				Query: spec.QuerySpec{Predicates: []spec.Predicate{
-					{FieldReference: spec.FieldReference{ageField}, Comparator: spec.ComparatorGreaterThan, ParamIndex: 1},
+					{
+						FieldReference: spec.FieldReference{ageField},
+						Comparator:     spec.ComparatorGreaterThan,
+						ParamIndex:     1,
+					},
 				}},
 			},
 		},
@@ -1107,7 +1247,11 @@ func TestParseInterfaceMethod_Delete(t *testing.T) {
 			ExpectedOperation: spec.DeleteOperation{
 				Mode: spec.QueryModeMany,
 				Query: spec.QuerySpec{Predicates: []spec.Predicate{
-					{FieldReference: spec.FieldReference{ageField}, Comparator: spec.ComparatorGreaterThanEqual, ParamIndex: 1},
+					{
+						FieldReference: spec.FieldReference{ageField},
+						Comparator:     spec.ComparatorGreaterThanEqual,
+						ParamIndex:     1,
+					},
 				}},
 			},
 		},
@@ -1208,7 +1352,11 @@ func TestParseInterfaceMethod_Count(t *testing.T) {
 			ExpectedOperation: spec.CountOperation{
 				Query: spec.QuerySpec{
 					Predicates: []spec.Predicate{
-						{FieldReference: spec.FieldReference{genderField}, Comparator: spec.ComparatorEqual, ParamIndex: 1},
+						{
+							FieldReference: spec.FieldReference{genderField},
+							Comparator:     spec.ComparatorEqual,
+							ParamIndex:     1,
+						},
 					},
 				},
 			},
@@ -1247,7 +1395,7 @@ func TestParseInterfaceMethod_Invalid(t *testing.T) {
 	})
 
 	expectedError := spec.NewUnknownOperationError("Search")
-	if err != expectedError {
+	if !errors.Is(err, expectedError) {
 		t.Errorf("\nExpected = %+v\nReceived = %+v", expectedError, err)
 	}
 }
@@ -1275,7 +1423,10 @@ func TestParseInterfaceMethod_Insert_Invalid(t *testing.T) {
 					code.TypeError,
 				},
 			},
-			ExpectedError: spec.NewUnsupportedReturnError(code.PointerType{ContainedType: code.SimpleType("UserModel")}, 0),
+			ExpectedError: spec.NewUnsupportedReturnError(
+				code.PointerType{ContainedType: code.SimpleType("UserModel")},
+				0,
+			),
 		},
 		{
 			Name: "unempty interface return from insert method",
@@ -1315,22 +1466,32 @@ func TestParseInterfaceMethod_Insert_Invalid(t *testing.T) {
 					code.TypeError,
 				},
 			},
-			ExpectedError: spec.ContextParamRequiredError,
+			ExpectedError: spec.ErrContextParamRequired,
 		},
 		{
 			Name: "mismatched model parameter for one mode",
 			Method: code.Method{
 				Name: "Insert",
 				Params: []code.Param{
-					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Name: "userModel", Type: code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}}},
+					{
+						Name: "ctx",
+						Type: code.ExternalType{PackageAlias: "context", Name: "Context"},
+					},
+					{
+						Name: "userModel",
+						Type: code.ArrayType{
+							ContainedType: code.PointerType{
+								ContainedType: code.SimpleType("UserModel"),
+							},
+						},
+					},
 				},
 				Returns: []code.Type{
 					code.InterfaceType{},
 					code.TypeError,
 				},
 			},
-			ExpectedError: spec.InvalidParamError,
+			ExpectedError: spec.ErrInvalidParam,
 		},
 		{
 			Name: "mismatched model parameter for many mode",
@@ -1345,7 +1506,7 @@ func TestParseInterfaceMethod_Insert_Invalid(t *testing.T) {
 					code.TypeError,
 				},
 			},
-			ExpectedError: spec.InvalidParamError,
+			ExpectedError: spec.ErrInvalidParam,
 		},
 	}
 
@@ -1405,7 +1566,7 @@ func TestParseInterfaceMethod_Find_Invalid(t *testing.T) {
 					code.TypeError,
 				},
 			},
-			ExpectedError: spec.QueryRequiredError,
+			ExpectedError: spec.ErrQueryRequired,
 		},
 		{
 			Name: "misplaced operator token (leftmost)",
@@ -1463,7 +1624,7 @@ func TestParseInterfaceMethod_Find_Invalid(t *testing.T) {
 					code.TypeError,
 				},
 			},
-			ExpectedError: spec.ContextParamRequiredError,
+			ExpectedError: spec.ErrContextParamRequired,
 		},
 		{
 			Name: "mismatched number of parameters",
@@ -1479,7 +1640,7 @@ func TestParseInterfaceMethod_Find_Invalid(t *testing.T) {
 					code.TypeError,
 				},
 			},
-			ExpectedError: spec.InvalidParamError,
+			ExpectedError: spec.ErrInvalidParam,
 		},
 		{
 			Name: "struct field not found",
@@ -1711,7 +1872,7 @@ func TestParseInterfaceMethod_Update_Invalid(t *testing.T) {
 					code.TypeError,
 				},
 			},
-			ExpectedError: spec.InvalidUpdateFieldsError,
+			ExpectedError: spec.ErrInvalidUpdateFields,
 		},
 		{
 			Name: "misplaced And token in update fields",
@@ -1725,7 +1886,7 @@ func TestParseInterfaceMethod_Update_Invalid(t *testing.T) {
 					code.TypeError,
 				},
 			},
-			ExpectedError: spec.InvalidUpdateFieldsError,
+			ExpectedError: spec.ErrInvalidUpdateFields,
 		},
 		{
 			Name: "push operator in non-array field",
@@ -1782,7 +1943,7 @@ func TestParseInterfaceMethod_Update_Invalid(t *testing.T) {
 					code.TypeError,
 				},
 			},
-			ExpectedError: spec.QueryRequiredError,
+			ExpectedError: spec.ErrQueryRequired,
 		},
 		{
 			Name: "ambiguous query",
@@ -1813,8 +1974,13 @@ func TestParseInterfaceMethod_Update_Invalid(t *testing.T) {
 					code.TypeError,
 				},
 			},
-			ExpectedError: spec.NewArgumentTypeNotMatchedError(consentHistoryField.Name, code.SimpleType("ConsentHistoryItem"),
-				code.ArrayType{ContainedType: code.SimpleType("ConsentHistoryItem")}),
+			ExpectedError: spec.NewArgumentTypeNotMatchedError(
+				consentHistoryField.Name,
+				code.SimpleType("ConsentHistoryItem"),
+				code.ArrayType{
+					ContainedType: code.SimpleType("ConsentHistoryItem"),
+				},
+			),
 		},
 		{
 			Name: "insufficient function parameters",
@@ -1829,7 +1995,7 @@ func TestParseInterfaceMethod_Update_Invalid(t *testing.T) {
 					code.TypeError,
 				},
 			},
-			ExpectedError: spec.InvalidUpdateFieldsError,
+			ExpectedError: spec.ErrInvalidUpdateFields,
 		},
 		{
 			Name: "update model with invalid parameter",
@@ -1844,7 +2010,7 @@ func TestParseInterfaceMethod_Update_Invalid(t *testing.T) {
 					code.TypeError,
 				},
 			},
-			ExpectedError: spec.InvalidUpdateFieldsError,
+			ExpectedError: spec.ErrInvalidUpdateFields,
 		},
 		{
 			Name: "no context parameter",
@@ -1859,7 +2025,7 @@ func TestParseInterfaceMethod_Update_Invalid(t *testing.T) {
 					code.TypeError,
 				},
 			},
-			ExpectedError: spec.ContextParamRequiredError,
+			ExpectedError: spec.ErrContextParamRequired,
 		},
 		{
 			Name: "struct field not found in update fields",
@@ -1967,7 +2133,7 @@ func TestParseInterfaceMethod_Delete_Invalid(t *testing.T) {
 					code.TypeError,
 				},
 			},
-			ExpectedError: spec.QueryRequiredError,
+			ExpectedError: spec.ErrQueryRequired,
 		},
 		{
 			Name: "misplaced operator token (leftmost)",
@@ -2025,7 +2191,7 @@ func TestParseInterfaceMethod_Delete_Invalid(t *testing.T) {
 					code.TypeError,
 				},
 			},
-			ExpectedError: spec.ContextParamRequiredError,
+			ExpectedError: spec.ErrContextParamRequired,
 		},
 		{
 			Name: "mismatched number of parameters",
@@ -2041,7 +2207,7 @@ func TestParseInterfaceMethod_Delete_Invalid(t *testing.T) {
 					code.TypeError,
 				},
 			},
-			ExpectedError: spec.InvalidParamError,
+			ExpectedError: spec.ErrInvalidParam,
 		},
 		{
 			Name: "struct field not found",
@@ -2147,7 +2313,7 @@ func TestParseInterfaceMethod_Count_Invalid(t *testing.T) {
 					code.TypeError,
 				},
 			},
-			ExpectedError: spec.QueryRequiredError,
+			ExpectedError: spec.ErrQueryRequired,
 		},
 		{
 			Name: "invalid query",
@@ -2172,7 +2338,7 @@ func TestParseInterfaceMethod_Count_Invalid(t *testing.T) {
 					code.TypeError,
 				},
 			},
-			ExpectedError: spec.ContextParamRequiredError,
+			ExpectedError: spec.ErrContextParamRequired,
 		},
 		{
 			Name: "mismatched number of parameter",
@@ -2188,7 +2354,7 @@ func TestParseInterfaceMethod_Count_Invalid(t *testing.T) {
 					code.TypeError,
 				},
 			},
-			ExpectedError: spec.InvalidParamError,
+			ExpectedError: spec.ErrInvalidParam,
 		},
 		{
 			Name: "mismatched method parameter type",

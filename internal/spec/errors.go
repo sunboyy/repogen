@@ -1,35 +1,19 @@
 package spec
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/sunboyy/repogen/internal/code"
 )
 
-// ParsingError is an error from parsing interface methods
-type ParsingError string
-
-func (err ParsingError) Error() string {
-	switch err {
-	case QueryRequiredError:
-		return "query is required"
-	case InvalidParamError:
-		return "parameters do not match the query"
-	case InvalidUpdateFieldsError:
-		return "update fields are invalid"
-	case ContextParamRequiredError:
-		return "context parameter is required"
-	}
-	return string(err)
-}
-
 // parsing error constants
-const (
-	QueryRequiredError        ParsingError = "ERROR_QUERY_REQUIRED"
-	InvalidParamError         ParsingError = "ERROR_INVALID_PARAM"
-	InvalidUpdateFieldsError  ParsingError = "ERROR_INVALID_UPDATE_FIELDS"
-	ContextParamRequiredError ParsingError = "ERROR_CONTEXT_PARAM_REQUIRED"
+var (
+	ErrQueryRequired        = errors.New("spec: query is required")
+	ErrInvalidParam         = errors.New("spec: parameters do not match the query")
+	ErrInvalidUpdateFields  = errors.New("spec: update fields are invalid")
+	ErrContextParamRequired = errors.New("spec: context parameter is required")
 )
 
 // NewUnsupportedReturnError creates unsupportedReturnError
@@ -49,7 +33,8 @@ func (err unsupportedReturnError) Error() string {
 	return fmt.Sprintf("return type '%s' at index %d is not supported", err.GivenType.Code(), err.Index)
 }
 
-// NewOperationReturnCountUnmatchedError creates operationReturnCountUnmatchedError
+// NewOperationReturnCountUnmatchedError creates
+// operationReturnCountUnmatchedError.
 func NewOperationReturnCountUnmatchedError(returnCount int) error {
 	return operationReturnCountUnmatchedError{
 		ReturnCount: returnCount,

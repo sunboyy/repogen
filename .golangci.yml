@@ -1,0 +1,9 @@
+linters:
+  enable:
+    - errname
+    - errorlint
+    - lll
+    - stylecheck
+linters-settings:
+  lll:
+    tab-width: 4

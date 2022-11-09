@@ -28,9 +28,9 @@ How are you?`
 
 		err := testutils.ExpectMultiLineString(expectedText, actualText)
 
-		expectedError := "On line 2\nExpected: this is an expected text\nReceived: this is a real text"
+		expectedError := "at line 2\nexpected: this is an expected text\nreceived: this is a real text"
 		if err == nil || err.Error() != expectedError {
-			t.Errorf("Expected = %s\nReceived = %s", expectedError, err.Error())
+			t.Errorf("expected = %s\nreceived = %s", expectedError, err.Error())
 		}
 	})
 
@@ -46,9 +46,9 @@ how are you?`
 
 		err := testutils.ExpectMultiLineString(expectedText, actualText)
 
-		expectedError := "Missing lines:\nI'm fine...\nThank you..."
+		expectedError := "missing lines:\nI'm fine...\nThank you..."
 		if err == nil || err.Error() != expectedError {
-			t.Errorf("Expected = %s\nReceived = %s", expectedError, err.Error())
+			t.Errorf("expected = %s\nreceived = %s", expectedError, err.Error())
 		}
 	})
 
@@ -64,9 +64,9 @@ Thank you...`
 
 		err := testutils.ExpectMultiLineString(expectedText, actualText)
 
-		expectedError := "Unexpected lines:\nI'm fine...\nThank you..."
+		expectedError := "unexpected lines:\nI'm fine...\nThank you..."
 		if err == nil || err.Error() != expectedError {
-			t.Errorf("Expected = %s\nReceived = %s", expectedError, err.Error())
+			t.Errorf("expected = %s\nreceived = %s", expectedError, err.Error())
 		}
 	})
 }
