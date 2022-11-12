@@ -109,6 +109,10 @@ func (p predicate) Code() string {
 		return fmt.Sprintf(`"%s": true`, p.Field)
 	case spec.ComparatorFalse:
 		return fmt.Sprintf(`"%s": false`, p.Field)
+	case spec.ComparatorExists:
+		return fmt.Sprintf(`"%s": bson.M{"$exists": 1}`, p.Field)
+	case spec.ComparatorNotExists:
+		return fmt.Sprintf(`"%s": bson.M{"$exists": 0}`, p.Field)
 	}
 	return ""
 }

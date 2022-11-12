@@ -44,6 +44,8 @@ const (
 	ComparatorNotIn            Comparator = "NOT_IN"
 	ComparatorTrue             Comparator = "EQUAL_TRUE"
 	ComparatorFalse            Comparator = "EQUAL_FALSE"
+	ComparatorExists           Comparator = "EXISTS"
+	ComparatorNotExists        Comparator = "NOT_EXISTS"
 )
 
 // ArgumentTypeFromFieldType returns a type of required argument from the given
@@ -63,7 +65,7 @@ func (c Comparator) NumberOfArguments() int {
 	switch c {
 	case ComparatorBetween:
 		return 2
-	case ComparatorTrue, ComparatorFalse:
+	case ComparatorTrue, ComparatorFalse, ComparatorExists, ComparatorNotExists:
 		return 0
 	default:
 		return 1
@@ -82,7 +84,9 @@ type queryParser struct {
 	StructModel   code.Struct
 }
 
-func (p queryParser) parseQuery(rawTokens []string, paramIndex int) (QuerySpec, error) {
+func (p queryParser) parseQuery(rawTokens []string, paramIndex int) (QuerySpec,
+	error) {
+
 	if len(rawTokens) == 0 {
 		return QuerySpec{}, ErrQueryRequired
 	}
@@ -154,7 +158,9 @@ func (p queryParser) splitPredicateTokens(tokens []string) (Operator, [][]string
 	return operator, predicateTokens, nil
 }
 
-func (p queryParser) parsePredicate(t []string, paramIndex int) (Predicate, error) {
+func (p queryParser) parsePredicate(t []string, paramIndex int) (Predicate,
+	error) {
+
 	if len(t) > 1 && t[len(t)-1] == "Not" {
 		return p.createPredicate(t[:len(t)-1], ComparatorNot, paramIndex)
 	}
@@ -173,6 +179,9 @@ func (p queryParser) parsePredicate(t []string, paramIndex int) (Predicate, erro
 	if len(t) > 2 && t[len(t)-2] == "Not" && t[len(t)-1] == "In" {
 		return p.createPredicate(t[:len(t)-2], ComparatorNotIn, paramIndex)
 	}
+	if len(t) > 2 && t[len(t)-2] == "Not" && t[len(t)-1] == "Exists" {
+		return p.createPredicate(t[:len(t)-2], ComparatorNotExists, paramIndex)
+	}
 	if len(t) > 1 && t[len(t)-1] == "In" {
 		return p.createPredicate(t[:len(t)-1], ComparatorIn, paramIndex)
 	}
@@ -185,10 +194,15 @@ func (p queryParser) parsePredicate(t []string, paramIndex int) (Predicate, erro
 	if len(t) > 1 && t[len(t)-1] == "False" {
 		return p.createPredicate(t[:len(t)-1], ComparatorFalse, paramIndex)
 	}
+	if len(t) > 1 && t[len(t)-1] == "Exists" {
+		return p.createPredicate(t[:len(t)-1], ComparatorExists, paramIndex)
+	}
 	return p.createPredicate(t, ComparatorEqual, paramIndex)
 }
 
-func (p queryParser) createPredicate(t []string, comparator Comparator, paramIndex int) (Predicate, error) {
+func (p queryParser) createPredicate(t []string, comparator Comparator,
+	paramIndex int) (Predicate, error) {
+
 	fields, ok := p.fieldResolver.ResolveStructField(p.StructModel, t)
 	if !ok {
 		return Predicate{}, NewStructFieldNotFoundError(t)

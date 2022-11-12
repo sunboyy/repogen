@@ -34,6 +34,11 @@ var (
 		Type: code.SimpleType("NameModel"),
 		Tags: map[string][]string{"bson": {"name"}},
 	}
+	referrerField = code.StructField{
+		Name: "Referrer",
+		Type: code.PointerType{ContainedType: code.SimpleType("UserModel")},
+		Tags: map[string][]string{"bson": {"referrer"}},
+	}
 	consentHistoryField = code.StructField{
 		Name: "ConsentHistory",
 		Type: code.ArrayType{ContainedType: code.SimpleType("ConsentHistory")},
@@ -68,6 +73,7 @@ var userModel = code.Struct{
 		genderField,
 		ageField,
 		nameField,
+		referrerField,
 		consentHistoryField,
 		enabledField,
 		accessTokenField,
@@ -873,6 +879,80 @@ func TestGenerateMethod_Find(t *testing.T) {
 			},
 			ExpectedBody: `	cursor, err := r.collection.Find(arg0, bson.M{
 		"enabled": false,
+	}, options.Find().SetSort(bson.M{
+	}))
+	if err != nil {
+		return nil, err
+	}
+	var entities []*UserModel
+	if err := cursor.All(arg0, &entities); err != nil {
+		return nil, err
+	}
+	return entities, nil`,
+		},
+		{
+			Name: "find with Exists comparator",
+			MethodSpec: spec.MethodSpec{
+				Name: "FindByReferrerExists",
+				Params: []code.Param{
+					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+				},
+				Returns: []code.Type{
+					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+					code.TypeError,
+				},
+				Operation: spec.FindOperation{
+					Mode: spec.QueryModeMany,
+					Query: spec.QuerySpec{
+						Predicates: []spec.Predicate{
+							{
+								Comparator:     spec.ComparatorExists,
+								FieldReference: spec.FieldReference{referrerField},
+								ParamIndex:     1,
+							},
+						},
+					},
+				},
+			},
+			ExpectedBody: `	cursor, err := r.collection.Find(arg0, bson.M{
+		"referrer": bson.M{"$exists": 1},
+	}, options.Find().SetSort(bson.M{
+	}))
+	if err != nil {
+		return nil, err
+	}
+	var entities []*UserModel
+	if err := cursor.All(arg0, &entities); err != nil {
+		return nil, err
+	}
+	return entities, nil`,
+		},
+		{
+			Name: "find with NotExists comparator",
+			MethodSpec: spec.MethodSpec{
+				Name: "FindByReferrerNotExists",
+				Params: []code.Param{
+					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+				},
+				Returns: []code.Type{
+					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+					code.TypeError,
+				},
+				Operation: spec.FindOperation{
+					Mode: spec.QueryModeMany,
+					Query: spec.QuerySpec{
+						Predicates: []spec.Predicate{
+							{
+								Comparator:     spec.ComparatorNotExists,
+								FieldReference: spec.FieldReference{referrerField},
+								ParamIndex:     1,
+							},
+						},
+					},
+				},
+			},
+			ExpectedBody: `	cursor, err := r.collection.Find(arg0, bson.M{
+		"referrer": bson.M{"$exists": 0},
 	}, options.Find().SetSort(bson.M{
 	}))
 	if err != nil {

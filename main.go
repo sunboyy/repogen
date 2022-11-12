@@ -96,15 +96,20 @@ func generateFromRequest(pkgDir, structModelName, repositoryInterfaceName string
 	return generateRepository(pkg, structModelName, repositoryInterfaceName)
 }
 
+var (
+	errStructNotFound    = errors.New("struct not found")
+	errInterfaceNotFound = errors.New("interface not found")
+)
+
 func generateRepository(pkg code.Package, structModelName, repositoryInterfaceName string) (string, error) {
 	structModel, ok := pkg.Structs[structModelName]
 	if !ok {
-		return "", errors.New("struct model not found")
+		return "", errStructNotFound
 	}
 
 	intf, ok := pkg.Interfaces[repositoryInterfaceName]
 	if !ok {
-		return "", errors.New("interface model not found")
+		return "", errInterfaceNotFound
 	}
 
 	var methodSpecs []spec.MethodSpec

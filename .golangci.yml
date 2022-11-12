@@ -2,6 +2,7 @@ linters:
   enable:
     - errname
     - errorlint
+    - goerr113
     - lll
     - stylecheck
 linters-settings:
