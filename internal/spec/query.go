@@ -96,9 +96,6 @@ func (p queryParser) parseQuery(rawTokens []string, paramIndex int) (QuerySpec,
 		return QuerySpec{}, nil
 	}
 
-	if tokens[0] == "One" {
-		tokens = tokens[1:]
-	}
 	if tokens[0] == "By" {
 		tokens = tokens[1:]
 	}
