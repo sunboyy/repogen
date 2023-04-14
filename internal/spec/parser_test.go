@@ -175,9 +175,9 @@ func TestParseInterfaceMethod_Insert(t *testing.T) {
 func TestParseInterfaceMethod_Find(t *testing.T) {
 	testTable := []ParseInterfaceMethodTestCase{
 		{
-			Name: "FindOneByArg method",
+			Name: "FindByArg one-mode method",
 			Method: code.Method{
-				Name: "FindOneByID",
+				Name: "FindByID",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
 					{Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
@@ -195,9 +195,29 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 			},
 		},
 		{
-			Name: "FindOneByMultiWordArg method",
+			Name: "FindByArg many-mode method",
 			Method: code.Method{
-				Name: "FindOneByPhoneNumber",
+				Name: "FindByCity",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.TypeString},
+				},
+				Returns: []code.Type{
+					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+					code.TypeError,
+				},
+			},
+			ExpectedOperation: spec.FindOperation{
+				Mode: spec.QueryModeMany,
+				Query: spec.QuerySpec{Predicates: []spec.Predicate{
+					{FieldReference: spec.FieldReference{cityField}, Comparator: spec.ComparatorEqual, ParamIndex: 1},
+				}},
+			},
+		},
+		{
+			Name: "FindByMultiWordArg method",
+			Method: code.Method{
+				Name: "FindByPhoneNumber",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
 					{Type: code.TypeString},
@@ -215,26 +235,6 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 						Comparator:     spec.ComparatorEqual,
 						ParamIndex:     1,
 					},
-				}},
-			},
-		},
-		{
-			Name: "FindByArg method",
-			Method: code.Method{
-				Name: "FindByCity",
-				Params: []code.Param{
-					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.TypeString},
-				},
-				Returns: []code.Type{
-					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.TypeError,
-				},
-			},
-			ExpectedOperation: spec.FindOperation{
-				Mode: spec.QueryModeMany,
-				Query: spec.QuerySpec{Predicates: []spec.Predicate{
-					{FieldReference: spec.FieldReference{cityField}, Comparator: spec.ComparatorEqual, ParamIndex: 1},
 				}},
 			},
 		},
@@ -1044,9 +1044,9 @@ func TestParseInterfaceMethod_Update(t *testing.T) {
 func TestParseInterfaceMethod_Delete(t *testing.T) {
 	testTable := []ParseInterfaceMethodTestCase{
 		{
-			Name: "DeleteOneByArg method",
+			Name: "DeleteByArg one-mode method",
 			Method: code.Method{
-				Name: "DeleteOneByID",
+				Name: "DeleteByID",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
 					{Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
@@ -1064,9 +1064,29 @@ func TestParseInterfaceMethod_Delete(t *testing.T) {
 			},
 		},
 		{
-			Name: "DeleteOneByMultiWordArg method",
+			Name: "DeleteByArg many-mode method",
 			Method: code.Method{
-				Name: "DeleteOneByPhoneNumber",
+				Name: "DeleteByCity",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.TypeString},
+				},
+				Returns: []code.Type{
+					code.TypeInt,
+					code.TypeError,
+				},
+			},
+			ExpectedOperation: spec.DeleteOperation{
+				Mode: spec.QueryModeMany,
+				Query: spec.QuerySpec{Predicates: []spec.Predicate{
+					{FieldReference: spec.FieldReference{cityField}, Comparator: spec.ComparatorEqual, ParamIndex: 1},
+				}},
+			},
+		},
+		{
+			Name: "DeleteByMultiWordArg method",
+			Method: code.Method{
+				Name: "DeleteByPhoneNumber",
 				Params: []code.Param{
 					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
 					{Type: code.TypeString},
@@ -1084,26 +1104,6 @@ func TestParseInterfaceMethod_Delete(t *testing.T) {
 						Comparator:     spec.ComparatorEqual,
 						ParamIndex:     1,
 					},
-				}},
-			},
-		},
-		{
-			Name: "DeleteByArg method",
-			Method: code.Method{
-				Name: "DeleteByCity",
-				Params: []code.Param{
-					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.TypeString},
-				},
-				Returns: []code.Type{
-					code.TypeInt,
-					code.TypeError,
-				},
-			},
-			ExpectedOperation: spec.DeleteOperation{
-				Mode: spec.QueryModeMany,
-				Query: spec.QuerySpec{Predicates: []spec.Predicate{
-					{FieldReference: spec.FieldReference{cityField}, Comparator: spec.ComparatorEqual, ParamIndex: 1},
 				}},
 			},
 		},
@@ -1572,7 +1572,7 @@ func TestParseInterfaceMethod_Find_Invalid(t *testing.T) {
 		{
 			Name: "invalid number of returns",
 			Method: code.Method{
-				Name: "FindOneByID",
+				Name: "FindByID",
 				Returns: []code.Type{
 					code.SimpleType("UserModel"),
 					code.TypeInt,
@@ -1584,7 +1584,7 @@ func TestParseInterfaceMethod_Find_Invalid(t *testing.T) {
 		{
 			Name: "unsupported return types from find method",
 			Method: code.Method{
-				Name: "FindOneByID",
+				Name: "FindByID",
 				Returns: []code.Type{
 					code.SimpleType("UserModel"),
 					code.TypeError,
@@ -1595,7 +1595,7 @@ func TestParseInterfaceMethod_Find_Invalid(t *testing.T) {
 		{
 			Name: "error return not provided",
 			Method: code.Method{
-				Name: "FindOneByID",
+				Name: "FindByID",
 				Returns: []code.Type{
 					code.SimpleType("UserModel"),
 					code.TypeInt,
@@ -2139,7 +2139,7 @@ func TestParseInterfaceMethod_Delete_Invalid(t *testing.T) {
 		{
 			Name: "invalid number of returns",
 			Method: code.Method{
-				Name: "DeleteOneByID",
+				Name: "DeleteByID",
 				Returns: []code.Type{
 					code.SimpleType("UserModel"),
 					code.TypeInt,
@@ -2151,7 +2151,7 @@ func TestParseInterfaceMethod_Delete_Invalid(t *testing.T) {
 		{
 			Name: "unsupported return types from delete method",
 			Method: code.Method{
-				Name: "DeleteOneByID",
+				Name: "DeleteByID",
 				Returns: []code.Type{
 					code.TypeFloat64,
 					code.TypeError,
@@ -2162,7 +2162,7 @@ func TestParseInterfaceMethod_Delete_Invalid(t *testing.T) {
 		{
 			Name: "error return not provided",
 			Method: code.Method{
-				Name: "DeleteOneByID",
+				Name: "DeleteByID",
 				Returns: []code.Type{
 					code.TypeInt,
 					code.TypeBool,

@@ -94,7 +94,7 @@ type UserModel struct {
 			Source: `package user
 
 type UserRepository interface {
-	FindOneByID(ctx context.Context, id primitive.ObjectID) (*UserModel, error)
+	FindByID(ctx context.Context, id primitive.ObjectID) (*UserModel, error)
 	FindAll(context.Context) ([]*UserModel, error)
 	FindByAgeBetween(ctx context.Context, fromAge, toAge int) ([]*UserModel, error)
 	InsertOne(ctx context.Context, user *UserModel) (interface{}, error)
@@ -113,7 +113,7 @@ type UserRepository interface {
 						Name: "UserRepository",
 						Methods: []code.Method{
 							{
-								Name: "FindOneByID",
+								Name: "FindByID",
 								Params: []code.Param{
 									{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
 									{Name: "id", Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
@@ -251,7 +251,7 @@ type UserModel struct {
 }
 
 type UserRepository interface {
-	FindOneByID(ctx context.Context, id primitive.ObjectID) (*UserModel, error)
+	FindByID(ctx context.Context, id primitive.ObjectID) (*UserModel, error)
 	FindAll(ctx context.Context) ([]*UserModel, error)
 }
 `,
@@ -289,7 +289,7 @@ type UserRepository interface {
 						Name: "UserRepository",
 						Methods: []code.Method{
 							{
-								Name: "FindOneByID",
+								Name: "FindByID",
 								Params: []code.Param{
 									{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
 									{Name: "id", Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
