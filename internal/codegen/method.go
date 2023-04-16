@@ -10,7 +10,7 @@ import (
 
 const methodTemplate = `
 func ({{.GenReceiver}}) {{.Name}}({{.GenParams}}){{.GenReturns}} {
-{{.Body}}
+{{.Body.Code}}
 }
 `
 
@@ -20,7 +20,7 @@ type MethodBuilder struct {
 	Name     string
 	Params   []code.Param
 	Returns  []code.Type
-	Body     string
+	Body     FunctionBody
 }
 
 // MethodReceiver describes a specification of a method receiver.

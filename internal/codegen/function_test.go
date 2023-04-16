@@ -14,7 +14,20 @@ func TestFunctionBuilderBuild_NoReturn(t *testing.T) {
 		Name:    "init",
 		Params:  nil,
 		Returns: nil,
-		Body:    `	logrus.SetLevel(logrus.DebugLevel)`,
+		Body: codegen.FunctionBody{
+			codegen.ChainStatement{
+				codegen.Identifier("logrus"),
+				codegen.CallStatement{
+					FuncName: "SetLevel",
+					Params: codegen.StatementList{
+						codegen.ChainStatement{
+							codegen.Identifier("logrus"),
+							codegen.Identifier("DebugLevel"),
+						},
+					},
+				},
+			},
+		},
 	}
 	expectedCode := `
 func init() {
@@ -57,18 +70,25 @@ func TestFunctionBuilderBuild_OneReturn(t *testing.T) {
 		Returns: []code.Type{
 			code.SimpleType("User"),
 		},
-		Body: `	return User{
-		Username: username,
-		Age: age,
-		Parent: parent
-	}`,
+		Body: codegen.FunctionBody{
+			codegen.ReturnStatement{
+				codegen.StructStatement{
+					Type: "User",
+					Pairs: []codegen.StructFieldPair{
+						{Key: "Username", Value: codegen.Identifier("username")},
+						{Key: "Age", Value: codegen.Identifier("age")},
+						{Key: "Parent", Value: codegen.Identifier("parent")},
+					},
+				},
+			},
+		},
 	}
 	expectedCode := `
 func NewUser(username string, age int, parent *User) User {
 	return User{
 		Username: username,
 		Age: age,
-		Parent: parent
+		Parent: parent,
 	}
 }
 `
@@ -101,7 +121,19 @@ func TestFunctionBuilderBuild_MultiReturn(t *testing.T) {
 			code.SimpleType("User"),
 			code.TypeError,
 		},
-		Body: `	return collection.Save(user)`,
+		Body: codegen.FunctionBody{
+			codegen.ReturnStatement{
+				codegen.ChainStatement{
+					codegen.Identifier("collection"),
+					codegen.CallStatement{
+						FuncName: "Save",
+						Params: codegen.StatementList{
+							codegen.Identifier("user"),
+						},
+					},
+				},
+			},
+		},
 	}
 	expectedCode := `
 func Save(user User) (User, error) {
