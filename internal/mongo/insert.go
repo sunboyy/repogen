@@ -20,35 +20,17 @@ func (g RepositoryGenerator) generateInsertOneBody() codegen.FunctionBody {
 		codegen.DeclAssignStatement{
 			Vars: []string{"result", "err"},
 			Values: codegen.StatementList{
-				codegen.ChainStatement{
-					codegen.Identifier("r"),
-					codegen.Identifier("collection"),
-					codegen.CallStatement{
-						FuncName: "InsertOne",
-						Params: []codegen.Statement{
-							codegen.Identifier("arg0"),
-							codegen.Identifier("arg1"),
-						},
-					},
-				},
+				codegen.NewChainBuilder("r").
+					Chain("collection").
+					Call("InsertOne",
+						codegen.Identifier("arg0"),
+						codegen.Identifier("arg1"),
+					).Build(),
 			},
 		},
-		codegen.IfBlock{
-			Condition: []codegen.Statement{
-				codegen.RawStatement("err != nil"),
-			},
-			Statements: []codegen.Statement{
-				codegen.ReturnStatement{
-					codegen.Identifier("nil"),
-					codegen.Identifier("err"),
-				},
-			},
-		},
+		ifErrReturnNilErr,
 		codegen.ReturnStatement{
-			codegen.ChainStatement{
-				codegen.Identifier("result"),
-				codegen.Identifier("InsertedID"),
-			},
+			codegen.NewChainBuilder("result").Chain("InsertedID").Build(),
 			codegen.Identifier("nil"),
 		},
 	}
@@ -82,35 +64,17 @@ func (g RepositoryGenerator) generateInsertManyBody() codegen.FunctionBody {
 		codegen.DeclAssignStatement{
 			Vars: []string{"result", "err"},
 			Values: codegen.StatementList{
-				codegen.ChainStatement{
-					codegen.Identifier("r"),
-					codegen.Identifier("collection"),
-					codegen.CallStatement{
-						FuncName: "InsertMany",
-						Params: codegen.StatementList{
-							codegen.Identifier("arg0"),
-							codegen.Identifier("entities"),
-						},
-					},
-				},
+				codegen.NewChainBuilder("r").
+					Chain("collection").
+					Call("InsertMany",
+						codegen.Identifier("arg0"),
+						codegen.Identifier("entities"),
+					).Build(),
 			},
 		},
-		codegen.IfBlock{
-			Condition: []codegen.Statement{
-				codegen.RawStatement("err != nil"),
-			},
-			Statements: []codegen.Statement{
-				codegen.ReturnStatement{
-					codegen.Identifier("nil"),
-					codegen.Identifier("err"),
-				},
-			},
-		},
+		ifErrReturnNilErr,
 		codegen.ReturnStatement{
-			codegen.ChainStatement{
-				codegen.Identifier("result"),
-				codegen.Identifier("InsertedIDs"),
-			},
+			codegen.NewChainBuilder("result").Chain("InsertedIDs").Build(),
 			codegen.Identifier("nil"),
 		},
 	}

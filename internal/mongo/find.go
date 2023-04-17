@@ -9,74 +9,67 @@ import (
 func (g RepositoryGenerator) generateFindBody(
 	operation spec.FindOperation) (codegen.FunctionBody, error) {
 
-	querySpec, err := g.mongoQuerySpec(operation.Query)
+	return findBodyGenerator{
+		baseMethodGenerator: g.baseMethodGenerator,
+		operation:           operation,
+	}.generate()
+}
+
+type findBodyGenerator struct {
+	baseMethodGenerator
+	operation spec.FindOperation
+}
+
+func (g findBodyGenerator) generate() (codegen.FunctionBody, error) {
+	querySpec, err := g.convertQuerySpec(g.operation.Query)
 	if err != nil {
 		return nil, err
 	}
 
-	sortsCode, err := g.mongoSorts(operation.Sorts)
+	sortsCode, err := g.generateSortMap()
 	if err != nil {
 		return nil, err
 	}
 
-	if operation.Mode == spec.QueryModeOne {
+	if g.operation.Mode == spec.QueryModeOne {
 		return g.generateFindOneBody(querySpec, sortsCode), nil
 	}
 
 	return g.generateFindManyBody(querySpec, sortsCode), nil
 }
 
-func (g RepositoryGenerator) generateFindOneBody(querySpec querySpec,
+func (g findBodyGenerator) generateFindOneBody(querySpec querySpec,
 	sortsCode codegen.MapStatement) codegen.FunctionBody {
 
 	return codegen.FunctionBody{
 		codegen.DeclStatement{
 			Name: "entity",
-			Type: code.SimpleType(g.StructModel.Name),
+			Type: code.SimpleType(g.structModel.Name),
 		},
 		codegen.IfBlock{
 			Condition: []codegen.Statement{
 				codegen.DeclAssignStatement{
 					Vars: []string{"err"},
 					Values: codegen.StatementList{
-						codegen.ChainStatement{
-							codegen.Identifier("r"),
-							codegen.Identifier("collection"),
-							codegen.CallStatement{
-								FuncName: "FindOne",
-								Params: codegen.StatementList{
-									codegen.Identifier("arg0"),
-									querySpec.Code(),
-									codegen.ChainStatement{
-										codegen.Identifier("options"),
-										codegen.CallStatement{
-											FuncName: "FindOne",
-										},
-										codegen.CallStatement{
-											FuncName: "SetSort",
-											Params: codegen.StatementList{
-												sortsCode,
-											},
-										},
-									},
-								},
-							},
-							codegen.CallStatement{
-								FuncName: "Decode",
-								Params: codegen.StatementList{
-									codegen.RawStatement("&entity"),
-								},
-							},
-						},
+						codegen.NewChainBuilder("r").
+							Chain("collection").
+							Call("FindOne",
+								codegen.Identifier("arg0"),
+								querySpec.Code(),
+								codegen.NewChainBuilder("options").
+									Call("FindOne").
+									Call("SetSort", sortsCode).
+									Build(),
+							).
+							Call("Decode",
+								codegen.RawStatement("&entity"),
+							).Build(),
 					},
 				},
 				codegen.RawStatement("err != nil"),
 			},
 			Statements: []codegen.Statement{
-				codegen.ReturnStatement{
-					codegen.Identifier("nil"),
-					codegen.Identifier("err"),
-				},
+				returnNilErr,
 			},
 		},
 		codegen.ReturnStatement{
@@ -86,54 +79,31 @@ func (g RepositoryGenerator) generateFindOneBody(querySpec querySpec,
 	}
 }
 
-func (g RepositoryGenerator) generateFindManyBody(querySpec querySpec,
+func (g findBodyGenerator) generateFindManyBody(querySpec querySpec,
 	sortsCode codegen.MapStatement) codegen.FunctionBody {
 
 	return codegen.FunctionBody{
 		codegen.DeclAssignStatement{
 			Vars: []string{"cursor", "err"},
 			Values: codegen.StatementList{
-				codegen.ChainStatement{
-					codegen.Identifier("r"),
-					codegen.Identifier("collection"),
-					codegen.CallStatement{
-						FuncName: "Find",
-						Params: codegen.StatementList{
-							codegen.Identifier("arg0"),
-							querySpec.Code(),
-							codegen.ChainStatement{
-								codegen.Identifier("options"),
-								codegen.CallStatement{
-									FuncName: "Find",
-								},
-								codegen.CallStatement{
-									FuncName: "SetSort",
-									Params: codegen.StatementList{
-										sortsCode,
-									},
-								},
-							},
-						},
-					},
-				},
+				codegen.NewChainBuilder("r").
+					Chain("collection").
+					Call("Find",
+						codegen.Identifier("arg0"),
+						querySpec.Code(),
+						codegen.NewChainBuilder("options").
+							Call("Find").
+							Call("SetSort", sortsCode).
+							Build(),
+					).Build(),
 			},
 		},
-		codegen.IfBlock{
-			Condition: []codegen.Statement{
-				codegen.RawStatement("err != nil"),
-			},
-			Statements: []codegen.Statement{
-				codegen.ReturnStatement{
-					codegen.Identifier("nil"),
-					codegen.Identifier("err"),
-				},
-			},
-		},
+		ifErrReturnNilErr,
 		codegen.DeclStatement{
 			Name: "entities",
 			Type: code.ArrayType{
 				ContainedType: code.PointerType{
-					ContainedType: code.SimpleType(g.StructModel.Name),
+					ContainedType: code.SimpleType(g.structModel.Name),
 				},
 			},
 		},
@@ -142,25 +112,17 @@ func (g RepositoryGenerator) generateFindManyBody(querySpec querySpec,
 				codegen.DeclAssignStatement{
 					Vars: []string{"err"},
 					Values: codegen.StatementList{
-						codegen.ChainStatement{
-							codegen.Identifier("cursor"),
-							codegen.CallStatement{
-								FuncName: "All",
-								Params: codegen.StatementList{
-									codegen.Identifier("arg0"),
-									codegen.RawStatement("&entities"),
-								},
-							},
-						},
+						codegen.NewChainBuilder("cursor").
+							Call("All",
+								codegen.Identifier("arg0"),
+								codegen.RawStatement("&entities"),
+							).Build(),
 					},
 				},
 				codegen.RawStatement("err != nil"),
 			},
 			Statements: []codegen.Statement{
-				codegen.ReturnStatement{
-					codegen.Identifier("nil"),
-					codegen.Identifier("err"),
-				},
+				returnNilErr,
 			},
 		},
 		codegen.ReturnStatement{
@@ -170,14 +132,14 @@ func (g RepositoryGenerator) generateFindManyBody(querySpec querySpec,
 	}
 }
 
-func (g RepositoryGenerator) mongoSorts(sortSpec []spec.Sort) (
+func (g findBodyGenerator) generateSortMap() (
 	codegen.MapStatement, error) {
 
 	sortsCode := codegen.MapStatement{
 		Type: "bson.M",
 	}
 
-	for _, s := range sortSpec {
+	for _, s := range g.operation.Sorts {
 		bsonFieldReference, err := g.bsonFieldReference(s.FieldReference)
 		if err != nil {
 			return codegen.MapStatement{}, err

@@ -129,107 +129,93 @@ func (p predicate) Code() codegen.MapPair {
 
 	switch p.Comparator {
 	case spec.ComparatorEqual:
-		return codegen.MapPair{Key: p.Field, Value: argStmt}
+		return p.createValueMapPair(argStmt)
 	case spec.ComparatorNot:
-		return codegen.MapPair{
-			Key: p.Field,
-			Value: codegen.MapStatement{
-				Type:  "bson.M",
-				Pairs: []codegen.MapPair{{Key: "$ne", Value: argStmt}},
-			},
-		}
+		return p.createSingleComparisonMapPair("$ne", argStmt)
 	case spec.ComparatorLessThan:
-		return codegen.MapPair{
-			Key: p.Field,
-			Value: codegen.MapStatement{
-				Type:  "bson.M",
-				Pairs: []codegen.MapPair{{Key: "$lt", Value: argStmt}},
-			},
-		}
+		return p.createSingleComparisonMapPair("$lt", argStmt)
 	case spec.ComparatorLessThanEqual:
-		return codegen.MapPair{
-			Key: p.Field,
-			Value: codegen.MapStatement{
-				Type:  "bson.M",
-				Pairs: []codegen.MapPair{{Key: "$lte", Value: argStmt}},
-			},
-		}
+		return p.createSingleComparisonMapPair("$lte", argStmt)
 	case spec.ComparatorGreaterThan:
-		return codegen.MapPair{
-			Key: p.Field,
-			Value: codegen.MapStatement{
-				Type:  "bson.M",
-				Pairs: []codegen.MapPair{{Key: "$gt", Value: argStmt}},
-			},
-		}
+		return p.createSingleComparisonMapPair("$gt", argStmt)
 	case spec.ComparatorGreaterThanEqual:
-		return codegen.MapPair{
-			Key: p.Field,
-			Value: codegen.MapStatement{
-				Type:  "bson.M",
-				Pairs: []codegen.MapPair{{Key: "$gte", Value: argStmt}},
-			},
-		}
+		return p.createSingleComparisonMapPair("$gte", argStmt)
 	case spec.ComparatorBetween:
 		argStmt2 := codegen.Identifier(fmt.Sprintf("arg%d", p.ParamIndex+1))
-		return codegen.MapPair{
-			Key: p.Field,
-			Value: codegen.MapStatement{
-				Type: "bson.M",
-				Pairs: []codegen.MapPair{
-					{Key: "$gte", Value: argStmt},
-					{Key: "$lte", Value: argStmt2},
-				},
-			},
-		}
+		return p.createBetweenMapPair(argStmt, argStmt2)
 	case spec.ComparatorIn:
-		return codegen.MapPair{
-			Key: p.Field,
-			Value: codegen.MapStatement{
-				Type:  "bson.M",
-				Pairs: []codegen.MapPair{{Key: "$in", Value: argStmt}},
-			},
-		}
+		return p.createArrayMapPair("$in", argStmt)
 	case spec.ComparatorNotIn:
-		return codegen.MapPair{
-			Key: p.Field,
-			Value: codegen.MapStatement{
-				Type:  "bson.M",
-				Pairs: []codegen.MapPair{{Key: "$nin", Value: argStmt}},
-			},
-		}
+		return p.createArrayMapPair("$nin", argStmt)
 	case spec.ComparatorTrue:
-		return codegen.MapPair{
-			Key:   p.Field,
-			Value: codegen.Identifier("true"),
-		}
+		return p.createValueMapPair(codegen.Identifier("true"))
 	case spec.ComparatorFalse:
-		return codegen.MapPair{
-			Key:   p.Field,
-			Value: codegen.Identifier("false"),
-		}
+		return p.createValueMapPair(codegen.Identifier("false"))
 	case spec.ComparatorExists:
-		return codegen.MapPair{
-			Key: p.Field,
-			Value: codegen.MapStatement{
-				Type: "bson.M",
-				Pairs: []codegen.MapPair{{
-					Key:   "$exists",
-					Value: codegen.Identifier("1"),
-				}},
-			},
-		}
+		return p.createExistsMapPair("1")
 	case spec.ComparatorNotExists:
-		return codegen.MapPair{
-			Key: p.Field,
-			Value: codegen.MapStatement{
-				Type: "bson.M",
-				Pairs: []codegen.MapPair{{
-					Key:   "$exists",
-					Value: codegen.Identifier("0"),
-				}},
-			},
-		}
+		return p.createExistsMapPair("0")
 	}
 	return codegen.MapPair{}
+}
+
+func (p predicate) createValueMapPair(
+	argStmt codegen.Statement) codegen.MapPair {
+
+	return codegen.MapPair{
+		Key:   p.Field,
+		Value: argStmt,
+	}
+}
+
+func (p predicate) createSingleComparisonMapPair(comparatorKey string,
+	argStmt codegen.Statement) codegen.MapPair {
+
+	return codegen.MapPair{
+		Key: p.Field,
+		Value: codegen.MapStatement{
+			Type:  "bson.M",
+			Pairs: []codegen.MapPair{{Key: comparatorKey, Value: argStmt}},
+		},
+	}
+}
+
+func (p predicate) createBetweenMapPair(argStmt codegen.Statement,
+	argStmt2 codegen.Statement) codegen.MapPair {
+
+	return codegen.MapPair{
+		Key: p.Field,
+		Value: codegen.MapStatement{
+			Type: "bson.M",
+			Pairs: []codegen.MapPair{
+				{Key: "$gte", Value: argStmt},
+				{Key: "$lte", Value: argStmt2},
+			},
+		},
+	}
+}
+
+func (p predicate) createArrayMapPair(comparatorKey string,
+	argStmt codegen.Statement) codegen.MapPair {
+
+	return codegen.MapPair{
+		Key: p.Field,
+		Value: codegen.MapStatement{
+			Type:  "bson.M",
+			Pairs: []codegen.MapPair{{Key: comparatorKey, Value: argStmt}},
+		},
+	}
+}
+
+func (p predicate) createExistsMapPair(existsValue string) codegen.MapPair {
+	return codegen.MapPair{
+		Key: p.Field,
+		Value: codegen.MapStatement{
+			Type: "bson.M",
+			Pairs: []codegen.MapPair{{
+				Key:   "$exists",
+				Value: codegen.Identifier(existsValue),
+			}},
+		},
+	}
 }

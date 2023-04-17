@@ -8,49 +8,46 @@ import (
 func (g RepositoryGenerator) generateDeleteBody(
 	operation spec.DeleteOperation) (codegen.FunctionBody, error) {
 
-	querySpec, err := g.mongoQuerySpec(operation.Query)
+	return deleteBodyGenerator{
+		baseMethodGenerator: g.baseMethodGenerator,
+		operation:           operation,
+	}.generate()
+}
+
+type deleteBodyGenerator struct {
+	baseMethodGenerator
+	operation spec.DeleteOperation
+}
+
+func (g deleteBodyGenerator) generate() (codegen.FunctionBody, error) {
+	querySpec, err := g.convertQuerySpec(g.operation.Query)
 	if err != nil {
 		return nil, err
 	}
 
-	if operation.Mode == spec.QueryModeOne {
+	if g.operation.Mode == spec.QueryModeOne {
 		return g.generateDeleteOneBody(querySpec), nil
 	}
 
 	return g.generateDeleteManyBody(querySpec), nil
 }
 
-func (g RepositoryGenerator) generateDeleteOneBody(
+func (g deleteBodyGenerator) generateDeleteOneBody(
 	querySpec querySpec) codegen.FunctionBody {
 
 	return codegen.FunctionBody{
 		codegen.DeclAssignStatement{
 			Vars: []string{"result", "err"},
 			Values: codegen.StatementList{
-				codegen.ChainStatement{
-					codegen.Identifier("r"),
-					codegen.Identifier("collection"),
-					codegen.CallStatement{
-						FuncName: "DeleteOne",
-						Params: codegen.StatementList{
-							codegen.Identifier("arg0"),
-							querySpec.Code(),
-						},
-					},
-				},
+				codegen.NewChainBuilder("r").
+					Chain("collection").
+					Call("DeleteOne",
+						codegen.Identifier("arg0"),
+						querySpec.Code(),
+					).Build(),
 			},
 		},
-		codegen.IfBlock{
-			Condition: []codegen.Statement{
-				codegen.RawStatement("err != nil"),
-			},
-			Statements: []codegen.Statement{
-				codegen.ReturnStatement{
-					codegen.Identifier("false"),
-					codegen.Identifier("err"),
-				},
-			},
-		},
+		ifErrReturnFalseErr,
 		codegen.ReturnStatement{
 			codegen.RawStatement("result.DeletedCount > 0"),
 			codegen.Identifier("nil"),
@@ -58,45 +55,27 @@ func (g RepositoryGenerator) generateDeleteOneBody(
 	}
 }
 
-func (g RepositoryGenerator) generateDeleteManyBody(
+func (g deleteBodyGenerator) generateDeleteManyBody(
 	querySpec querySpec) codegen.FunctionBody {
 
 	return codegen.FunctionBody{
 		codegen.DeclAssignStatement{
 			Vars: []string{"result", "err"},
 			Values: codegen.StatementList{
-				codegen.ChainStatement{
-					codegen.Identifier("r"),
-					codegen.Identifier("collection"),
-					codegen.CallStatement{
-						FuncName: "DeleteMany",
-						Params: codegen.StatementList{
-							codegen.Identifier("arg0"),
-							querySpec.Code(),
-						},
-					},
-				},
+				codegen.NewChainBuilder("r").
+					Chain("collection").
+					Call("DeleteMany",
+						codegen.Identifier("arg0"),
+						querySpec.Code(),
+					).Build(),
 			},
 		},
-		codegen.IfBlock{
-			Condition: []codegen.Statement{
-				codegen.RawStatement("err != nil"),
-			},
-			Statements: []codegen.Statement{
-				codegen.ReturnStatement{
-					codegen.Identifier("0"),
-					codegen.Identifier("err"),
-				},
-			},
-		},
+		ifErrReturn0Err,
 		codegen.ReturnStatement{
 			codegen.CallStatement{
 				FuncName: "int",
 				Params: codegen.StatementList{
-					codegen.ChainStatement{
-						codegen.Identifier("result"),
-						codegen.Identifier("DeletedCount"),
-					},
+					codegen.NewChainBuilder("result").Chain("DeletedCount").Build(),
 				},
 			},
 			codegen.Identifier("nil"),

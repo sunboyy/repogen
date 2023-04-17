@@ -8,55 +8,52 @@ import (
 func (g RepositoryGenerator) generateUpdateBody(
 	operation spec.UpdateOperation) (codegen.FunctionBody, error) {
 
-	update, err := g.getMongoUpdate(operation.Update)
+	return updateBodyGenerator{
+		baseMethodGenerator: g.baseMethodGenerator,
+		operation:           operation,
+	}.generate()
+}
+
+type updateBodyGenerator struct {
+	baseMethodGenerator
+	operation spec.UpdateOperation
+}
+
+func (g updateBodyGenerator) generate() (codegen.FunctionBody, error) {
+	update, err := g.convertUpdate(g.operation.Update)
 	if err != nil {
 		return nil, err
 	}
 
-	querySpec, err := g.mongoQuerySpec(operation.Query)
+	querySpec, err := g.convertQuerySpec(g.operation.Query)
 	if err != nil {
 		return nil, err
 	}
 
-	if operation.Mode == spec.QueryModeOne {
+	if g.operation.Mode == spec.QueryModeOne {
 		return g.generateUpdateOneBody(update, querySpec), nil
 	}
 
 	return g.generateUpdateManyBody(update, querySpec), nil
 }
 
-func (g RepositoryGenerator) generateUpdateOneBody(update update,
+func (g updateBodyGenerator) generateUpdateOneBody(update update,
 	querySpec querySpec) codegen.FunctionBody {
 
 	return codegen.FunctionBody{
 		codegen.DeclAssignStatement{
 			Vars: []string{"result", "err"},
 			Values: codegen.StatementList{
-				codegen.ChainStatement{
-					codegen.Identifier("r"),
-					codegen.Identifier("collection"),
-					codegen.CallStatement{
-						FuncName: "UpdateOne",
-						Params: codegen.StatementList{
-							codegen.Identifier("arg0"),
-							querySpec.Code(),
-							update.Code(),
-						},
-					},
-				},
+				codegen.NewChainBuilder("r").
+					Chain("collection").
+					Call("UpdateOne",
+						codegen.Identifier("arg0"),
+						querySpec.Code(),
+						update.Code(),
+					).Build(),
 			},
 		},
-		codegen.IfBlock{
-			Condition: []codegen.Statement{
-				codegen.RawStatement("err != nil"),
-			},
-			Statements: []codegen.Statement{
-				codegen.ReturnStatement{
-					codegen.Identifier("false"),
-					codegen.Identifier("err"),
-				},
-			},
-		},
+		ifErrReturnFalseErr,
 		codegen.ReturnStatement{
 			codegen.RawStatement("result.MatchedCount > 0"),
 			codegen.Identifier("nil"),
@@ -64,46 +61,29 @@ func (g RepositoryGenerator) generateUpdateOneBody(update update,
 	}
 }
 
-func (g RepositoryGenerator) generateUpdateManyBody(update update,
+func (g updateBodyGenerator) generateUpdateManyBody(update update,
 	querySpec querySpec) codegen.FunctionBody {
 
 	return codegen.FunctionBody{
 		codegen.DeclAssignStatement{
 			Vars: []string{"result", "err"},
 			Values: codegen.StatementList{
-				codegen.ChainStatement{
-					codegen.Identifier("r"),
-					codegen.Identifier("collection"),
-					codegen.CallStatement{
-						FuncName: "UpdateMany",
-						Params: codegen.StatementList{
-							codegen.Identifier("arg0"),
-							querySpec.Code(),
-							update.Code(),
-						},
-					},
-				},
+				codegen.NewChainBuilder("r").
+					Chain("collection").
+					Call("UpdateMany",
+						codegen.Identifier("arg0"),
+						querySpec.Code(),
+						update.Code(),
+					).Build(),
 			},
 		},
-		codegen.IfBlock{
-			Condition: []codegen.Statement{
-				codegen.RawStatement("err != nil"),
-			},
-			Statements: []codegen.Statement{
-				codegen.ReturnStatement{
-					codegen.Identifier("0"),
-					codegen.Identifier("err"),
-				},
-			},
-		},
+		ifErrReturn0Err,
 		codegen.ReturnStatement{
 			codegen.CallStatement{
 				FuncName: "int",
 				Params: codegen.StatementList{
-					codegen.ChainStatement{
-						codegen.Identifier("result"),
-						codegen.Identifier("MatchedCount"),
-					},
+					codegen.NewChainBuilder("result").
+						Chain("MatchedCount").Build(),
 				},
 			},
 			codegen.Identifier("nil"),
@@ -111,7 +91,7 @@ func (g RepositoryGenerator) generateUpdateManyBody(update update,
 	}
 }
 
-func (g RepositoryGenerator) getMongoUpdate(updateSpec spec.Update) (update, error) {
+func (g updateBodyGenerator) convertUpdate(updateSpec spec.Update) (update, error) {
 	switch updateSpec := updateSpec.(type) {
 	case spec.UpdateModel:
 		return updateModel{}, nil

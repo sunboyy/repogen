@@ -238,3 +238,28 @@ func concatenateStatements(sep string, statements []Statement) []string {
 
 	return lines
 }
+
+type ChainBuilder []Statement
+
+func NewChainBuilder(object string) ChainBuilder {
+	return ChainBuilder{
+		Identifier(object),
+	}
+}
+
+func (b ChainBuilder) Chain(field string) ChainBuilder {
+	b = append(b, Identifier(field))
+	return b
+}
+
+func (b ChainBuilder) Call(method string, params ...Statement) ChainBuilder {
+	b = append(b, CallStatement{
+		FuncName: method,
+		Params:   params,
+	})
+	return b
+}
+
+func (b ChainBuilder) Build() ChainStatement {
+	return ChainStatement(b)
+}

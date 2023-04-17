@@ -2,7 +2,6 @@ package mongo
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/sunboyy/repogen/internal/code"
 	"github.com/sunboyy/repogen/internal/codegen"
@@ -12,7 +11,9 @@ import (
 // NewGenerator creates a new instance of MongoDB repository generator
 func NewGenerator(structModel code.Struct, interfaceName string) RepositoryGenerator {
 	return RepositoryGenerator{
-		StructModel:   structModel,
+		baseMethodGenerator: baseMethodGenerator{
+			structModel: structModel,
+		},
 		InterfaceName: interfaceName,
 	}
 }
@@ -20,7 +21,7 @@ func NewGenerator(structModel code.Struct, interfaceName string) RepositoryGener
 // RepositoryGenerator is a MongoDB repository generator that provides
 // necessary information required to construct an implementation.
 type RepositoryGenerator struct {
-	StructModel   code.Struct
+	baseMethodGenerator
 	InterfaceName string
 }
 
@@ -137,49 +138,6 @@ func (g RepositoryGenerator) generateMethodImplementation(
 	default:
 		return nil, NewOperationNotSupportedError(operation.Name())
 	}
-}
-
-func (g RepositoryGenerator) mongoQuerySpec(query spec.QuerySpec) (querySpec, error) {
-	var predicates []predicate
-
-	for _, predicateSpec := range query.Predicates {
-		bsonFieldReference, err := g.bsonFieldReference(predicateSpec.FieldReference)
-		if err != nil {
-			return querySpec{}, err
-		}
-
-		predicates = append(predicates, predicate{
-			Field:      bsonFieldReference,
-			Comparator: predicateSpec.Comparator,
-			ParamIndex: predicateSpec.ParamIndex,
-		})
-	}
-
-	return querySpec{
-		Operator:   query.Operator,
-		Predicates: predicates,
-	}, nil
-}
-
-func (g RepositoryGenerator) bsonFieldReference(fieldReference spec.FieldReference) (string, error) {
-	var bsonTags []string
-	for _, field := range fieldReference {
-		tag, err := g.bsonTagFromField(field)
-		if err != nil {
-			return "", err
-		}
-		bsonTags = append(bsonTags, tag)
-	}
-	return strings.Join(bsonTags, "."), nil
-}
-
-func (g RepositoryGenerator) bsonTagFromField(field code.StructField) (string, error) {
-	bsonTag, ok := field.Tags["bson"]
-	if !ok {
-		return "", NewBsonTagNotFoundError(field.Name)
-	}
-
-	return bsonTag[0], nil
 }
 
 func (g RepositoryGenerator) repoImplStructName() string {
