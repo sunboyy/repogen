@@ -128,16 +128,7 @@ type MapStatement struct {
 }
 
 func (stmt MapStatement) CodeLines() []string {
-	lines := []string{fmt.Sprintf("%s{", stmt.Type)}
-	for _, pair := range stmt.Pairs {
-		pairLines := pair.CodeLines()
-		pairLines[len(pairLines)-1] += ","
-		for _, line := range pairLines {
-			lines = append(lines, fmt.Sprintf("\t%s", line))
-		}
-	}
-	lines = append(lines, "}")
-	return lines
+	return generateCollectionCodeLines(stmt.Type, stmt.Pairs)
 }
 
 type MapPair struct {
@@ -145,7 +136,7 @@ type MapPair struct {
 	Value Statement
 }
 
-func (p MapPair) CodeLines() []string {
+func (p MapPair) ItemCodeLines() []string {
 	lines := p.Value.CodeLines()
 	lines[0] = fmt.Sprintf(`"%s": %s`, p.Key, lines[0])
 	return lines
@@ -157,16 +148,7 @@ type StructStatement struct {
 }
 
 func (stmt StructStatement) CodeLines() []string {
-	lines := []string{fmt.Sprintf("%s{", stmt.Type)}
-	for _, pair := range stmt.Pairs {
-		pairLines := pair.CodeLines()
-		pairLines[len(pairLines)-1] += ","
-		for _, line := range pairLines {
-			lines = append(lines, fmt.Sprintf("\t%s", line))
-		}
-	}
-	lines = append(lines, "}")
-	return lines
+	return generateCollectionCodeLines(stmt.Type, stmt.Pairs)
 }
 
 type StructFieldPair struct {
@@ -174,9 +156,26 @@ type StructFieldPair struct {
 	Value Statement
 }
 
-func (p StructFieldPair) CodeLines() []string {
+func (p StructFieldPair) ItemCodeLines() []string {
 	lines := p.Value.CodeLines()
 	lines[0] = fmt.Sprintf(`%s: %s`, p.Key, lines[0])
+	return lines
+}
+
+type collectionItem interface {
+	ItemCodeLines() []string
+}
+
+func generateCollectionCodeLines[T collectionItem](typ string, pairs []T) []string {
+	lines := []string{fmt.Sprintf("%s{", typ)}
+	for _, pair := range pairs {
+		pairLines := pair.ItemCodeLines()
+		pairLines[len(pairLines)-1] += ","
+		for _, line := range pairLines {
+			lines = append(lines, fmt.Sprintf("\t%s", line))
+		}
+	}
+	lines = append(lines, "}")
 	return lines
 }
 

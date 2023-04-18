@@ -277,3 +277,29 @@ func TestIfBlockStatement(t *testing.T) {
 		t.Errorf("expected=%+v actual=%+v", expected, actual)
 	}
 }
+
+func TestChainBuilder(t *testing.T) {
+	expected := codegen.ChainStatement{
+		codegen.Identifier("r"),
+		codegen.Identifier("repository"),
+		codegen.CallStatement{
+			FuncName: "Find",
+			Params: []codegen.Statement{
+				codegen.Identifier("ctx"),
+			},
+		},
+		codegen.CallStatement{
+			FuncName: "Decode",
+		},
+	}
+
+	actual := codegen.NewChainBuilder("r").
+		Chain("repository").
+		Call("Find", codegen.Identifier("ctx")).
+		Call("Decode").
+		Build()
+
+	if !reflect.DeepEqual(expected, actual) {
+		t.Errorf("expected=%+v actual=%+v", expected, actual)
+	}
+}

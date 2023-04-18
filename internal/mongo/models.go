@@ -144,9 +144,9 @@ func (p predicate) Code() codegen.MapPair {
 		argStmt2 := codegen.Identifier(fmt.Sprintf("arg%d", p.ParamIndex+1))
 		return p.createBetweenMapPair(argStmt, argStmt2)
 	case spec.ComparatorIn:
-		return p.createArrayMapPair("$in", argStmt)
+		return p.createSingleComparisonMapPair("$in", argStmt)
 	case spec.ComparatorNotIn:
-		return p.createArrayMapPair("$nin", argStmt)
+		return p.createSingleComparisonMapPair("$nin", argStmt)
 	case spec.ComparatorTrue:
 		return p.createValueMapPair(codegen.Identifier("true"))
 	case spec.ComparatorFalse:
@@ -191,18 +191,6 @@ func (p predicate) createBetweenMapPair(argStmt codegen.Statement,
 				{Key: "$gte", Value: argStmt},
 				{Key: "$lte", Value: argStmt2},
 			},
-		},
-	}
-}
-
-func (p predicate) createArrayMapPair(comparatorKey string,
-	argStmt codegen.Statement) codegen.MapPair {
-
-	return codegen.MapPair{
-		Key: p.Field,
-		Value: codegen.MapStatement{
-			Type:  "bson.M",
-			Pairs: []codegen.MapPair{{Key: comparatorKey, Value: argStmt}},
 		},
 	}
 }
