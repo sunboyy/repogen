@@ -11,7 +11,7 @@ import (
 
 const functionTemplate = `
 func {{.Name}}({{.GenParams}}){{.GenReturns}} {
-{{.Body}}
+{{.Body.Code}}
 }
 `
 
@@ -20,7 +20,7 @@ type FunctionBuilder struct {
 	Name    string
 	Params  []code.Param
 	Returns []code.Type
-	Body    string
+	Body    FunctionBody
 }
 
 // Impl writes function declatation code to the buffer.

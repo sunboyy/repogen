@@ -3,8 +3,9 @@ package mongo
 import (
 	"fmt"
 	"sort"
-	"strings"
 
+	"github.com/sunboyy/repogen/internal/code"
+	"github.com/sunboyy/repogen/internal/codegen"
 	"github.com/sunboyy/repogen/internal/spec"
 )
 
@@ -14,36 +15,54 @@ type updateField struct {
 }
 
 type update interface {
-	Code() string
+	Code() codegen.Statement
 }
 
 type updateModel struct {
 }
 
-func (u updateModel) Code() string {
-	return `		"$set": arg1,`
+func (u updateModel) Code() codegen.Statement {
+	return codegen.MapStatement{
+		Type: "bson.M",
+		Pairs: []codegen.MapPair{
+			{
+				Key:   "$set",
+				Value: codegen.Identifier("arg1"),
+			},
+		},
+	}
 }
 
 type updateFields map[string][]updateField
 
-func (u updateFields) Code() string {
+func (u updateFields) Code() codegen.Statement {
 	var keys []string
 	for k := range u {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
 
-	var lines []string
+	stmt := codegen.MapStatement{
+		Type: "bson.M",
+	}
 	for _, key := range keys {
-		lines = append(lines, fmt.Sprintf(`		"%s": bson.M{`, key))
-
-		for _, field := range u[key] {
-			lines = append(lines, fmt.Sprintf(`			"%s": arg%d,`, field.BsonTag, field.ParamIndex))
+		applicationMap := codegen.MapStatement{
+			Type: "bson.M",
 		}
 
-		lines = append(lines, `		},`)
+		for _, field := range u[key] {
+			applicationMap.Pairs = append(applicationMap.Pairs, codegen.MapPair{
+				Key:   field.BsonTag,
+				Value: codegen.Identifier(fmt.Sprintf("arg%d", field.ParamIndex)),
+			})
+		}
+
+		stmt.Pairs = append(stmt.Pairs, codegen.MapPair{
+			Key:   key,
+			Value: applicationMap,
+		})
 	}
-	return strings.Join(lines, "\n")
+	return stmt
 }
 
 type querySpec struct {
@@ -51,32 +70,52 @@ type querySpec struct {
 	Predicates []predicate
 }
 
-func (q querySpec) Code() string {
-	var predicateCodes []string
+func (q querySpec) Code() codegen.Statement {
+	var predicatePairs []codegen.MapPair
 	for _, predicate := range q.Predicates {
-		predicateCodes = append(predicateCodes, predicate.Code())
+		predicatePairs = append(predicatePairs, predicate.Code())
+	}
+	var predicateMaps []codegen.Statement
+	for _, pair := range predicatePairs {
+		predicateMaps = append(predicateMaps, codegen.MapStatement{
+			Pairs: []codegen.MapPair{pair},
+		})
 	}
 
-	var lines []string
+	stmt := codegen.MapStatement{
+		Type: "bson.M",
+	}
 	switch q.Operator {
 	case spec.OperatorOr:
-		lines = append(lines, `		"$or": []bson.M{`)
-		for _, predicateCode := range predicateCodes {
-			lines = append(lines, fmt.Sprintf(`			{%s},`, predicateCode))
-		}
-		lines = append(lines, `		},`)
+		stmt.Pairs = append(stmt.Pairs, codegen.MapPair{
+			Key: "$or",
+			Value: codegen.SliceStatement{
+				Type: code.ArrayType{
+					ContainedType: code.ExternalType{
+						PackageAlias: "bson",
+						Name:         "M",
+					},
+				},
+				Values: predicateMaps,
+			},
+		})
 	case spec.OperatorAnd:
-		lines = append(lines, `		"$and": []bson.M{`)
-		for _, predicateCode := range predicateCodes {
-			lines = append(lines, fmt.Sprintf(`			{%s},`, predicateCode))
-		}
-		lines = append(lines, `		},`)
+		stmt.Pairs = append(stmt.Pairs, codegen.MapPair{
+			Key: "$and",
+			Value: codegen.SliceStatement{
+				Type: code.ArrayType{
+					ContainedType: code.ExternalType{
+						PackageAlias: "bson",
+						Name:         "M",
+					},
+				},
+				Values: predicateMaps,
+			},
+		})
 	default:
-		for _, predicateCode := range predicateCodes {
-			lines = append(lines, fmt.Sprintf(`		%s,`, predicateCode))
-		}
+		stmt.Pairs = predicatePairs
 	}
-	return strings.Join(lines, "\n")
+	return stmt
 }
 
 type predicate struct {
@@ -85,34 +124,86 @@ type predicate struct {
 	ParamIndex int
 }
 
-func (p predicate) Code() string {
+func (p predicate) Code() codegen.MapPair {
+	argStmt := codegen.Identifier(fmt.Sprintf("arg%d", p.ParamIndex))
+
 	switch p.Comparator {
 	case spec.ComparatorEqual:
-		return fmt.Sprintf(`"%s": arg%d`, p.Field, p.ParamIndex)
+		return p.createValueMapPair(argStmt)
 	case spec.ComparatorNot:
-		return fmt.Sprintf(`"%s": bson.M{"$ne": arg%d}`, p.Field, p.ParamIndex)
+		return p.createSingleComparisonMapPair("$ne", argStmt)
 	case spec.ComparatorLessThan:
-		return fmt.Sprintf(`"%s": bson.M{"$lt": arg%d}`, p.Field, p.ParamIndex)
+		return p.createSingleComparisonMapPair("$lt", argStmt)
 	case spec.ComparatorLessThanEqual:
-		return fmt.Sprintf(`"%s": bson.M{"$lte": arg%d}`, p.Field, p.ParamIndex)
+		return p.createSingleComparisonMapPair("$lte", argStmt)
 	case spec.ComparatorGreaterThan:
-		return fmt.Sprintf(`"%s": bson.M{"$gt": arg%d}`, p.Field, p.ParamIndex)
+		return p.createSingleComparisonMapPair("$gt", argStmt)
 	case spec.ComparatorGreaterThanEqual:
-		return fmt.Sprintf(`"%s": bson.M{"$gte": arg%d}`, p.Field, p.ParamIndex)
+		return p.createSingleComparisonMapPair("$gte", argStmt)
 	case spec.ComparatorBetween:
-		return fmt.Sprintf(`"%s": bson.M{"$gte": arg%d, "$lte": arg%d}`, p.Field, p.ParamIndex, p.ParamIndex+1)
+		argStmt2 := codegen.Identifier(fmt.Sprintf("arg%d", p.ParamIndex+1))
+		return p.createBetweenMapPair(argStmt, argStmt2)
 	case spec.ComparatorIn:
-		return fmt.Sprintf(`"%s": bson.M{"$in": arg%d}`, p.Field, p.ParamIndex)
+		return p.createSingleComparisonMapPair("$in", argStmt)
 	case spec.ComparatorNotIn:
-		return fmt.Sprintf(`"%s": bson.M{"$nin": arg%d}`, p.Field, p.ParamIndex)
+		return p.createSingleComparisonMapPair("$nin", argStmt)
 	case spec.ComparatorTrue:
-		return fmt.Sprintf(`"%s": true`, p.Field)
+		return p.createValueMapPair(codegen.Identifier("true"))
 	case spec.ComparatorFalse:
-		return fmt.Sprintf(`"%s": false`, p.Field)
+		return p.createValueMapPair(codegen.Identifier("false"))
 	case spec.ComparatorExists:
-		return fmt.Sprintf(`"%s": bson.M{"$exists": 1}`, p.Field)
+		return p.createExistsMapPair("1")
 	case spec.ComparatorNotExists:
-		return fmt.Sprintf(`"%s": bson.M{"$exists": 0}`, p.Field)
+		return p.createExistsMapPair("0")
 	}
-	return ""
+	return codegen.MapPair{}
+}
+
+func (p predicate) createValueMapPair(
+	argStmt codegen.Statement) codegen.MapPair {
+
+	return codegen.MapPair{
+		Key:   p.Field,
+		Value: argStmt,
+	}
+}
+
+func (p predicate) createSingleComparisonMapPair(comparatorKey string,
+	argStmt codegen.Statement) codegen.MapPair {
+
+	return codegen.MapPair{
+		Key: p.Field,
+		Value: codegen.MapStatement{
+			Type:  "bson.M",
+			Pairs: []codegen.MapPair{{Key: comparatorKey, Value: argStmt}},
+		},
+	}
+}
+
+func (p predicate) createBetweenMapPair(argStmt codegen.Statement,
+	argStmt2 codegen.Statement) codegen.MapPair {
+
+	return codegen.MapPair{
+		Key: p.Field,
+		Value: codegen.MapStatement{
+			Type: "bson.M",
+			Pairs: []codegen.MapPair{
+				{Key: "$gte", Value: argStmt},
+				{Key: "$lte", Value: argStmt2},
+			},
+		},
+	}
+}
+
+func (p predicate) createExistsMapPair(existsValue string) codegen.MapPair {
+	return codegen.MapPair{
+		Key: p.Field,
+		Value: codegen.MapStatement{
+			Type: "bson.M",
+			Pairs: []codegen.MapPair{{
+				Key:   "$exists",
+				Value: codegen.Identifier(existsValue),
+			}},
+		},
+	}
 }

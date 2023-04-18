@@ -79,17 +79,43 @@ func TestBuilderBuild(t *testing.T) {
 			{Name: "username", Type: code.TypeString},
 		},
 		Returns: []code.Type{code.SimpleType("User")},
-		Body: `	return User{
-		ID:       primitive.NewObjectID(),
-		Username: username,
-	}`,
+		Body: codegen.FunctionBody{
+			codegen.ReturnStatement{
+				codegen.StructStatement{
+					Type: "User",
+					Pairs: []codegen.StructFieldPair{
+						{
+							Key: "ID",
+							Value: codegen.ChainStatement{
+								codegen.Identifier("primitive"),
+								codegen.CallStatement{
+									FuncName: "NewObjectID",
+								},
+							},
+						},
+						{
+							Key:   "Username",
+							Value: codegen.Identifier("username"),
+						},
+					},
+				},
+			},
+		},
 	})
 	builder.AddImplementer(codegen.MethodBuilder{
 		Receiver: codegen.MethodReceiver{Name: "u", Type: code.SimpleType("User")},
 		Name:     "IDHex",
 		Params:   nil,
 		Returns:  []code.Type{code.TypeString},
-		Body:     "	return u.ID.Hex()",
+		Body: codegen.FunctionBody{
+			codegen.ReturnStatement{
+				codegen.ChainStatement{
+					codegen.Identifier("u"),
+					codegen.Identifier("ID"),
+					codegen.CallStatement{FuncName: "Hex"},
+				},
+			},
+		},
 	})
 
 	generatedCode, err := builder.Build()
