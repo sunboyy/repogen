@@ -62,10 +62,7 @@ func TestBuilderBuild(t *testing.T) {
 					PackageAlias: "primitive",
 					Name:         "ObjectID",
 				},
-				Tags: map[string][]string{
-					"bson": {"id"},
-					"json": {"id", "omitempty"},
-				},
+				Tag: `bson:"id" json:"id,omitempty"`,
 			},
 			{
 				Name: "Username",

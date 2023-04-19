@@ -28,25 +28,17 @@ func TestStructBuilderBuild(t *testing.T) {
 					PackageAlias: "primitive",
 					Name:         "ObjectID",
 				},
-				Tags: map[string][]string{
-					"json": {"id", "omitempty"},
-					"bson": {"id", "omitempty"},
-				},
+				Tag: `bson:"id,omitempty" json:"id,omitempty"`,
 			},
 			{
 				Name: "Username",
 				Type: code.TypeString,
-				Tags: map[string][]string{
-					"json": {"username"},
-					"bson": {"username"},
-				},
+				Tag:  `bson:"username" json:"username"`,
 			},
 			{
 				Name: "Age",
 				Type: code.TypeInt,
-				Tags: map[string][]string{
-					"bson": {"age"},
-				},
+				Tag:  `bson:"age"`,
 			},
 			{
 				Name: "orderCount",

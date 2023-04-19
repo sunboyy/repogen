@@ -14,17 +14,17 @@ var (
 	idField = code.StructField{
 		Name: "ID",
 		Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"},
-		Tags: map[string][]string{"bson": {"_id", "omitempty"}},
+		Tag:  `bson:"_id,omitempty"`,
 	}
 	genderField = code.StructField{
 		Name: "Gender",
 		Type: code.SimpleType("Gender"),
-		Tags: map[string][]string{"bson": {"gender"}},
+		Tag:  `bson:"gender"`,
 	}
 	ageField = code.StructField{
 		Name: "Age",
 		Type: code.TypeInt,
-		Tags: map[string][]string{"bson": {"age"}},
+		Tag:  `bson:"age"`,
 	}
 )
 
@@ -36,7 +36,7 @@ func TestGenerateMongoRepository(t *testing.T) {
 			code.StructField{
 				Name: "Username",
 				Type: code.TypeString,
-				Tags: map[string][]string{"bson": {"username"}},
+				Tag:  `bson:"username"`,
 			},
 			genderField,
 			ageField,

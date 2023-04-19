@@ -3,6 +3,7 @@ package code
 import (
 	"fmt"
 	"go/ast"
+	"reflect"
 	"strconv"
 	"strings"
 )
@@ -60,7 +61,7 @@ func extractStructType(name string, structType *ast.StructType) Struct {
 		}
 		strField.Type = getType(field.Type)
 		if field.Tag != nil {
-			strField.Tags = extractStructTag(field.Tag.Value)
+			strField.Tag = extractStructTag(field.Tag.Value)
 		}
 
 		str.Fields = append(str.Fields, strField)
@@ -103,26 +104,8 @@ func extractInterfaceType(name string, interfaceType *ast.InterfaceType) Interfa
 	return intf
 }
 
-func extractStructTag(tagValue string) map[string][]string {
-	tagTokens := strings.Fields(tagValue[1 : len(tagValue)-1])
-
-	tags := make(map[string][]string)
-	for _, tagToken := range tagTokens {
-		colonIndex := strings.Index(tagToken, ":")
-		if colonIndex == -1 {
-			continue
-		}
-		tagKey := tagToken[:colonIndex]
-		tagValue, err := strconv.Unquote(tagToken[colonIndex+1:])
-		if err != nil {
-			fmt.Printf("cannot unquote struct tag %s : %s\n", tagToken[colonIndex+1:], err)
-			continue
-		}
-		tagValues := strings.Split(tagValue, ",")
-		tags[tagKey] = tagValues
-	}
-
-	return tags
+func extractStructTag(tagValue string) reflect.StructTag {
+	return reflect.StructTag(tagValue[1 : len(tagValue)-1])
 }
 
 func extractFunction(name string, comments []string, funcType *ast.FuncType) Method {

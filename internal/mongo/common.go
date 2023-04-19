@@ -63,12 +63,13 @@ func (g baseMethodGenerator) bsonFieldReference(fieldReference spec.FieldReferen
 }
 
 func (g baseMethodGenerator) bsonTagFromField(field code.StructField) (string, error) {
-	bsonTag, ok := field.Tags["bson"]
+	bsonTag, ok := field.Tag.Lookup("bson")
 	if !ok {
 		return "", NewBsonTagNotFoundError(field.Name)
 	}
 
-	return bsonTag[0], nil
+	documentKey := strings.Split(bsonTag, ",")[0]
+	return documentKey, nil
 }
 
 func (g baseMethodGenerator) convertQuerySpec(query spec.QuerySpec) (querySpec, error) {

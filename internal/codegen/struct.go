@@ -3,7 +3,6 @@ package codegen
 import (
 	"bytes"
 	"fmt"
-	"sort"
 	"strings"
 	"text/template"
 
@@ -39,25 +38,10 @@ func (sb StructBuilder) GenFields() string {
 	var fieldLines []string
 	for _, field := range sb.Fields {
 		fieldLine := fmt.Sprintf("\t%s %s", field.Name, field.Type.Code())
-		if len(field.Tags) > 0 {
-			fieldLine += fmt.Sprintf(" `%s`", sb.generateStructTag(field.Tags))
+		if len(field.Tag) > 0 {
+			fieldLine += fmt.Sprintf(" `%s`", string(field.Tag))
 		}
 		fieldLines = append(fieldLines, fieldLine)
 	}
 	return strings.Join(fieldLines, "\n")
-}
-
-func (sb StructBuilder) generateStructTag(tags map[string][]string) string {
-	var tagKeys []string
-	for key := range tags {
-		tagKeys = append(tagKeys, key)
-	}
-	sort.Strings(tagKeys)
-
-	var tagGroups []string
-	for _, key := range tagKeys {
-		tagValue := strings.Join(tags[key], ",")
-		tagGroups = append(tagGroups, fmt.Sprintf("%s:\"%s\"", key, tagValue))
-	}
-	return strings.Join(tagGroups, " ")
 }
