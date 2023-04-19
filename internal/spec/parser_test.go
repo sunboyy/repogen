@@ -745,6 +745,30 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 				},
 			},
 		},
+		{
+			Name: "FindTopNByArg method",
+			Method: code.Method{
+				Name: "FindTop5ByGenderOrderByAgeDesc",
+				Params: []code.Param{
+					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+					{Type: code.SimpleType("Gender")},
+				},
+				Returns: []code.Type{
+					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+					code.TypeError,
+				},
+			},
+			ExpectedOperation: spec.FindOperation{
+				Mode: spec.QueryModeMany,
+				Query: spec.QuerySpec{Predicates: []spec.Predicate{
+					{FieldReference: spec.FieldReference{genderField}, Comparator: spec.ComparatorEqual, ParamIndex: 1},
+				}},
+				Sorts: []spec.Sort{
+					{FieldReference: spec.FieldReference{ageField}, Ordering: spec.OrderingDescending},
+				},
+				Limit: 5,
+			},
+		},
 	}
 
 	for _, testCase := range testTable {
@@ -1602,6 +1626,50 @@ func TestParseInterfaceMethod_Find_Invalid(t *testing.T) {
 				},
 			},
 			ExpectedError: spec.NewUnsupportedReturnError(code.TypeInt, 1),
+		},
+		{
+			Name: "find method with Top keyword but no number and query",
+			Method: code.Method{
+				Name: "FindTop",
+				Returns: []code.Type{
+					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+					code.TypeError,
+				},
+			},
+			ExpectedError: spec.ErrLimitAmountRequired,
+		},
+		{
+			Name: "find method with Top keyword but no number",
+			Method: code.Method{
+				Name: "FindTopAll",
+				Returns: []code.Type{
+					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+					code.TypeError,
+				},
+			},
+			ExpectedError: spec.ErrLimitAmountRequired,
+		},
+		{
+			Name: "find method with TopN keyword where N is not positive",
+			Method: code.Method{
+				Name: "FindTop0All",
+				Returns: []code.Type{
+					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+					code.TypeError,
+				},
+			},
+			ExpectedError: spec.ErrLimitNonPositive,
+		},
+		{
+			Name: "find one method with TopN keyword",
+			Method: code.Method{
+				Name: "FindTop5All",
+				Returns: []code.Type{
+					code.PointerType{ContainedType: code.SimpleType("UserModel")},
+					code.TypeError,
+				},
+			},
+			ExpectedError: spec.ErrLimitOnFindOne,
 		},
 		{
 			Name: "find method without query",

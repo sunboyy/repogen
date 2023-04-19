@@ -1,6 +1,8 @@
 package mongo
 
 import (
+	"strconv"
+
 	"github.com/sunboyy/repogen/internal/code"
 	"github.com/sunboyy/repogen/internal/codegen"
 	"github.com/sunboyy/repogen/internal/spec"
@@ -66,7 +68,7 @@ func (g findBodyGenerator) generateFindOneBody(querySpec querySpec,
 							).Build(),
 					},
 				},
-				codegen.RawStatement("err != nil"),
+				errOccurred,
 			},
 			Statements: []codegen.Statement{
 				returnNilErr,
@@ -91,10 +93,7 @@ func (g findBodyGenerator) generateFindManyBody(querySpec querySpec,
 					Call("Find",
 						codegen.Identifier("arg0"),
 						querySpec.Code(),
-						codegen.NewChainBuilder("options").
-							Call("Find").
-							Call("SetSort", sortsCode).
-							Build(),
+						g.findManyOptions(sortsCode),
 					).Build(),
 			},
 		},
@@ -119,7 +118,7 @@ func (g findBodyGenerator) generateFindManyBody(querySpec querySpec,
 							).Build(),
 					},
 				},
-				codegen.RawStatement("err != nil"),
+				errOccurred,
 			},
 			Statements: []codegen.Statement{
 				returnNilErr,
@@ -130,6 +129,21 @@ func (g findBodyGenerator) generateFindManyBody(querySpec querySpec,
 			codegen.Identifier("nil"),
 		},
 	}
+}
+
+func (g findBodyGenerator) findManyOptions(
+	sortsCode codegen.MapStatement) codegen.Statement {
+
+	optionsBuilder := codegen.NewChainBuilder("options").
+		Call("Find").
+		Call("SetSort", sortsCode)
+	if g.operation.Limit > 0 {
+		optionsBuilder = optionsBuilder.Call("SetLimit",
+			codegen.Identifier(strconv.Itoa(g.operation.Limit)),
+		)
+	}
+
+	return optionsBuilder.Build()
 }
 
 func (g findBodyGenerator) generateSortMap() (

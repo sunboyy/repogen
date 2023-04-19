@@ -41,6 +41,7 @@ type FindOperation struct {
 	Mode  QueryMode
 	Query QuerySpec
 	Sorts []Sort
+	Limit int
 }
 
 // Name returns "Find" operation name

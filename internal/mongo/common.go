@@ -8,6 +8,8 @@ import (
 	"github.com/sunboyy/repogen/internal/spec"
 )
 
+var errOccurred = codegen.RawStatement("err != nil")
+
 var returnNilErr = codegen.ReturnStatement{
 	codegen.Identifier("nil"),
 	codegen.Identifier("err"),
@@ -15,7 +17,7 @@ var returnNilErr = codegen.ReturnStatement{
 
 var ifErrReturnNilErr = codegen.IfBlock{
 	Condition: []codegen.Statement{
-		codegen.RawStatement("err != nil"),
+		errOccurred,
 	},
 	Statements: []codegen.Statement{
 		returnNilErr,
@@ -24,7 +26,7 @@ var ifErrReturnNilErr = codegen.IfBlock{
 
 var ifErrReturn0Err = codegen.IfBlock{
 	Condition: []codegen.Statement{
-		codegen.RawStatement("err != nil"),
+		errOccurred,
 	},
 	Statements: []codegen.Statement{
 		codegen.ReturnStatement{
@@ -36,7 +38,7 @@ var ifErrReturn0Err = codegen.IfBlock{
 
 var ifErrReturnFalseErr = codegen.IfBlock{
 	Condition: []codegen.Statement{
-		codegen.RawStatement("err != nil"),
+		errOccurred,
 	},
 	Statements: []codegen.Statement{
 		codegen.ReturnStatement{
