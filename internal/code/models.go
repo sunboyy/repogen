@@ -2,6 +2,7 @@ package code
 
 import (
 	"fmt"
+	"reflect"
 )
 
 // File is a container of all required components for code generation in the file
@@ -46,7 +47,7 @@ func (fields StructFields) ByName(name string) (StructField, bool) {
 type StructField struct {
 	Name string
 	Type Type
-	Tags map[string][]string
+	Tag  reflect.StructTag
 }
 
 // InterfaceType is a definition of the interface

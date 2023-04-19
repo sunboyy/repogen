@@ -15,37 +15,37 @@ var (
 	idField = code.StructField{
 		Name: "ID",
 		Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"},
-		Tags: map[string][]string{"bson": {"_id", "omitempty"}},
+		Tag:  `bson:"_id,omitempty"`,
 	}
 	genderField = code.StructField{
 		Name: "Gender",
 		Type: code.SimpleType("Gender"),
-		Tags: map[string][]string{"bson": {"gender"}},
+		Tag:  `bson:"gender"`,
 	}
 	ageField = code.StructField{
 		Name: "Age",
 		Type: code.TypeInt,
-		Tags: map[string][]string{"bson": {"age"}},
+		Tag:  `bson:"age"`,
 	}
 	nameField = code.StructField{
 		Name: "Name",
 		Type: code.SimpleType("NameModel"),
-		Tags: map[string][]string{"bson": {"name"}},
+		Tag:  `bson:"name"`,
 	}
 	referrerField = code.StructField{
 		Name: "Referrer",
 		Type: code.PointerType{ContainedType: code.SimpleType("UserModel")},
-		Tags: map[string][]string{"bson": {"referrer"}},
+		Tag:  `bson:"referrer"`,
 	}
 	consentHistoryField = code.StructField{
 		Name: "ConsentHistory",
 		Type: code.ArrayType{ContainedType: code.SimpleType("ConsentHistory")},
-		Tags: map[string][]string{"bson": {"consent_history"}},
+		Tag:  `bson:"consent_history"`,
 	}
 	enabledField = code.StructField{
 		Name: "Enabled",
 		Type: code.TypeBool,
-		Tags: map[string][]string{"bson": {"enabled"}},
+		Tag:  `bson:"enabled"`,
 	}
 	accessTokenField = code.StructField{
 		Name: "AccessToken",
@@ -55,7 +55,7 @@ var (
 	firstNameField = code.StructField{
 		Name: "First",
 		Type: code.TypeString,
-		Tags: map[string][]string{"bson": {"first"}},
+		Tag:  `bson:"first"`,
 	}
 )
 
@@ -66,7 +66,7 @@ var userModel = code.Struct{
 		code.StructField{
 			Name: "Username",
 			Type: code.TypeString,
-			Tags: map[string][]string{"bson": {"username"}},
+			Tag:  `bson:"username"`,
 		},
 		genderField,
 		ageField,

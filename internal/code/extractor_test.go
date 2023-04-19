@@ -61,6 +61,7 @@ import (
 type UserModel struct {
 	ID       primitive.ObjectID ` + "`bson:\"_id,omitempty\" json:\"id\"`" + `
 	Username string             ` + "`bson:\"username\" json:\"username\"`" + `
+	Password string             ` + "`bson:\"password\" json:\"-\" note:\"This should be hidden.\"`" + `
 }`,
 			ExpectedOutput: code.File{
 				PackageName: "user",
@@ -71,18 +72,17 @@ type UserModel struct {
 							code.StructField{
 								Name: "ID",
 								Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"},
-								Tags: map[string][]string{
-									"bson": {"_id", "omitempty"},
-									"json": {"id"},
-								},
+								Tag:  `bson:"_id,omitempty" json:"id"`,
 							},
 							code.StructField{
 								Name: "Username",
 								Type: code.TypeString,
-								Tags: map[string][]string{
-									"bson": {"username"},
-									"json": {"username"},
-								},
+								Tag:  `bson:"username" json:"username"`,
+							},
+							code.StructField{
+								Name: "Password",
+								Type: code.TypeString,
+								Tag:  `bson:"password" json:"-" note:"This should be hidden."`,
 							},
 						},
 					},
@@ -268,18 +268,12 @@ type UserRepository interface {
 							code.StructField{
 								Name: "ID",
 								Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"},
-								Tags: map[string][]string{
-									"bson": {"_id", "omitempty"},
-									"json": {"id"},
-								},
+								Tag:  `bson:"_id,omitempty" json:"id"`,
 							},
 							code.StructField{
 								Name: "Username",
 								Type: code.TypeString,
-								Tags: map[string][]string{
-									"bson": {"username"},
-									"json": {"username"},
-								},
+								Tag:  `bson:"username" json:"username"`,
 							},
 						},
 					},
