@@ -14,6 +14,9 @@ var (
 	ErrInvalidParam         = errors.New("spec: parameters do not match the query")
 	ErrInvalidUpdateFields  = errors.New("spec: update fields are invalid")
 	ErrContextParamRequired = errors.New("spec: context parameter is required")
+	ErrLimitAmountRequired  = errors.New("spec: limit amount is required")
+	ErrLimitNonPositive     = errors.New("spec: limit value must be positive")
+	ErrLimitOnFindOne       = errors.New("spec: cannot specify limit on find one")
 )
 
 // NewUnsupportedReturnError creates unsupportedReturnError

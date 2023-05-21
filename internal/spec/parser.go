@@ -1,6 +1,8 @@
 package spec
 
 import (
+	"strconv"
+
 	"github.com/fatih/camelcase"
 	"github.com/sunboyy/repogen/internal/code"
 )
@@ -114,6 +116,14 @@ func (p interfaceMethodParser) parseFindOperation(tokens []string) (Operation, e
 		return nil, err
 	}
 
+	limit, tokens, err := p.parseFindTop(tokens)
+	if err != nil {
+		return nil, err
+	}
+	if mode == QueryModeOne && limit != 0 {
+		return nil, ErrLimitOnFindOne
+	}
+
 	queryTokens, sortTokens := p.splitQueryAndSortTokens(tokens)
 
 	querySpec, err := p.parseQuery(queryTokens, 1)
@@ -138,7 +148,30 @@ func (p interfaceMethodParser) parseFindOperation(tokens []string) (Operation, e
 		Mode:  mode,
 		Query: querySpec,
 		Sorts: sorts,
+		Limit: limit,
 	}, nil
+}
+
+func (p interfaceMethodParser) parseFindTop(tokens []string) (int, []string,
+	error) {
+
+	if len(tokens) >= 1 && tokens[0] == "Top" {
+		if len(tokens) < 2 {
+			return 0, nil, ErrLimitAmountRequired
+		}
+
+		limit, err := strconv.Atoi(tokens[1])
+		if err != nil {
+			return 0, nil, ErrLimitAmountRequired
+		}
+
+		if limit <= 0 {
+			return 0, nil, ErrLimitNonPositive
+		}
+		return limit, tokens[2:], nil
+	}
+
+	return 0, tokens, nil
 }
 
 func (p interfaceMethodParser) parseSort(rawTokens []string) ([]Sort, error) {

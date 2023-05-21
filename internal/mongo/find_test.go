@@ -827,6 +827,38 @@ func TestGenerateMethod_Find(t *testing.T) {
 	}
 	return entities, nil`,
 		},
+		{
+			Name: "find with limit",
+			MethodSpec: spec.MethodSpec{
+				Name: "FindTop5AllOrderByAgeDesc",
+				Params: []code.Param{
+					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
+				},
+				Returns: []code.Type{
+					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
+					code.TypeError,
+				},
+				Operation: spec.FindOperation{
+					Mode: spec.QueryModeMany,
+					Sorts: []spec.Sort{
+						{FieldReference: spec.FieldReference{ageField}, Ordering: spec.OrderingDescending},
+					},
+					Limit: 5,
+				},
+			},
+			ExpectedBody: `	cursor, err := r.collection.Find(arg0, bson.M{
+	}, options.Find().SetSort(bson.M{
+		"age": -1,
+	}).SetLimit(5))
+	if err != nil {
+		return nil, err
+	}
+	var entities []*UserModel
+	if err := cursor.All(arg0, &entities); err != nil {
+		return nil, err
+	}
+	return entities, nil`,
+		},
 	}
 
 	for _, testCase := range testTable {
