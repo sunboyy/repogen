@@ -14,7 +14,7 @@ type UserModel struct {
 	City        string             `bson:"city" json:"city"`
 }
 
-//go:generate repogen -src=user.go -dest=user_repo.go -model=UserModel -repo=UserRepository
+//go:generate repogen -dest=user_repo.go -model=UserModel -repo=UserRepository
 
 // UserRepository is an interface that describes the specification of querying
 // user data in the database.
