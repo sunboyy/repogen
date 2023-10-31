@@ -27,35 +27,38 @@ This getting started tutorial shows a simple example on how to use repogen. You 
 
 ### Step 1: Download and install repogen
 
-Run this command in your terminal to download and install repogen
+Run this command in your terminal to download and install the latest version of repogen
 
 ```
-$ go get github.com/sunboyy/repogen
+$ go install github.com/sunboyy/repogen@latest
 ```
 
 ### Step 2: Write a repository specification
 
-Write repository specification as an interface in the same file as the model struct. There are 5 types of operations that are currently supported and are determined by the first word of the method name. Single-entity and multiple-entity modes are determined be the first return value. More complex queries can also be written.
+Write repository specification as an interface in the same package as the model struct. There are 5 types of operations that are currently supported and are determined on the first word of the method name. Single-entity and multiple-entity modes are determined on the first return value. More complex queries can also be written.
 
 ```go
 // You write this interface specification (comment is optional)
 type UserRepository interface {
-	// InsertOne stores userModel into the database and returns inserted ID if insertion
-	// succeeds and returns error if insertion fails.
+	// InsertOne stores userModel into the database and returns inserted ID if
+	// insertion succeeds and returns error if insertion fails.
 	InsertOne(ctx context.Context, userModel *UserModel) (interface{}, error)
 
-	// FindByUsername queries user by username. If a user with specified username exists,
-	// the user will be returned. Otherwise, error will be returned.
+	// FindByUsername queries user by username. If a user with specified
+	// username exists, the user will be returned. Otherwise, error will be
+	// returned.
 	FindByUsername(ctx context.Context, username string) (*UserModel, error)
 
-	// UpdateDisplayNameByID updates a user with the specified ID with a new display name.
-	// If there is a user matches the query, it will return true. Error will be returned
-	// only when error occurs while accessing the database.
+	// UpdateDisplayNameByID updates a user with the specified ID with a new
+	// display name. If there is a user matches the query, it will return true.
+	// Error will be returned only when error occurs while accessing the
+	// database.
 	UpdateDisplayNameByID(ctx context.Context, displayName string, id primitive.ObjectID) (bool, error)
 
-	// DeleteByCity deletes users that have `city` value match the parameter and returns
-	// the match count. The error will be returned only when error occurs while accessing
-	// the database. This is a MANY mode because the first return type is an integer.
+	// DeleteByCity deletes users that have `city` value match the parameter
+	// and returns the match count. The error will be returned only when an
+	// error occurs while accessing the database. This is a MANY mode because
+	// the first return type is an integer.
 	DeleteByCity(ctx context.Context, city string) (int, error)
 
 	// CountByCity returns the number of rows that match the given city parameter. If an
@@ -69,22 +72,22 @@ type UserRepository interface {
 Run the repogen to generate a repository implementation from the interface. The following command is an example to generate `UserRepository` interface implementation defined in `examples/getting-started/user.go` to the destination file `examples/getting-started/user_repo.go`. See [Usage](#Usage) section below for more detailed information.
 
 ```
-$ repogen -src=examples/getting-started/user.go -dest=examples/getting-started/user_repo.go \
+$ repogen -pkg=examples/getting-started -dest=examples/getting-started/user_repo.go \
         -model=UserModel -repo=UserRepository
 ```
 
-You can also write the above command in the `go:generate` format inside Go files in order to generate the implementation when `go generate` command is executed.
+You can also write the above command in the `go:generate` format inside Go files in order to generate the implementation when `go generate` command is executed. If the command is written in the corresponding package, the `-pkg` flag can be ignored.
 
 ## Usage
 
 ### Running Options
 
-The `repogen` command is used to generate source code for a given Go file containing repository interface to be implemented. Run `repogen -h` to see all available options while the necessary options for code generation are described as follows:
+The `repogen` command is used to generate source code for a given Go package containing repository interface to be implemented. Run `repogen -h` to see all available options while the options for code generation are described as follows:
 
-- `-src`: A Go file containing struct model and repository interface to be implemented
-- `-dest`: A file to which to write the resulting source code. If not specified, the source code will be printed to the standard output.
+- `-pkg`: A path to the package containing struct model and repository interface to be implemented. (Default: Current working directory)
+- `-dest`: A path to the file to output the resulting source code. (Default: Print to standard output)
 - `-model`: The name of the base struct model that represents the data stored in MongoDB for a specific collection.
-- `-repo`: The name of the repository interface that you want to be implemented.
+- `-repo`: The name of the repository interface that you want to be implemented according to the `-model` flag.
 
 ### Method Definition
 
@@ -144,6 +147,16 @@ FindByCityOrderByAgeAsc(ctx context.Context, city string) ([]*Model, error)
 
 // This will sort results by age descendingly
 FindByCityOrderByAgeDesc(ctx context.Context, city string) ([]*Model, error)
+```
+
+If you want the result to be limited to the maximum of N items, you can also specify `TopN` immediately after the `Find` keyword.
+
+```go
+// This will return top 5 youngest users.
+FindTop5AllOrderByAge(ctx context.Context) ([]*Model, error)
+
+// This will return top 5 youngest users in the specified city.
+FindTop5ByCityOrderByAge(ctx context.Context, city string) ([]*Model, error)
 ```
 
 #### Update operation
@@ -247,10 +260,12 @@ When you specify the query like `ByAge`, it finds documents that contains age va
 | `NotIn`            | not in slice $1 | `FindByCityNotIn(ctx, $1)`           |
 | `True`             | == `true`       | `FindByEnabledTrue(ctx)`             |
 | `False`            | == `false`      | `FindByEnabledFalse(ctx)`            |
+| `Exists`           | key exists      | `FindByContactExists(ctx)`           |
+| `NotExists`        | key not exists  | `FindByContactNotExists(ctx)`        |
 
 To apply these comparators to the query, place the keyword after the field name such as `ByAgeGreaterThan`. You can also use comparators along with `And` and `Or` operators. For example, `ByGenderNotOrAgeLessThan` will apply `Not` comparator to the `Gender` field and `LessThan` comparator to the `Age` field.
 
-`Between`, `In`, `NotIn`, `True` and `False` comparators are special in terms of parameter requirements. `Between` needs two parameters to perform the query, `In` and `NotIn` needs a slice instead of its raw type and `True` and `False` doesn't need any parameter. The example is provided below:
+`Between`, `In`, `NotIn`, `True`, `False`, `Exists` and `NotExists` comparators are special in terms of parameter requirements. `Between` needs two parameters to perform the query, `In` and `NotIn` needs a slice instead of its raw type and `True`, `False`, `Exists` and `NotExists` doesn't need any parameter. The example is provided below:
 
 ```go
 FindByAgeBetween(ctx context.Context, fromAge int, toAge int) ([]*UserModel, error)
@@ -260,6 +275,8 @@ FindByCityNotIn(ctx context.Context, cities []string) ([]*UserModel, error)
 
 FindByEnabledTrue(ctx context.Context) ([]*UserModel, error)
 FindByEnabledFalse(ctx context.Context) ([]*UserModel, error)
+FindByContactExists(ctx context.Context) ([]*UserModel, error)
+FindByContactNotExists(ctx context.Context) ([]*UserModel, error)
 ```
 
 Assuming that the `Age` field in the `UserModel` struct is of type `int`, it requires that there must be two `int` parameters provided for `Age` field in the method. And assuming that the `City` field in the `UserModel` struct is of type `string`, it requires that the parameter that is provided to the query must be of slice type.
