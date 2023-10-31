@@ -15,9 +15,5 @@ builds:
       - amd64
       - arm64
       - "386"
-archives:
-  - replacements:
-      386: i386
-      amd64: x86_64
 snapshot:
   name_template: "{{ .Tag }}-next"
