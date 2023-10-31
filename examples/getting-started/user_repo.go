@@ -49,7 +49,7 @@ func (r *UserRepositoryMongo) UpdateDisplayNameByID(arg0 context.Context, arg1 s
 	if err != nil {
 		return false, err
 	}
-	return result.MatchedCount > 0, err
+	return result.MatchedCount > 0, nil
 }
 
 func (r *UserRepositoryMongo) DeleteByCity(arg0 context.Context, arg1 string) (int, error) {
