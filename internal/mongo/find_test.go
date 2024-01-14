@@ -80,7 +80,8 @@ func TestGenerateMethod_Find(t *testing.T) {
 	if err != nil {
 		return nil, err
 	}
-	var entities []*UserModel
+	entities := []*UserModel{
+	}
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}
@@ -166,7 +167,8 @@ func TestGenerateMethod_Find(t *testing.T) {
 	if err != nil {
 		return nil, err
 	}
-	var entities []*UserModel
+	entities := []*UserModel{
+	}
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}
@@ -218,7 +220,8 @@ func TestGenerateMethod_Find(t *testing.T) {
 	if err != nil {
 		return nil, err
 	}
-	var entities []*UserModel
+	entities := []*UserModel{
+	}
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}
@@ -258,7 +261,8 @@ func TestGenerateMethod_Find(t *testing.T) {
 	if err != nil {
 		return nil, err
 	}
-	var entities []*UserModel
+	entities := []*UserModel{
+	}
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}
@@ -298,7 +302,8 @@ func TestGenerateMethod_Find(t *testing.T) {
 	if err != nil {
 		return nil, err
 	}
-	var entities []*UserModel
+	entities := []*UserModel{
+	}
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}
@@ -338,7 +343,8 @@ func TestGenerateMethod_Find(t *testing.T) {
 	if err != nil {
 		return nil, err
 	}
-	var entities []*UserModel
+	entities := []*UserModel{
+	}
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}
@@ -378,7 +384,8 @@ func TestGenerateMethod_Find(t *testing.T) {
 	if err != nil {
 		return nil, err
 	}
-	var entities []*UserModel
+	entities := []*UserModel{
+	}
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}
@@ -418,7 +425,8 @@ func TestGenerateMethod_Find(t *testing.T) {
 	if err != nil {
 		return nil, err
 	}
-	var entities []*UserModel
+	entities := []*UserModel{
+	}
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}
@@ -460,7 +468,8 @@ func TestGenerateMethod_Find(t *testing.T) {
 	if err != nil {
 		return nil, err
 	}
-	var entities []*UserModel
+	entities := []*UserModel{
+	}
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}
@@ -500,7 +509,8 @@ func TestGenerateMethod_Find(t *testing.T) {
 	if err != nil {
 		return nil, err
 	}
-	var entities []*UserModel
+	entities := []*UserModel{
+	}
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}
@@ -540,7 +550,8 @@ func TestGenerateMethod_Find(t *testing.T) {
 	if err != nil {
 		return nil, err
 	}
-	var entities []*UserModel
+	entities := []*UserModel{
+	}
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}
@@ -577,7 +588,8 @@ func TestGenerateMethod_Find(t *testing.T) {
 	if err != nil {
 		return nil, err
 	}
-	var entities []*UserModel
+	entities := []*UserModel{
+	}
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}
@@ -614,7 +626,8 @@ func TestGenerateMethod_Find(t *testing.T) {
 	if err != nil {
 		return nil, err
 	}
-	var entities []*UserModel
+	entities := []*UserModel{
+	}
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}
@@ -653,7 +666,8 @@ func TestGenerateMethod_Find(t *testing.T) {
 	if err != nil {
 		return nil, err
 	}
-	var entities []*UserModel
+	entities := []*UserModel{
+	}
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}
@@ -692,7 +706,8 @@ func TestGenerateMethod_Find(t *testing.T) {
 	if err != nil {
 		return nil, err
 	}
-	var entities []*UserModel
+	entities := []*UserModel{
+	}
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}
@@ -723,7 +738,8 @@ func TestGenerateMethod_Find(t *testing.T) {
 	if err != nil {
 		return nil, err
 	}
-	var entities []*UserModel
+	entities := []*UserModel{
+	}
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}
@@ -754,7 +770,8 @@ func TestGenerateMethod_Find(t *testing.T) {
 	if err != nil {
 		return nil, err
 	}
-	var entities []*UserModel
+	entities := []*UserModel{
+	}
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}
@@ -788,7 +805,8 @@ func TestGenerateMethod_Find(t *testing.T) {
 	if err != nil {
 		return nil, err
 	}
-	var entities []*UserModel
+	entities := []*UserModel{
+	}
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}
@@ -821,7 +839,8 @@ func TestGenerateMethod_Find(t *testing.T) {
 	if err != nil {
 		return nil, err
 	}
-	var entities []*UserModel
+	entities := []*UserModel{
+	}
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}
@@ -853,7 +872,8 @@ func TestGenerateMethod_Find(t *testing.T) {
 	if err != nil {
 		return nil, err
 	}
-	var entities []*UserModel
+	entities := []*UserModel{
+	}
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}

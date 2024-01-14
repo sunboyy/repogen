@@ -38,7 +38,7 @@ func (r *UserComparatorRepositoryMongo) FindByAgeGreaterThan(arg0 context.Contex
 	if err != nil {
 		return nil, err
 	}
-	var entities []*UserModel
+	entities := []*UserModel{}
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}
@@ -54,7 +54,7 @@ func (r *UserComparatorRepositoryMongo) FindByAgeGreaterThanEqual(arg0 context.C
 	if err != nil {
 		return nil, err
 	}
-	var entities []*UserModel
+	entities := []*UserModel{}
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}
@@ -70,7 +70,7 @@ func (r *UserComparatorRepositoryMongo) FindByAgeLessThan(arg0 context.Context, 
 	if err != nil {
 		return nil, err
 	}
-	var entities []*UserModel
+	entities := []*UserModel{}
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}
@@ -86,7 +86,7 @@ func (r *UserComparatorRepositoryMongo) FindByAgeLessThanEqual(arg0 context.Cont
 	if err != nil {
 		return nil, err
 	}
-	var entities []*UserModel
+	entities := []*UserModel{}
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}
@@ -103,7 +103,7 @@ func (r *UserComparatorRepositoryMongo) FindByAgeBetween(arg0 context.Context, a
 	if err != nil {
 		return nil, err
 	}
-	var entities []*UserModel
+	entities := []*UserModel{}
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}
@@ -119,7 +119,7 @@ func (r *UserComparatorRepositoryMongo) FindByCityNot(arg0 context.Context, arg1
 	if err != nil {
 		return nil, err
 	}
-	var entities []*UserModel
+	entities := []*UserModel{}
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}
@@ -135,7 +135,7 @@ func (r *UserComparatorRepositoryMongo) FindByCityIn(arg0 context.Context, arg1 
 	if err != nil {
 		return nil, err
 	}
-	var entities []*UserModel
+	entities := []*UserModel{}
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}
@@ -151,7 +151,7 @@ func (r *UserComparatorRepositoryMongo) FindByCityNotIn(arg0 context.Context, ar
 	if err != nil {
 		return nil, err
 	}
-	var entities []*UserModel
+	entities := []*UserModel{}
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}
@@ -165,7 +165,7 @@ func (r *UserComparatorRepositoryMongo) FindByBannedTrue(arg0 context.Context) (
 	if err != nil {
 		return nil, err
 	}
-	var entities []*UserModel
+	entities := []*UserModel{}
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}
@@ -179,7 +179,7 @@ func (r *UserComparatorRepositoryMongo) FindByBannedFalse(arg0 context.Context) 
 	if err != nil {
 		return nil, err
 	}
-	var entities []*UserModel
+	entities := []*UserModel{}
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}
