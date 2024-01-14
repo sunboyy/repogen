@@ -24,11 +24,7 @@ var (
 
 func init() {
 	// create a connection to the database
-	client, err := mongo.NewClient(options.Client().ApplyURI(connectionString))
-	if err != nil {
-		panic(err)
-	}
-	err = client.Connect(context.TODO())
+	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(connectionString))
 	if err != nil {
 		panic(err)
 	}

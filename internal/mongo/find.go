@@ -98,11 +98,16 @@ func (g findBodyGenerator) generateFindManyBody(querySpec querySpec,
 			},
 		},
 		ifErrReturnNilErr,
-		codegen.DeclStatement{
-			Name: "entities",
-			Type: code.ArrayType{
-				ContainedType: code.PointerType{
-					ContainedType: code.SimpleType(g.structModel.Name),
+		codegen.DeclAssignStatement{
+			Vars: []string{"entities"},
+			Values: []codegen.Statement{
+				codegen.SliceStatement{
+					Type: code.ArrayType{
+						ContainedType: code.PointerType{
+							ContainedType: code.SimpleType(g.structModel.Name),
+						},
+					},
+					Values: []codegen.Statement{},
 				},
 			},
 		},
