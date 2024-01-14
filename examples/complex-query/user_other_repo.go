@@ -43,7 +43,7 @@ func (r *UserOtherRepositoryMongo) FindByAgeAndCity(arg0 context.Context, arg1 i
 	if err != nil {
 		return nil, err
 	}
-	var entities []*UserModel
+	entities := []*UserModel{}
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}
@@ -66,7 +66,7 @@ func (r *UserOtherRepositoryMongo) FindByGenderOrAgeGreaterThan(arg0 context.Con
 	if err != nil {
 		return nil, err
 	}
-	var entities []*UserModel
+	entities := []*UserModel{}
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}
@@ -80,7 +80,7 @@ func (r *UserOtherRepositoryMongo) FindTop5AllOrderByAge(arg0 context.Context) (
 	if err != nil {
 		return nil, err
 	}
-	var entities []*UserModel
+	entities := []*UserModel{}
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
 	}
