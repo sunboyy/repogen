@@ -21,12 +21,19 @@ type Import struct {
 
 // Struct is a definition of the struct
 type Struct struct {
-	Name   string
-	Fields StructFields
+	PackageAlias string
+	Name         string
+	Fields       StructFields
 }
 
 // ReferencedType returns a type variable of this struct
 func (str Struct) ReferencedType() Type {
+	if str.PackageAlias != "" {
+		return ExternalType{
+			PackageAlias: str.PackageAlias,
+			Name:         str.Name,
+		}
+	}
 	return SimpleType(str.Name)
 }
 
