@@ -46,7 +46,7 @@ func (g findBodyGenerator) generateFindOneBody(querySpec querySpec,
 	return codegen.FunctionBody{
 		codegen.DeclStatement{
 			Name: "entity",
-			Type: code.SimpleType(g.structModel.Name),
+			Type: g.structModel.ReferencedType(),
 		},
 		codegen.IfBlock{
 			Condition: []codegen.Statement{
