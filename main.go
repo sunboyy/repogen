@@ -4,6 +4,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"go/ast"
 	"go/parser"
 	"go/token"
 	"log"
@@ -13,6 +14,7 @@ import (
 	"github.com/sunboyy/repogen/internal/code"
 	"github.com/sunboyy/repogen/internal/generator"
 	"github.com/sunboyy/repogen/internal/spec"
+	"golang.org/x/tools/go/packages"
 )
 
 const usageText = `repogen generates MongoDB repository implementation from repository interface
@@ -82,18 +84,40 @@ func printVersion() {
 }
 
 func generateFromRequest(pkgDir, structModelName, repositoryInterfaceName string) (string, error) {
-	fset := token.NewFileSet()
-	dir, err := parser.ParseDir(fset, pkgDir, nil, parser.ParseComments)
-	if err != nil {
-		return "", err
-	}
-
-	pkg, err := code.ParsePackage(dir)
+	pkg, err := parsePkg(pkgDir)
 	if err != nil {
 		return "", err
 	}
 
 	return generateRepository(pkg, structModelName, repositoryInterfaceName)
+}
+
+func parsePkg(pkgDir string) (code.Package, error) {
+	dirParser := func(dir string) (pkgs map[string]*ast.Package, err error) {
+		return parser.ParseDir(token.NewFileSet(), dir, nil, parser.ParseComments)
+	}
+
+	pkgPserser := code.NewPackageParser(dirParser, parsePackageID)
+	return pkgPserser.ParsePackage(pkgDir)
+}
+
+var (
+	errNoPackagesFound = errors.New("no packages found")
+)
+
+func parsePackageID(dir string) (string, error) {
+	cfg := &packages.Config{
+		Mode: packages.NeedFiles | packages.NeedSyntax | packages.NeedTypes,
+		Dir:  dir,
+	}
+	pkgs, err := packages.Load(cfg)
+	if err != nil {
+		return "", err
+	}
+	if len(pkgs) > 0 {
+		return pkgs[0].ID, nil
+	}
+	return "", errNoPackagesFound
 }
 
 var (

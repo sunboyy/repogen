@@ -140,16 +140,29 @@ func init() {
 	goTestFile, _ = parser.ParseFile(fset, "", goTestFileData, parser.ParseComments)
 }
 
+const testpkgpath = "github/usr/codepkgsuccess"
+
+var (
+	mockPackPathParser = func(pkgName string) (string, error) {
+		return testpkgpath, nil
+	}
+)
+
 func TestParsePackage_Success(t *testing.T) {
-	pkg, err := code.ParsePackage(map[string]*ast.Package{
-		"codepkgsuccess": {
-			Files: map[string]*ast.File{
-				"file1.go":      goImplFile1,
-				"file2.go":      goImplFile2,
-				"file1_test.go": goTestFile,
+	mockDirParser := func(dir string) (pkgs map[string]*ast.Package, err error) {
+		return map[string]*ast.Package{
+			"codepkgsuccess": {
+				Files: map[string]*ast.File{
+					"file1.go":      goImplFile1,
+					"file2.go":      goImplFile2,
+					"file1_test.go": goTestFile,
+				},
 			},
-		},
-	})
+		}, nil
+	}
+
+	parser := code.NewPackageParser(mockDirParser, mockPackPathParser)
+	pkg, err := parser.ParsePackage(testpkgpath)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -175,18 +188,26 @@ func TestParsePackage_Success(t *testing.T) {
 	if _, ok := pkg.Structs["TestCase"]; ok {
 		t.Error("unexpected struct 'TestCase' in test file")
 	}
+
+	if pkg.Path != testpkgpath {
+		t.Errorf("expected package path '%s', got '%s'", testpkgpath, pkg.Path)
+	}
 }
 
 func TestParsePackage_AmbiguousPackageName(t *testing.T) {
-	_, err := code.ParsePackage(map[string]*ast.Package{
-		"codepkgsuccess": {
-			Files: map[string]*ast.File{
-				"file1.go": goImplFile1,
-				"file2.go": goImplFile2,
-				"file3.go": goImplFile3,
+	mockDirParser := func(dir string) (pkgs map[string]*ast.Package, err error) {
+		return map[string]*ast.Package{
+			"codepkgsuccess": {
+				Files: map[string]*ast.File{
+					"file1.go": goImplFile1,
+					"file2.go": goImplFile2,
+					"file3.go": goImplFile3,
+				},
 			},
-		},
-	})
+		}, nil
+	}
+	parser := code.NewPackageParser(mockDirParser, mockPackPathParser)
+	_, err := parser.ParsePackage(testpkgpath)
 
 	if !errors.Is(err, code.ErrAmbiguousPackageName) {
 		t.Errorf(
@@ -198,15 +219,19 @@ func TestParsePackage_AmbiguousPackageName(t *testing.T) {
 }
 
 func TestParsePackage_DuplicateStructs(t *testing.T) {
-	_, err := code.ParsePackage(map[string]*ast.Package{
-		"codepkgsuccess": {
-			Files: map[string]*ast.File{
-				"file1.go": goImplFile1,
-				"file2.go": goImplFile2,
-				"file4.go": goImplFile4,
+	mockDirParser := func(dir string) (pkgs map[string]*ast.Package, err error) {
+		return map[string]*ast.Package{
+			"codepkgsuccess": {
+				Files: map[string]*ast.File{
+					"file1.go": goImplFile1,
+					"file2.go": goImplFile2,
+					"file4.go": goImplFile4,
+				},
 			},
-		},
-	})
+		}, nil
+	}
+	parser := code.NewPackageParser(mockDirParser, mockPackPathParser)
+	_, err := parser.ParsePackage(testpkgpath)
 
 	if !errors.Is(err, code.DuplicateStructError("User")) {
 		t.Errorf(
@@ -218,15 +243,19 @@ func TestParsePackage_DuplicateStructs(t *testing.T) {
 }
 
 func TestParsePackage_DuplicateInterfaces(t *testing.T) {
-	_, err := code.ParsePackage(map[string]*ast.Package{
-		"codepkgsuccess": {
-			Files: map[string]*ast.File{
-				"file1.go": goImplFile1,
-				"file2.go": goImplFile2,
-				"file5.go": goImplFile5,
+	mockDirParser := func(dir string) (pkgs map[string]*ast.Package, err error) {
+		return map[string]*ast.Package{
+			"codepkgsuccess": {
+				Files: map[string]*ast.File{
+					"file1.go": goImplFile1,
+					"file2.go": goImplFile2,
+					"file5.go": goImplFile5,
+				},
 			},
-		},
-	})
+		}, nil
+	}
+	parser := code.NewPackageParser(mockDirParser, mockPackPathParser)
+	_, err := parser.ParsePackage(testpkgpath)
 
 	if !errors.Is(err, code.DuplicateInterfaceError("OrderService")) {
 		t.Errorf(
