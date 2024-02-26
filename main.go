@@ -104,7 +104,7 @@ func generateFromRequest(pkgDir, modelDirPtr, structModelName,
 		if !ok {
 			return "", errStructNotFound
 		}
-		return generateRepository(pkg, structModel, repositoryInterfaceName, destPkgName)
+		return generateRepository(pkg, structModel, repositoryInterfaceName, "", destPkgName)
 	} else {
 		modelPkg, err := parsePkg(modelDirPtr)
 		if err != nil {
@@ -115,7 +115,7 @@ func generateFromRequest(pkgDir, modelDirPtr, structModelName,
 			return "", errStructNotFound
 		}
 		structModel.PackageAlias = modelPkg.Name
-		return generateRepository(pkg, structModel, repositoryInterfaceName, destPkgName)
+		return generateRepository(pkg, structModel, repositoryInterfaceName, modelPkg.Path, destPkgName)
 	}
 }
 
@@ -147,7 +147,7 @@ func parsePackageID(dir string) (string, error) {
 	return "", errNoPackagesFound
 }
 
-func generateRepository(pkg code.Package, structModel code.Struct, repositoryInterfaceName,
+func generateRepository(pkg code.Package, structModel code.Struct, repositoryInterfaceName, modelPkgPath,
 	destPkgName string) (string, error) {
 	intf, ok := pkg.Interfaces[repositoryInterfaceName]
 	if !ok {
@@ -163,5 +163,5 @@ func generateRepository(pkg code.Package, structModel code.Struct, repositoryInt
 		methodSpecs = append(methodSpecs, methodSpec)
 	}
 
-	return generator.GenerateRepository(destPkgName, structModel, intf.Name, methodSpecs)
+	return generator.GenerateRepository(modelPkgPath, destPkgName, structModel, intf.Name, methodSpecs)
 }
