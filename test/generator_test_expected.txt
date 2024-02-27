@@ -10,7 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func NewUserRepository(collection *mongo.Collection) UserRepository {
+func NewUserRepository(collection *mongo.Collection) *UserRepositoryMongo {
 	return &UserRepositoryMongo{
 		collection: collection,
 	}
