@@ -245,15 +245,15 @@ func (p interfaceMethodParser) extractModelOrSliceReturns(returns []code.Type) (
 
 	switch t := returns[0].(type) {
 	case code.PointerType:
-		pointerType := code.PointerType{ContainedType: p.StructModel.ReferencedType()}
-		if t == pointerType {
+		expectedType := code.PointerType{ContainedType: p.StructModel.ReferencedType()}
+		if t == expectedType {
 			return QueryModeOne, nil
 		}
 
 	case code.ArrayType:
 		pointerType := code.PointerType{ContainedType: p.StructModel.ReferencedType()}
-		arrayType := code.ArrayType{ContainedType: pointerType}
-		if t == arrayType {
+		expectedType := code.ArrayType{ContainedType: pointerType}
+		if t == expectedType {
 			return QueryModeMany, nil
 		}
 	}

@@ -32,10 +32,10 @@ func main() {
 	versionPtr := flag.Bool("version", false, "print version of repogen")
 	pkgDirPtr := flag.String("pkg", ".", "package directory to scan for repository interface")
 	destPtr := flag.String("dest", "", "destination file")
+	destPkgPtr := flag.String("dest-pkg", "", "destination package name")
 	modelDirPtr := flag.String("model-dir", ".", "package directory to scan for model struct")
 	modelPtr := flag.String("model", "", "model struct name")
 	repoPtr := flag.String("repo", "", "repository interface name")
-	destPkgName := flag.String("dest-pkg", "", "destination package name")
 
 	flag.Parse()
 
@@ -53,7 +53,7 @@ func main() {
 		log.Fatal("-repo flag required")
 	}
 
-	code, err := generateFromRequest(*pkgDirPtr, *modelDirPtr, *modelPtr, *repoPtr, *destPkgName)
+	code, err := generateFromRequest(*pkgDirPtr, *modelDirPtr, *modelPtr, *repoPtr, *destPkgPtr)
 	if err != nil {
 		panic(err)
 	}
@@ -91,7 +91,7 @@ var (
 )
 
 func generateFromRequest(
-	pkgDir, modelDirPtr, structModelName, repositoryInterfaceName, destPkgName string,
+	pkgDir, modelDir, structModelName, repositoryInterfaceName, destPkgName string,
 ) (string, error) {
 	pkg, err := parsePkg(pkgDir)
 	if err != nil {
@@ -100,14 +100,14 @@ func generateFromRequest(
 	if destPkgName == "" {
 		destPkgName = pkg.Name
 	}
-	if pkgDir == modelDirPtr {
+	if pkgDir == modelDir {
 		structModel, ok := pkg.Structs[structModelName]
 		if !ok {
 			return "", errStructNotFound
 		}
 		return generateRepository(pkg, structModel, repositoryInterfaceName, "", destPkgName)
 	} else {
-		modelPkg, err := parsePkg(modelDirPtr)
+		modelPkg, err := parsePkg(modelDir)
 		if err != nil {
 			return "", err
 		}
