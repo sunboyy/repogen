@@ -28,8 +28,16 @@ func main() {
 	versionPtr := flag.Bool("version", false, "print version of repogen")
 	pkgDirPtr := flag.String("pkg", ".", "package directory to scan for repository interface")
 	destPtr := flag.String("dest", "", "destination file")
-	destPkgPtr := flag.String("dest-pkg", "", "destination package name")
-	modelDirPtr := flag.String("model-dir", ".", "package directory to scan for model struct")
+	destPkgPtr := flag.String(
+		"dest-pkg",
+		"",
+		"destination package name. If not set, will consider as in the same package as repository interface.",
+	)
+	modelDirPtr := flag.String(
+		"model-dir",
+		"",
+		"package directory to scan for model struct. If not set, will fallback to -pkg.",
+	)
 	modelPtr := flag.String("model", "", "model struct name")
 	repoPtr := flag.String("repo", "", "repository interface name")
 
@@ -92,6 +100,9 @@ func generateFromRequest(
 	pkg, err := parsePkg(pkgDir)
 	if err != nil {
 		return "", err
+	}
+	if modelDir == "" {
+		modelDir = pkgDir
 	}
 	if destPkgName == "" {
 		destPkgName = pkg.Name
