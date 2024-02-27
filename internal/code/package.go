@@ -14,14 +14,14 @@ var (
 	errNoPackagesFound = errors.New("no packages found")
 )
 
-type dirparseFn func(dir string) (pkgs map[string]*ast.Package, err error)
+type parseDirFn func(dir string) (map[string]*ast.Package, error)
 
-type pkgPathParseFn func(dir string) (path string, err error)
+type parsePackagePathFn func(dir string) (string, error)
 
-func dirParser(dir string) (pkgs map[string]*ast.Package, err error) {
+func defaultParseDir(dir string) (map[string]*ast.Package, error) {
 	return parser.ParseDir(token.NewFileSet(), dir, nil, parser.ParseComments)
 }
-func parsePackagePath(dir string) (string, error) {
+func defaultPackagePathParser(dir string) (string, error) {
 	cfg := &packages.Config{
 		Mode: packages.NeedName,
 		Dir:  dir,
@@ -37,14 +37,14 @@ func parsePackagePath(dir string) (string, error) {
 }
 
 type PackageParser struct {
-	DirParser     dirparseFn
-	PkgPathParser pkgPathParseFn
+	DirParser     parseDirFn
+	PkgPathParser parsePackagePathFn
 }
 
 func NewPackageParser() *PackageParser {
 	return &PackageParser{
-		DirParser:     dirParser,
-		PkgPathParser: parsePackagePath,
+		DirParser:     defaultParseDir,
+		PkgPathParser: defaultPackagePathParser,
 	}
 }
 

@@ -128,8 +128,8 @@ func generateFromRequest(
 }
 
 func parsePkg(pkgDir string) (code.Package, error) {
-	pkgPserser := code.NewPackageParser()
-	return pkgPserser.ParsePackage(pkgDir)
+	pkgParser := code.NewPackageParser()
+	return pkgParser.ParsePackage(pkgDir)
 }
 
 func generateRepository(
