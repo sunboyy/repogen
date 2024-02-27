@@ -39,13 +39,11 @@ func (r *UserRepositoryMongo) FindByUsername(arg0 context.Context, arg1 string) 
 	return &entity, nil
 }
 
-func (r *UserRepositoryMongo) UpdateDisplayNameByID(arg0 context.Context, arg1 string, arg2 string) (bool, error) {
+func (r *UserRepositoryMongo) UpdateByID(arg0 context.Context, arg1 *cross_package.UserModel, arg2 string) (bool, error) {
 	result, err := r.collection.UpdateOne(arg0, bson.M{
 		"_id": arg2,
 	}, bson.M{
-		"$set": bson.M{
-			"display_name": arg1,
-		},
+		"$set": arg1,
 	})
 	if err != nil {
 		return false, err

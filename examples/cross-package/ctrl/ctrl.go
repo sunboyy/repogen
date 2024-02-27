@@ -19,11 +19,8 @@ type UserRepository interface {
 	// returned.
 	FindByUsername(ctx context.Context, username string) (*cross_package.UserModel, error)
 
-	// UpdateDisplayNameByID updates a user with the specified ID with a new
-	// display name. If there is a user matches the query, it will return
-	// true. Error will be returned only when error occurs while accessing
-	// the database.
-	UpdateDisplayNameByID(ctx context.Context, displayName string, id string) (bool, error)
+	// UpdateByID updates a single document by ID
+	UpdateByID(ctx context.Context, user *cross_package.UserModel, id string) (bool, error)
 
 	// DeleteByCity deletes users that have `city` value match the parameter
 	// and returns the match count. The error will be returned only when
