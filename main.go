@@ -134,7 +134,7 @@ var (
 
 func parsePackageID(dir string) (string, error) {
 	cfg := &packages.Config{
-		Mode: packages.NeedFiles | packages.NeedSyntax | packages.NeedTypes,
+		Mode: packages.NeedName,
 		Dir:  dir,
 	}
 	pkgs, err := packages.Load(cfg)
