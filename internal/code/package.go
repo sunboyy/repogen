@@ -1,22 +1,50 @@
 package code
 
 import (
+	"errors"
 	"go/ast"
+	"go/parser"
+	"go/token"
 	"strings"
+
+	"golang.org/x/tools/go/packages"
 )
 
-type DirParser func(dir string) (pkgs map[string]*ast.Package, err error)
-type PKGPathParser func(dir string) (string, error)
+var (
+	errNoPackagesFound = errors.New("no packages found")
+)
 
-type PackageParser struct {
-	dirParser     DirParser
-	pkgPathParser PKGPathParser
+type dirparseFn func(dir string) (pkgs map[string]*ast.Package, err error)
+
+type pkgPathParseFn func(dir string) (path string, err error)
+
+func dirParser(dir string) (pkgs map[string]*ast.Package, err error) {
+	return parser.ParseDir(token.NewFileSet(), dir, nil, parser.ParseComments)
+}
+func parsePackagePath(dir string) (string, error) {
+	cfg := &packages.Config{
+		Mode: packages.NeedName,
+		Dir:  dir,
+	}
+	pkgs, err := packages.Load(cfg)
+	if err != nil {
+		return "", err
+	}
+	if len(pkgs) > 0 {
+		return pkgs[0].ID, nil
+	}
+	return "", errNoPackagesFound
 }
 
-func NewPackageParser(dirParser DirParser, pkgPathParser PKGPathParser) *PackageParser {
+type PackageParser struct {
+	DirParser     dirparseFn
+	PkgPathParser pkgPathParseFn
+}
+
+func NewPackageParser() *PackageParser {
 	return &PackageParser{
-		dirParser:     dirParser,
-		pkgPathParser: pkgPathParser,
+		DirParser:     dirParser,
+		PkgPathParser: parsePackagePath,
 	}
 }
 
@@ -25,12 +53,12 @@ func NewPackageParser(dirParser DirParser, pkgPathParser PKGPathParser) *Package
 func (p *PackageParser) ParsePackage(pkgDir string) (Package, error) {
 	pkg := NewPackage()
 	var err error
-	pkg.Path, err = p.pkgPathParser(pkgDir)
+	pkg.Path, err = p.PkgPathParser(pkgDir)
 	if err != nil {
 		return Package{}, err
 	}
 
-	pkgs, err := p.dirParser(pkgDir)
+	pkgs, err := p.DirParser(pkgDir)
 	if err != nil {
 		return Package{}, err
 	}

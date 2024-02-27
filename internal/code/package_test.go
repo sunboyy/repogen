@@ -161,7 +161,10 @@ func TestParsePackage_Success(t *testing.T) {
 		}, nil
 	}
 
-	parser := code.NewPackageParser(mockDirParser, mockPackPathParser)
+	parser := code.NewPackageParser()
+	parser.DirParser = mockDirParser
+	parser.PkgPathParser = mockPackPathParser
+
 	pkg, err := parser.ParsePackage(testpkgpath)
 	if err != nil {
 		t.Fatal(err)
@@ -206,7 +209,10 @@ func TestParsePackage_AmbiguousPackageName(t *testing.T) {
 			},
 		}, nil
 	}
-	parser := code.NewPackageParser(mockDirParser, mockPackPathParser)
+	parser := code.NewPackageParser()
+	parser.DirParser = mockDirParser
+	parser.PkgPathParser = mockPackPathParser
+
 	_, err := parser.ParsePackage(testpkgpath)
 
 	if !errors.Is(err, code.ErrAmbiguousPackageName) {
@@ -230,7 +236,10 @@ func TestParsePackage_DuplicateStructs(t *testing.T) {
 			},
 		}, nil
 	}
-	parser := code.NewPackageParser(mockDirParser, mockPackPathParser)
+	parser := code.NewPackageParser()
+	parser.DirParser = mockDirParser
+	parser.PkgPathParser = mockPackPathParser
+
 	_, err := parser.ParsePackage(testpkgpath)
 
 	if !errors.Is(err, code.DuplicateStructError("User")) {
@@ -254,7 +263,9 @@ func TestParsePackage_DuplicateInterfaces(t *testing.T) {
 			},
 		}, nil
 	}
-	parser := code.NewPackageParser(mockDirParser, mockPackPathParser)
+	parser := code.NewPackageParser()
+	parser.DirParser = mockDirParser
+	parser.PkgPathParser = mockPackPathParser
 	_, err := parser.ParsePackage(testpkgpath)
 
 	if !errors.Is(err, code.DuplicateInterfaceError("OrderService")) {
