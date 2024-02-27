@@ -21,7 +21,7 @@ type Import struct {
 
 // Struct is a definition of the struct
 type Struct struct {
-	PackageAlias string
+	PackageAlias string // alias of the package, could be empty if it's in local package
 	Name         string
 	Fields       StructFields
 }
