@@ -76,7 +76,9 @@ func (g RepositoryGenerator) GenerateConstructor() (codegen.FunctionBuilder, err
 			},
 		},
 		Returns: []code.Type{
-			code.SimpleType(g.InterfaceName),
+			code.PointerType{
+				ContainedType: code.SimpleType(g.repoImplStructName()),
+			},
 		},
 		Body: codegen.FunctionBody{
 			codegen.ReturnStatement{
