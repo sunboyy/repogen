@@ -90,8 +90,9 @@ var (
 	errInterfaceNotFound = errors.New("interface not found")
 )
 
-func generateFromRequest(pkgDir, modelDirPtr, structModelName,
-	repositoryInterfaceName, destPkgName string) (string, error) {
+func generateFromRequest(
+	pkgDir, modelDirPtr, structModelName, repositoryInterfaceName, destPkgName string,
+) (string, error) {
 	pkg, err := parsePkg(pkgDir)
 	if err != nil {
 		return "", err
@@ -147,8 +148,11 @@ func parsePackageID(dir string) (string, error) {
 	return "", errNoPackagesFound
 }
 
-func generateRepository(pkg code.Package, structModel code.Struct, repositoryInterfaceName, modelPkgPath,
-	destPkgName string) (string, error) {
+func generateRepository(
+	pkg code.Package,
+	structModel code.Struct,
+	repositoryInterfaceName, modelPkgPath, destPkgName string,
+) (string, error) {
 	intf, ok := pkg.Interfaces[repositoryInterfaceName]
 	if !ok {
 		return "", errInterfaceNotFound
@@ -163,5 +167,11 @@ func generateRepository(pkg code.Package, structModel code.Struct, repositoryInt
 		methodSpecs = append(methodSpecs, methodSpec)
 	}
 
-	return generator.GenerateRepository(modelPkgPath, destPkgName, structModel, intf.Name, methodSpecs)
+	return generator.GenerateRepository(
+		modelPkgPath,
+		destPkgName,
+		structModel,
+		intf.Name,
+		methodSpecs,
+	)
 }
