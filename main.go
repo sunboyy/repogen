@@ -56,11 +56,15 @@ func main() {
 		printUsage()
 		log.Fatal("-repo flag required")
 	}
-
-	code, err := generateFromRequest(*pkgDirPtr, *modelDirPtr, *modelPtr, *repoPtr, *destPkgPtr)
+	flow, err := NewFlow(*pkgDirPtr, *repoPtr, *modelDirPtr, *modelPtr, *destPkgPtr)
 	if err != nil {
 		panic(err)
 	}
+	code, err := flow.GenerateRepository()
+	// code, err := generateFromRequest(*pkgDirPtr, *modelDirPtr, *modelPtr, *repoPtr, *destPkgPtr)
+	// if err != nil {
+	// 	panic(err)
+	// }
 
 	dest := os.Stdout
 	if *destPtr != "" {
@@ -94,68 +98,173 @@ var (
 	errInterfaceNotFound = errors.New("interface not found")
 )
 
-func generateFromRequest(
-	pkgDir, modelDir, structModelName, repositoryInterfaceName, destPkgName string,
-) (string, error) {
-	pkg, err := parsePkg(pkgDir)
-	if err != nil {
-		return "", err
-	}
-	if modelDir == "" {
-		modelDir = pkgDir
-	}
-	if destPkgName == "" {
-		destPkgName = pkg.Name
-	}
-	if pkgDir == modelDir {
-		structModel, ok := pkg.Structs[structModelName]
-		if !ok {
-			return "", errStructNotFound
-		}
-		return generateRepository(pkg, structModel, repositoryInterfaceName, "", destPkgName)
-	} else {
-		modelPkg, err := parsePkg(modelDir)
-		if err != nil {
-			return "", err
-		}
-		structModel, ok := modelPkg.Structs[structModelName]
-		if !ok {
-			return "", errStructNotFound
-		}
-		structModel.PackageAlias = modelPkg.Name
-		return generateRepository(pkg, structModel, repositoryInterfaceName, modelPkg.Path, destPkgName)
-	}
-}
+// func generateFromRequest(
+// 	pkgDir, modelDir, structModelName, repositoryInterfaceName, destPkgName string,
+// ) (string, error) {
+// 	pkg, err := parsePkg(pkgDir)
+// 	if err != nil {
+// 		return "", err
+// 	}
+// 	if modelDir == "" {
+// 		modelDir = pkgDir
+// 	}
+// 	if destPkgName == "" {
+// 		destPkgName = pkg.Name
+// 	}
+// 	if pkgDir == modelDir {
+// 		structModel, ok := pkg.Structs[structModelName]
+// 		if !ok {
+// 			return "", errStructNotFound
+// 		}
+// 		return generateRepository(pkg, structModel, repositoryInterfaceName, "", destPkgName)
+// 	} else {
+// 		modelPkg, err := parsePkg(modelDir)
+// 		if err != nil {
+// 			return "", err
+// 		}
+// 		structModel, ok := modelPkg.Structs[structModelName]
+// 		if !ok {
+// 			return "", errStructNotFound
+// 		}
+// 		structModel.PackageAlias = modelPkg.Name
+// 		return generateRepository(pkg, structModel, repositoryInterfaceName, modelPkg.Path, destPkgName)
+// 	}
+// }
 
 func parsePkg(pkgDir string) (code.Package, error) {
 	pkgParser := code.NewPackageParser()
 	return pkgParser.ParsePackage(pkgDir)
 }
 
-func generateRepository(
-	pkg code.Package,
-	structModel code.Struct,
-	repositoryInterfaceName, modelPkgPath, destPkgName string,
-) (string, error) {
-	intf, ok := pkg.Interfaces[repositoryInterfaceName]
+// func generateRepository(
+// 	pkg code.Package,
+// 	structModel code.Struct,
+// 	repositoryInterfaceName, modelPkgPath, destPkgName string,
+// ) (string, error) {
+// 	intf, ok := pkg.Interfaces[repositoryInterfaceName]
+// 	if !ok {
+// 		return "", errInterfaceNotFound
+// 	}
+
+// 	var methodSpecs []spec.MethodSpec
+// 	for _, method := range intf.Methods {
+// 		methodSpec, err := spec.ParseInterfaceMethod(pkg.Structs, structModel, method)
+// 		if err != nil {
+// 			return "", err
+// 		}
+// 		methodSpecs = append(methodSpecs, methodSpec)
+// 	}
+
+// 	return generator.GenerateRepository(
+// 		modelPkgPath,
+// 		destPkgName,
+// 		structModel,
+// 		intf.Name,
+// 		methodSpecs,
+// 	)
+// }
+
+type InterfaceSource struct {
+	dir string
+	typ code.InterfaceType
+	pkg code.Package
+}
+type ModelSource struct {
+	dir string
+	typ code.Struct
+	pkg code.Package
+}
+type DestInfo struct {
+	pkgName string
+}
+
+type Flow struct {
+	intf  InterfaceSource
+	model ModelSource
+	dest  DestInfo
+}
+
+func NewFlow(
+	interfaceDir, interfaceName,
+	modelDir, modelName,
+	destPkgName string,
+) (*Flow, error) {
+	// interface
+	pkg, err := parsePkg(interfaceDir)
+	if err != nil {
+		return nil, err
+	}
+	intface, ok := pkg.Interfaces[interfaceName]
 	if !ok {
-		return "", errInterfaceNotFound
+		return nil, errInterfaceNotFound
+	}
+	intf := InterfaceSource{
+		dir: interfaceDir,
+		pkg: pkg,
+		typ: intface,
 	}
 
-	var methodSpecs []spec.MethodSpec
-	for _, method := range intf.Methods {
-		methodSpec, err := spec.ParseInterfaceMethod(pkg.Structs, structModel, method)
+	// model
+	var model ModelSource
+	if modelDir == "" { // fallback to interfaceDir
+		modelPkg, err := parsePkg(interfaceDir)
+		if err != nil {
+			return nil, err
+		}
+		structModel, ok := modelPkg.Structs[modelName]
+		if !ok {
+			return nil, errStructNotFound
+		}
+		model = ModelSource{
+			dir: interfaceDir,
+			pkg: modelPkg,
+			typ: structModel,
+		}
+	} else {
+		modelPkg, err := parsePkg(modelDir)
+		if err != nil {
+			return nil, err
+		}
+		structModel, ok := modelPkg.Structs[modelName]
+		if !ok {
+			return nil, errStructNotFound
+		}
+		structModel.PackageAlias = modelPkg.Name
+		model = ModelSource{
+			dir: interfaceDir,
+			pkg: modelPkg,
+			typ: structModel,
+		}
+	}
+
+	if destPkgName == "" {
+		destPkgName = pkg.Name
+	}
+	dest := DestInfo{
+		pkgName: destPkgName,
+	}
+
+	return &Flow{
+		intf:  intf,
+		model: model,
+		dest:  dest,
+	}, nil
+}
+
+func (f *Flow) GenerateRepository() (string, error) {
+	methodSpecs := make([]spec.MethodSpec, len(f.intf.typ.Methods))
+	for i, method := range f.intf.typ.Methods {
+		methodSpec, err := spec.ParseInterfaceMethod(f.intf.pkg.Structs, f.model.typ, method)
 		if err != nil {
 			return "", err
 		}
-		methodSpecs = append(methodSpecs, methodSpec)
+		methodSpecs[i] = methodSpec
 	}
-
 	return generator.GenerateRepository(
-		modelPkgPath,
-		destPkgName,
-		structModel,
-		intf.Name,
+		f.model.pkg.Path,
+		f.dest.pkgName,
+		f.model.typ,
+		f.intf.typ.Name,
 		methodSpecs,
 	)
 }
