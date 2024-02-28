@@ -1,14 +1,68 @@
 package code
 
 import (
+	"errors"
 	"go/ast"
+	"go/parser"
+	"go/token"
 	"strings"
+
+	"golang.org/x/tools/go/packages"
 )
 
-// ParsePackage extracts package name, struct and interface implementations from
-// map[string]*ast.Package. Test files will be ignored.
-func ParsePackage(pkgs map[string]*ast.Package) (Package, error) {
+var (
+	errNoPackagesFound = errors.New("no packages found")
+)
+
+type parseDirFn func(dir string) (map[string]*ast.Package, error)
+
+type parsePackagePathFn func(dir string) (string, error)
+
+func defaultParseDir(dir string) (map[string]*ast.Package, error) {
+	return parser.ParseDir(token.NewFileSet(), dir, nil, parser.ParseComments)
+}
+func defaultPackagePathParser(dir string) (string, error) {
+	cfg := &packages.Config{
+		Mode: packages.NeedName,
+		Dir:  dir,
+	}
+	pkgs, err := packages.Load(cfg)
+	if err != nil {
+		return "", err
+	}
+	if len(pkgs) > 0 {
+		return pkgs[0].ID, nil
+	}
+	return "", errNoPackagesFound
+}
+
+type PackageParser struct {
+	DirParser     parseDirFn
+	PkgPathParser parsePackagePathFn
+}
+
+func NewPackageParser() *PackageParser {
+	return &PackageParser{
+		DirParser:     defaultParseDir,
+		PkgPathParser: defaultPackagePathParser,
+	}
+}
+
+// ParsePackage extracts package name, struct and interface implementations from pkgDir.
+// Test files will be ignored.
+func (p *PackageParser) ParsePackage(pkgDir string) (Package, error) {
 	pkg := NewPackage()
+	var err error
+	pkg.Path, err = p.PkgPathParser(pkgDir)
+	if err != nil {
+		return Package{}, err
+	}
+
+	pkgs, err := p.DirParser(pkgDir)
+	if err != nil {
+		return Package{}, err
+	}
+
 	for _, astPkg := range pkgs {
 		for fileName, file := range astPkg.Files {
 			if strings.HasSuffix(fileName, "_test.go") {
@@ -27,6 +81,7 @@ func ParsePackage(pkgs map[string]*ast.Package) (Package, error) {
 // from ParsePackage.
 type Package struct {
 	Name       string
+	Path       string // the path of package itself
 	Structs    map[string]Struct
 	Interfaces map[string]InterfaceType
 }

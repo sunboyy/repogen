@@ -9,7 +9,7 @@ import (
 
 // GenerateRepository generates repository implementation code from repository
 // interface specification.
-func GenerateRepository(packageName string, structModel code.Struct,
+func GenerateRepository(modelPackagePath, packageName string, structModel code.Struct,
 	interfaceName string, methodSpecs []spec.MethodSpec) (string, error) {
 
 	generator := mongo.NewGenerator(structModel, interfaceName)
@@ -17,7 +17,7 @@ func GenerateRepository(packageName string, structModel code.Struct,
 	codeBuilder := codegen.NewBuilder(
 		"repogen",
 		packageName,
-		generator.Imports(),
+		append(generator.Imports(), []code.Import{{Path: modelPackagePath}}),
 	)
 
 	constructorBuilder, err := generator.GenerateConstructor()
