@@ -1,25 +1,18 @@
 package code
 
-import (
-	"go/ast"
-	"strings"
-)
+import "golang.org/x/tools/go/packages"
 
 // ParsePackage extracts package name, struct and interface implementations from
-// map[string]*ast.Package. Test files will be ignored.
-func ParsePackage(pkgs map[string]*ast.Package) (Package, error) {
-	pkg := NewPackage()
-	for _, astPkg := range pkgs {
-		for fileName, file := range astPkg.Files {
-			if strings.HasSuffix(fileName, "_test.go") {
-				continue
-			}
+// *packages.Package.
+func ParsePackage(pkgPkg *packages.Package) (Package, error) {
+	pkg := NewPackage(pkgPkg.Name)
 
-			if err := pkg.addFile(ExtractComponents(file)); err != nil {
-				return Package{}, err
-			}
+	for _, file := range pkgPkg.Syntax {
+		if err := pkg.addFile(ExtractComponents(file)); err != nil {
+			return Package{}, err
 		}
 	}
+
 	return pkg, nil
 }
 
@@ -32,8 +25,9 @@ type Package struct {
 }
 
 // NewPackage is a constructor function for Package.
-func NewPackage() Package {
+func NewPackage(name string) Package {
 	return Package{
+		Name:       name,
 		Structs:    map[string]Struct{},
 		Interfaces: map[string]InterfaceType{},
 	}
@@ -42,12 +36,6 @@ func NewPackage() Package {
 // addFile alters the Package by adding struct and interface implementations in
 // the extracted file. If the package name conflicts, it will return error.
 func (pkg *Package) addFile(file File) error {
-	if pkg.Name == "" {
-		pkg.Name = file.PackageName
-	} else if pkg.Name != file.PackageName {
-		return ErrAmbiguousPackageName
-	}
-
 	for _, structImpl := range file.Structs {
 		if _, ok := pkg.Structs[structImpl.Name]; ok {
 			return DuplicateStructError(structImpl.Name)
@@ -55,11 +43,11 @@ func (pkg *Package) addFile(file File) error {
 		pkg.Structs[structImpl.Name] = structImpl
 	}
 
-	for _, interfaceImpl := range file.Interfaces {
-		if _, ok := pkg.Interfaces[interfaceImpl.Name]; ok {
-			return DuplicateInterfaceError(interfaceImpl.Name)
+	for interfaceName, interfaceImpl := range file.Interfaces {
+		if _, ok := pkg.Interfaces[interfaceName]; ok {
+			return DuplicateInterfaceError(interfaceName)
 		}
-		pkg.Interfaces[interfaceImpl.Name] = interfaceImpl
+		pkg.Interfaces[interfaceName] = interfaceImpl
 	}
 
 	return nil

@@ -21,7 +21,7 @@ func TestExtractComponents(t *testing.T) {
 			Name:   "package name",
 			Source: `package user`,
 			ExpectedOutput: code.File{
-				PackageName: "user",
+				Interfaces: map[string]code.InterfaceType{},
 			},
 		},
 		{
@@ -31,11 +31,11 @@ func TestExtractComponents(t *testing.T) {
 import ctx "context"
 import "go.mongodb.org/mongo-driver/bson/primitive"`,
 			ExpectedOutput: code.File{
-				PackageName: "user",
 				Imports: []code.Import{
 					{Name: "ctx", Path: "context"},
 					{Path: "go.mongodb.org/mongo-driver/bson/primitive"},
 				},
+				Interfaces: map[string]code.InterfaceType{},
 			},
 		},
 		{
@@ -47,11 +47,11 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )`,
 			ExpectedOutput: code.File{
-				PackageName: "user",
 				Imports: []code.Import{
 					{Name: "ctx", Path: "context"},
 					{Path: "go.mongodb.org/mongo-driver/bson/primitive"},
 				},
+				Interfaces: map[string]code.InterfaceType{},
 			},
 		},
 		{
@@ -64,7 +64,6 @@ type UserModel struct {
 	Password string             ` + "`bson:\"password\" json:\"-\" note:\"This should be hidden.\"`" + `
 }`,
 			ExpectedOutput: code.File{
-				PackageName: "user",
 				Structs: []code.Struct{
 					{
 						Name: "UserModel",
@@ -87,6 +86,7 @@ type UserModel struct {
 						},
 					},
 				},
+				Interfaces: map[string]code.InterfaceType{},
 			},
 		},
 		{
@@ -107,10 +107,8 @@ type UserRepository interface {
 	}
 }`,
 			ExpectedOutput: code.File{
-				PackageName: "user",
-				Interfaces: []code.InterfaceType{
-					{
-						Name: "UserRepository",
+				Interfaces: map[string]code.InterfaceType{
+					"UserRepository": {
 						Methods: []code.Method{
 							{
 								Name: "FindByID",
@@ -256,7 +254,6 @@ type UserRepository interface {
 }
 `,
 			ExpectedOutput: code.File{
-				PackageName: "user",
 				Imports: []code.Import{
 					{Path: "context"},
 					{Path: "go.mongodb.org/mongo-driver/bson/primitive"},
@@ -278,9 +275,8 @@ type UserRepository interface {
 						},
 					},
 				},
-				Interfaces: []code.InterfaceType{
-					{
-						Name: "UserRepository",
+				Interfaces: map[string]code.InterfaceType{
+					"UserRepository": {
 						Methods: []code.Method{
 							{
 								Name: "FindByID",

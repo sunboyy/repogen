@@ -4,8 +4,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"go/parser"
-	"go/token"
 	"log"
 	"os"
 	"path/filepath"
@@ -13,6 +11,7 @@ import (
 	"github.com/sunboyy/repogen/internal/code"
 	"github.com/sunboyy/repogen/internal/generator"
 	"github.com/sunboyy/repogen/internal/spec"
+	"golang.org/x/tools/go/packages"
 )
 
 const usageText = `repogen generates MongoDB repository implementation from repository interface
@@ -82,13 +81,20 @@ func printVersion() {
 }
 
 func generateFromRequest(pkgDir, structModelName, repositoryInterfaceName string) (string, error) {
-	fset := token.NewFileSet()
-	dir, err := parser.ParseDir(fset, pkgDir, nil, parser.ParseComments)
+	cfg := packages.Config{
+		Mode: packages.NeedName | packages.NeedSyntax | packages.NeedTypes,
+	}
+	pkgs, err := packages.Load(&cfg, pkgDir)
 	if err != nil {
 		return "", err
 	}
+	if len(pkgs) == 0 {
+		return "", errNoPackageFound
+	}
 
-	pkg, err := code.ParsePackage(dir)
+	pkgPkg := pkgs[0]
+
+	pkg, err := code.ParsePackage(pkgPkg)
 	if err != nil {
 		return "", err
 	}
@@ -97,6 +103,7 @@ func generateFromRequest(pkgDir, structModelName, repositoryInterfaceName string
 }
 
 var (
+	errNoPackageFound    = errors.New("no package found")
 	errStructNotFound    = errors.New("struct not found")
 	errInterfaceNotFound = errors.New("interface not found")
 )
@@ -121,5 +128,5 @@ func generateRepository(pkg code.Package, structModelName, repositoryInterfaceNa
 		methodSpecs = append(methodSpecs, methodSpec)
 	}
 
-	return generator.GenerateRepository(pkg.Name, structModel, intf.Name, methodSpecs)
+	return generator.GenerateRepository(pkg.Name, structModel, repositoryInterfaceName, methodSpecs)
 }
