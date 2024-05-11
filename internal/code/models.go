@@ -7,10 +7,9 @@ import (
 
 // File is a container of all required components for code generation in the file
 type File struct {
-	PackageName string
-	Imports     []Import
-	Structs     []Struct
-	Interfaces  []InterfaceType
+	Imports    []Import
+	Structs    []Struct
+	Interfaces map[string]InterfaceType
 }
 
 // Import is a model for package imports
@@ -52,7 +51,6 @@ type StructField struct {
 
 // InterfaceType is a definition of the interface
 type InterfaceType struct {
-	Name    string
 	Methods []Method
 }
 

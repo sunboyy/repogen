@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/sunboyy/repogen/internal/code"
+	"golang.org/x/tools/go/packages"
 )
 
 const goImplFile1Data = `
@@ -110,24 +111,12 @@ type OrderService interface {
 }
 `
 
-const goTestFileData = `
-package codepkgsuccess
-
-type TestCase struct {
-	Name     string
-	Params   []interface{}
-	Expected string
-	Actual   string
-}
-`
-
 var (
 	goImplFile1 *ast.File
 	goImplFile2 *ast.File
 	goImplFile3 *ast.File
 	goImplFile4 *ast.File
 	goImplFile5 *ast.File
-	goTestFile  *ast.File
 )
 
 func init() {
@@ -137,17 +126,15 @@ func init() {
 	goImplFile3, _ = parser.ParseFile(fset, "", goImplFile3Data, parser.ParseComments)
 	goImplFile4, _ = parser.ParseFile(fset, "", goImplFile4Data, parser.ParseComments)
 	goImplFile5, _ = parser.ParseFile(fset, "", goImplFile5Data, parser.ParseComments)
-	goTestFile, _ = parser.ParseFile(fset, "", goTestFileData, parser.ParseComments)
 }
 
 func TestParsePackage_Success(t *testing.T) {
-	pkg, err := code.ParsePackage(map[string]*ast.Package{
-		"codepkgsuccess": {
-			Files: map[string]*ast.File{
-				"file1.go":      goImplFile1,
-				"file2.go":      goImplFile2,
-				"file1_test.go": goTestFile,
-			},
+	pkg, err := code.ParsePackage(&packages.Package{
+		Name: "codepkgsuccess",
+		Syntax: []*ast.File{
+			goImplFile1,
+			goImplFile2,
+			goImplFile3,
 		},
 	})
 	if err != nil {
@@ -177,61 +164,39 @@ func TestParsePackage_Success(t *testing.T) {
 	}
 }
 
-func TestParsePackage_AmbiguousPackageName(t *testing.T) {
-	_, err := code.ParsePackage(map[string]*ast.Package{
-		"codepkgsuccess": {
-			Files: map[string]*ast.File{
-				"file1.go": goImplFile1,
-				"file2.go": goImplFile2,
-				"file3.go": goImplFile3,
-			},
-		},
-	})
-
-	if !errors.Is(err, code.ErrAmbiguousPackageName) {
-		t.Errorf(
-			"expected error '%s', got '%s'",
-			code.ErrAmbiguousPackageName.Error(),
-			err.Error(),
-		)
-	}
-}
-
 func TestParsePackage_DuplicateStructs(t *testing.T) {
-	_, err := code.ParsePackage(map[string]*ast.Package{
-		"codepkgsuccess": {
-			Files: map[string]*ast.File{
-				"file1.go": goImplFile1,
-				"file2.go": goImplFile2,
-				"file4.go": goImplFile4,
-			},
+	_, err := code.ParsePackage(&packages.Package{
+		Name: "codepkgsuccess",
+		Syntax: []*ast.File{
+			goImplFile1,
+			goImplFile2,
+			goImplFile4,
 		},
 	})
 
 	if !errors.Is(err, code.DuplicateStructError("User")) {
 		t.Errorf(
 			"expected error '%s', got '%s'",
-			code.ErrAmbiguousPackageName.Error(),
+			code.DuplicateStructError("User").Error(),
 			err.Error(),
 		)
 	}
 }
 
 func TestParsePackage_DuplicateInterfaces(t *testing.T) {
-	_, err := code.ParsePackage(map[string]*ast.Package{
-		"codepkgsuccess": {
-			Files: map[string]*ast.File{
-				"file1.go": goImplFile1,
-				"file2.go": goImplFile2,
-				"file5.go": goImplFile5,
-			},
+	_, err := code.ParsePackage(&packages.Package{
+		Name: "codepkgsuccess",
+		Syntax: []*ast.File{
+			goImplFile1,
+			goImplFile2,
+			goImplFile5,
 		},
 	})
 
 	if !errors.Is(err, code.DuplicateInterfaceError("OrderService")) {
 		t.Errorf(
 			"expected error '%s', got '%s'",
-			code.ErrAmbiguousPackageName.Error(),
+			code.DuplicateInterfaceError("OrderService").Error(),
 			err.Error(),
 		)
 	}

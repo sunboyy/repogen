@@ -1,13 +1,6 @@
 package code
 
-import (
-	"errors"
-	"fmt"
-)
-
-var (
-	ErrAmbiguousPackageName = errors.New("code: ambiguous package name")
-)
+import "fmt"
 
 type DuplicateStructError string
 

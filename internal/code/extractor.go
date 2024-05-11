@@ -10,8 +10,9 @@ import (
 
 // ExtractComponents converts ast file into code components model
 func ExtractComponents(f *ast.File) File {
-	var file File
-	file.PackageName = f.Name.Name
+	file := File{
+		Interfaces: map[string]InterfaceType{},
+	}
 
 	for _, decl := range f.Decls {
 		genDecl, ok := decl.(*ast.GenDecl)
@@ -40,7 +41,7 @@ func ExtractComponents(f *ast.File) File {
 				case *ast.StructType:
 					file.Structs = append(file.Structs, extractStructType(spec.Name.Name, t))
 				case *ast.InterfaceType:
-					file.Interfaces = append(file.Interfaces, extractInterfaceType(spec.Name.Name, t))
+					file.Interfaces[spec.Name.Name] = extractInterfaceType(t)
 				}
 			}
 		}
@@ -70,10 +71,8 @@ func extractStructType(name string, structType *ast.StructType) Struct {
 	return str
 }
 
-func extractInterfaceType(name string, interfaceType *ast.InterfaceType) InterfaceType {
-	intf := InterfaceType{
-		Name: name,
-	}
+func extractInterfaceType(interfaceType *ast.InterfaceType) InterfaceType {
+	intf := InterfaceType{}
 
 	for _, method := range interfaceType.Methods.List {
 		funcType, ok := method.Type.(*ast.FuncType)
@@ -164,7 +163,7 @@ func getType(expr ast.Expr) Type {
 		return MapType{KeyType: keyType, ValueType: valueType}
 
 	case *ast.InterfaceType:
-		return extractInterfaceType("", expr)
+		return extractInterfaceType(expr)
 	}
 
 	return nil
