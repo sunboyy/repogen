@@ -4,11 +4,11 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"go/types"
 	"log"
 	"os"
 	"path/filepath"
 
-	"github.com/sunboyy/repogen/internal/code"
 	"github.com/sunboyy/repogen/internal/generator"
 	"github.com/sunboyy/repogen/internal/spec"
 	"golang.org/x/tools/go/packages"
@@ -82,7 +82,7 @@ func printVersion() {
 
 func generateFromRequest(pkgDir, structModelName, repositoryInterfaceName string) (string, error) {
 	cfg := packages.Config{
-		Mode: packages.NeedName | packages.NeedSyntax | packages.NeedTypes,
+		Mode: packages.NeedName | packages.NeedTypes,
 	}
 	pkgs, err := packages.Load(&cfg, pkgDir)
 	if err != nil {
@@ -92,41 +92,49 @@ func generateFromRequest(pkgDir, structModelName, repositoryInterfaceName string
 		return "", errNoPackageFound
 	}
 
-	pkgPkg := pkgs[0]
+	pkg := pkgs[0]
 
-	pkg, err := code.ParsePackage(pkgPkg)
-	if err != nil {
-		return "", err
-	}
-
-	return generateRepository(pkg, structModelName, repositoryInterfaceName)
+	return generateRepository(pkg.Types, structModelName, repositoryInterfaceName)
 }
 
 var (
 	errNoPackageFound    = errors.New("no package found")
 	errStructNotFound    = errors.New("struct not found")
+	errNotNamedStruct    = errors.New("not a named struct")
 	errInterfaceNotFound = errors.New("interface not found")
+	errNotInterface      = errors.New("not an interface")
 )
 
-func generateRepository(pkg code.Package, structModelName, repositoryInterfaceName string) (string, error) {
-	structModel, ok := pkg.Structs[structModelName]
-	if !ok {
+func generateRepository(pkg *types.Package, structModelName, repositoryInterfaceName string) (string, error) {
+	structModelObj := pkg.Scope().Lookup(structModelName)
+	if structModelObj == nil {
 		return "", errStructNotFound
 	}
-
-	intf, ok := pkg.Interfaces[repositoryInterfaceName]
+	namedStruct, ok := structModelObj.Type().(*types.Named)
 	if !ok {
+		return "", errNotNamedStruct
+	}
+
+	intfObj := pkg.Scope().Lookup(repositoryInterfaceName)
+	if intfObj == nil {
 		return "", errInterfaceNotFound
+	}
+	intf, ok := intfObj.Type().Underlying().(*types.Interface)
+	if !ok {
+		return "", errNotInterface
 	}
 
 	var methodSpecs []spec.MethodSpec
-	for _, method := range intf.Methods {
-		methodSpec, err := spec.ParseInterfaceMethod(pkg.Structs, structModel, method)
+	for i := 0; i < intf.NumMethods(); i++ {
+		method := intf.Method(i)
+		log.Println("Generating method:", method.Name())
+
+		methodSpec, err := spec.ParseInterfaceMethod(pkg, namedStruct, method)
 		if err != nil {
 			return "", err
 		}
 		methodSpecs = append(methodSpecs, methodSpec)
 	}
 
-	return generator.GenerateRepository(pkg.Name, structModel, repositoryInterfaceName, methodSpecs)
+	return generator.GenerateRepository(pkg, structModelName, repositoryInterfaceName, methodSpecs)
 }

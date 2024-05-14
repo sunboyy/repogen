@@ -1,6 +1,7 @@
 package mongo
 
 import (
+	"go/types"
 	"strings"
 
 	"github.com/sunboyy/repogen/internal/code"
@@ -49,7 +50,8 @@ var ifErrReturnFalseErr = codegen.IfBlock{
 }
 
 type baseMethodGenerator struct {
-	structModel code.Struct
+	pkg             *types.Package
+	structModelName string
 }
 
 func (g baseMethodGenerator) bsonFieldReference(fieldReference spec.FieldReference) (string, error) {
@@ -67,7 +69,7 @@ func (g baseMethodGenerator) bsonFieldReference(fieldReference spec.FieldReferen
 func (g baseMethodGenerator) bsonTagFromField(field code.StructField) (string, error) {
 	bsonTag, ok := field.Tag.Lookup("bson")
 	if !ok {
-		return "", NewBsonTagNotFoundError(field.Name)
+		return "", NewBsonTagNotFoundError(field.Var.Name())
 	}
 
 	documentKey := strings.Split(bsonTag, ",")[0]

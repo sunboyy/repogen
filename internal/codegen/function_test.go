@@ -2,6 +2,8 @@ package codegen_test
 
 import (
 	"bytes"
+	"go/token"
+	"go/types"
 	"testing"
 
 	"github.com/sunboyy/repogen/internal/code"
@@ -12,7 +14,7 @@ import (
 func TestFunctionBuilderBuild_NoReturn(t *testing.T) {
 	fb := codegen.FunctionBuilder{
 		Name:    "init",
-		Params:  nil,
+		Params:  types.NewTuple(),
 		Returns: nil,
 		Body: codegen.FunctionBody{
 			codegen.ChainStatement{
@@ -53,22 +55,14 @@ func init() {
 func TestFunctionBuilderBuild_OneReturn(t *testing.T) {
 	fb := codegen.FunctionBuilder{
 		Name: "NewUser",
-		Params: []code.Param{
-			{
-				Name: "username",
-				Type: code.TypeString,
-			},
-			{
-				Name: "age",
-				Type: code.TypeInt,
-			},
-			{
-				Name: "parent",
-				Type: code.PointerType{ContainedType: code.SimpleType("User")},
-			},
-		},
-		Returns: []code.Type{
-			code.SimpleType("User"),
+		Params: types.NewTuple(
+			types.NewVar(token.NoPos, nil, "username", code.TypeString),
+			types.NewVar(token.NoPos, nil, "age", code.TypeInt),
+			types.NewVar(token.NoPos, nil, "parent",
+				types.NewPointer(types.NewNamed(types.NewTypeName(token.NoPos, nil, "User", nil), nil, nil))),
+		),
+		Returns: []types.Type{
+			types.NewNamed(types.NewTypeName(token.NoPos, nil, "User", nil), nil, nil),
 		},
 		Body: codegen.FunctionBody{
 			codegen.ReturnStatement{
@@ -111,14 +105,12 @@ func NewUser(username string, age int, parent *User) User {
 func TestFunctionBuilderBuild_MultiReturn(t *testing.T) {
 	fb := codegen.FunctionBuilder{
 		Name: "Save",
-		Params: []code.Param{
-			{
-				Name: "user",
-				Type: code.SimpleType("User"),
-			},
-		},
-		Returns: []code.Type{
-			code.SimpleType("User"),
+		Params: types.NewTuple(
+			types.NewVar(token.NoPos, nil, "user",
+				types.NewNamed(types.NewTypeName(token.NoPos, nil, "User", nil), nil, nil)),
+		),
+		Returns: []types.Type{
+			types.NewNamed(types.NewTypeName(token.NoPos, nil, "User", nil), nil, nil),
 			code.TypeError,
 		},
 		Body: codegen.FunctionBody{

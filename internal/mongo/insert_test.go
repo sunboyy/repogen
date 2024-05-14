@@ -2,6 +2,8 @@ package mongo_test
 
 import (
 	"fmt"
+	"go/token"
+	"go/types"
 	"reflect"
 	"testing"
 
@@ -12,20 +14,30 @@ import (
 	"github.com/sunboyy/repogen/internal/testutils"
 )
 
+func createSignature(params []*types.Var, results []*types.Var) *types.Signature {
+	return types.NewSignatureType(nil, nil, nil, types.NewTuple(params...), types.NewTuple(results...), false)
+}
+
+func createTypeVar(t types.Type) *types.Var {
+	return types.NewVar(token.NoPos, nil, "", t)
+}
+
 func TestGenerateMethod_Insert(t *testing.T) {
 	testTable := []GenerateMethodTestCase{
 		{
 			Name: "insert one method",
 			MethodSpec: spec.MethodSpec{
 				Name: "InsertOne",
-				Params: []code.Param{
-					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Name: "userModel", Type: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-				},
-				Returns: []code.Type{
-					code.InterfaceType{},
-					code.TypeError,
-				},
+				Signature: createSignature(
+					[]*types.Var{
+						createTypeVar(testutils.TypeContextNamed),
+						createTypeVar(types.NewPointer(testutils.TypeUserNamed)),
+					},
+					[]*types.Var{
+						createTypeVar(types.NewInterfaceType(nil, nil)),
+						createTypeVar(code.TypeError),
+					},
+				),
 				Operation: spec.InsertOperation{
 					Mode: spec.QueryModeOne,
 				},
@@ -40,16 +52,16 @@ func TestGenerateMethod_Insert(t *testing.T) {
 			Name: "insert many method",
 			MethodSpec: spec.MethodSpec{
 				Name: "Insert",
-				Params: []code.Param{
-					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Name: "userModel", Type: code.ArrayType{
-						ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")},
-					}},
-				},
-				Returns: []code.Type{
-					code.ArrayType{ContainedType: code.InterfaceType{}},
-					code.TypeError,
-				},
+				Signature: createSignature(
+					[]*types.Var{
+						createTypeVar(testutils.TypeContextNamed),
+						createTypeVar(types.NewSlice(types.NewPointer(testutils.TypeUserNamed))),
+					},
+					[]*types.Var{
+						createTypeVar(types.NewSlice(types.NewInterfaceType(nil, nil))),
+						createTypeVar(code.TypeError),
+					},
+				),
 				Operation: spec.InsertOperation{
 					Mode: spec.QueryModeMany,
 				},
@@ -68,18 +80,24 @@ func TestGenerateMethod_Insert(t *testing.T) {
 
 	for _, testCase := range testTable {
 		t.Run(testCase.Name, func(t *testing.T) {
-			generator := mongo.NewGenerator(userModel, "UserRepository")
+			generator := mongo.NewGenerator(testutils.Pkg, "User", "UserRepository")
 			expectedReceiver := codegen.MethodReceiver{
 				Name:    "r",
 				Type:    "UserRepositoryMongo",
 				Pointer: true,
 			}
-			var expectedParams []code.Param
-			for i, param := range testCase.MethodSpec.Params {
-				expectedParams = append(expectedParams, code.Param{
-					Name: fmt.Sprintf("arg%d", i),
-					Type: param.Type,
-				})
+
+			params := testCase.MethodSpec.Signature.Params()
+			var expectedParamVars []*types.Var
+			for i := 0; i < params.Len(); i++ {
+				expectedParamVars = append(expectedParamVars, types.NewVar(token.NoPos, nil, fmt.Sprintf("arg%d", i),
+					params.At(i).Type()))
+			}
+			expectedParams := types.NewTuple(expectedParamVars...)
+			returns := testCase.MethodSpec.Signature.Results()
+			var expectedReturns []types.Type
+			for i := 0; i < returns.Len(); i++ {
+				expectedReturns = append(expectedReturns, returns.At(i).Type())
 			}
 
 			actual, err := generator.GenerateMethod(testCase.MethodSpec)
@@ -108,10 +126,10 @@ func TestGenerateMethod_Insert(t *testing.T) {
 					actual.Params,
 				)
 			}
-			if !reflect.DeepEqual(testCase.MethodSpec.Returns, actual.Returns) {
+			if !reflect.DeepEqual(expectedReturns, actual.Returns) {
 				t.Errorf(
 					"incorrect struct returns: expected %+v, got %+v",
-					testCase.MethodSpec.Returns,
+					expectedReturns,
 					actual.Returns,
 				)
 			}

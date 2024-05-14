@@ -3,6 +3,7 @@ package codegen
 import (
 	"bytes"
 	"fmt"
+	"go/types"
 	"text/template"
 
 	"github.com/sunboyy/repogen/internal/code"
@@ -16,10 +17,11 @@ func ({{.GenReceiver}}) {{.Name}}({{.GenParams}}){{.GenReturns}} {
 
 // MethodBuilder is an implementer of a method.
 type MethodBuilder struct {
+	Pkg      *types.Package
 	Receiver MethodReceiver
 	Name     string
-	Params   []code.Param
-	Returns  []code.Type
+	Params   *types.Tuple
+	Returns  []types.Type
 	Body     FunctionBody
 }
 
@@ -58,9 +60,9 @@ func (mb MethodBuilder) generateReceiverType() string {
 }
 
 func (mb MethodBuilder) GenParams() string {
-	return generateParams(mb.Params)
+	return generateParams(mb.Pkg, mb.Params)
 }
 
 func (mb MethodBuilder) GenReturns() string {
-	return generateReturns(mb.Returns)
+	return generateReturns(mb.Pkg, mb.Returns)
 }

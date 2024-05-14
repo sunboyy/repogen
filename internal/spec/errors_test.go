@@ -1,6 +1,8 @@
 package spec_test
 
 import (
+	"go/token"
+	"go/types"
 	"testing"
 
 	"github.com/sunboyy/repogen/internal/code"
@@ -26,8 +28,9 @@ func TestError(t *testing.T) {
 			ExpectedString: "struct field 'PhoneNumber' not found",
 		},
 		{
-			Name:           "UnsupportedReturnError",
-			Error:          spec.NewUnsupportedReturnError(code.SimpleType("User"), 0),
+			Name: "UnsupportedReturnError",
+			Error: spec.NewUnsupportedReturnError(types.NewNamed(
+				types.NewTypeName(token.NoPos, nil, "User", nil), nil, nil), 0),
 			ExpectedString: "return type 'User' at index 0 is not supported",
 		},
 		{
@@ -43,8 +46,7 @@ func TestError(t *testing.T) {
 		{
 			Name: "IncompatibleComparatorError",
 			Error: spec.NewIncompatibleComparatorError(spec.ComparatorTrue, code.StructField{
-				Name: "Age",
-				Type: code.TypeInt,
+				Var: types.NewVar(token.NoPos, nil, "Age", code.TypeInt),
 			}),
 			ExpectedString: "cannot use comparator EQUAL_TRUE with struct field 'Age' of type 'int'",
 		},
@@ -62,8 +64,7 @@ func TestError(t *testing.T) {
 			Name: "IncompatibleUpdateOperatorError",
 			Error: spec.NewIncompatibleUpdateOperatorError(spec.UpdateOperatorInc, spec.FieldReference{
 				code.StructField{
-					Name: "City",
-					Type: code.TypeString,
+					Var: types.NewVar(token.NoPos, nil, "City", code.TypeString),
 				},
 			}),
 			ExpectedString: "cannot use update operator INC with struct field 'City' of type 'string'",

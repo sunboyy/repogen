@@ -46,7 +46,7 @@ func (g findBodyGenerator) generateFindOneBody(querySpec querySpec,
 	return codegen.FunctionBody{
 		codegen.DeclStatement{
 			Name: "entity",
-			Type: code.SimpleType(g.structModel.Name),
+			Type: code.SimpleType(g.structModelName),
 		},
 		codegen.IfBlock{
 			Condition: []codegen.Statement{
@@ -104,7 +104,7 @@ func (g findBodyGenerator) generateFindManyBody(querySpec querySpec,
 				codegen.SliceStatement{
 					Type: code.ArrayType{
 						ContainedType: code.PointerType{
-							ContainedType: code.SimpleType(g.structModel.Name),
+							ContainedType: code.SimpleType(g.structModelName),
 						},
 					},
 					Values: []codegen.Statement{},

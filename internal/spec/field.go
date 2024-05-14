@@ -1,6 +1,8 @@
 package spec
 
 import (
+	"go/types"
+	"reflect"
 	"strings"
 
 	"github.com/sunboyy/repogen/internal/code"
@@ -19,56 +21,74 @@ func (r FieldReference) ReferencedField() code.StructField {
 func (r FieldReference) ReferencingCode() string {
 	var fieldNames []string
 	for _, field := range r {
-		fieldNames = append(fieldNames, field.Name)
+		fieldNames = append(fieldNames, field.Var.Name())
 	}
 	return strings.Join(fieldNames, ".")
 }
 
-type fieldResolver struct {
-	Structs map[string]code.Struct
-}
-
-func (r fieldResolver) ResolveStructField(structModel code.Struct, tokens []string) (FieldReference, bool) {
+func resolveStructField(structModel *types.Struct, tokens []string) (FieldReference, bool) {
 	fieldName := strings.Join(tokens, "")
-	field, ok := structModel.Fields.ByName(fieldName)
-	if ok {
-		return FieldReference{field}, true
+	for i := 0; i < structModel.NumFields(); i++ {
+		field := structModel.Field(i)
+		if field.Name() == fieldName {
+			return FieldReference{
+				code.StructField{
+					Var: field,
+					Tag: reflect.StructTag(structModel.Tag(i)),
+				},
+			}, true
+		}
 	}
 
 	for i := len(tokens) - 1; i > 0; i-- {
 		fieldName := strings.Join(tokens[:i], "")
-		field, ok := structModel.Fields.ByName(fieldName)
+		var foundField *types.Var
+		var foundFieldIndex int
+		for j := 0; j < structModel.NumFields(); j++ {
+			field := structModel.Field(j)
+			if field.Name() == fieldName {
+				foundField = field
+				foundFieldIndex = j
+				break
+			}
+		}
+		if foundField == nil {
+			continue
+		}
+
+		underlyingStructType, ok := getUnderlyingStructType(foundField.Type())
 		if !ok {
 			continue
 		}
 
-		fieldSimpleType, ok := getSimpleType(field.Type)
+		fields, ok := resolveStructField(underlyingStructType, tokens[i:])
 		if !ok {
 			continue
 		}
 
-		childStruct, ok := r.Structs[fieldSimpleType.Code()]
-		if !ok {
-			continue
-		}
-
-		fields, ok := r.ResolveStructField(childStruct, tokens[i:])
-		if !ok {
-			continue
-		}
-		return append(FieldReference{field}, fields...), true
+		return append(FieldReference{
+			code.StructField{
+				Var: foundField,
+				Tag: reflect.StructTag(structModel.Tag(foundFieldIndex)),
+			},
+		}, fields...), true
 	}
 
 	return nil, false
 }
 
-func getSimpleType(t code.Type) (code.SimpleType, bool) {
+func getUnderlyingStructType(t types.Type) (*types.Struct, bool) {
 	switch t := t.(type) {
-	case code.SimpleType:
+	case *types.Named:
+		return getUnderlyingStructType(t.Underlying())
+
+	case *types.Struct:
 		return t, true
-	case code.PointerType:
-		return getSimpleType(t.ContainedType)
+
+	case *types.Pointer:
+		return getUnderlyingStructType(t.Elem())
+
 	default:
-		return "", false
+		return nil, false
 	}
 }

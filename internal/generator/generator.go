@@ -1,7 +1,8 @@
 package generator
 
 import (
-	"github.com/sunboyy/repogen/internal/code"
+	"go/types"
+
 	"github.com/sunboyy/repogen/internal/codegen"
 	"github.com/sunboyy/repogen/internal/mongo"
 	"github.com/sunboyy/repogen/internal/spec"
@@ -9,14 +10,14 @@ import (
 
 // GenerateRepository generates repository implementation code from repository
 // interface specification.
-func GenerateRepository(packageName string, structModel code.Struct,
+func GenerateRepository(pkg *types.Package, structModelName string,
 	interfaceName string, methodSpecs []spec.MethodSpec) (string, error) {
 
-	generator := mongo.NewGenerator(structModel, interfaceName)
+	generator := mongo.NewGenerator(pkg, structModelName, interfaceName)
 
 	codeBuilder := codegen.NewBuilder(
 		"repogen",
-		packageName,
+		pkg.Name(),
 		generator.Imports(),
 	)
 

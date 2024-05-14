@@ -21,7 +21,7 @@ type User struct {
 func TestStructBuilderBuild(t *testing.T) {
 	sb := codegen.StructBuilder{
 		Name: "User",
-		Fields: []code.StructField{
+		Fields: []code.LegacyStructField{
 			{
 				Name: "ID",
 				Type: code.ExternalType{
@@ -32,18 +32,18 @@ func TestStructBuilderBuild(t *testing.T) {
 			},
 			{
 				Name: "Username",
-				Type: code.TypeString,
+				Type: code.SimpleType("string"),
 				Tag:  `bson:"username" json:"username"`,
 			},
 			{
 				Name: "Age",
-				Type: code.TypeInt,
+				Type: code.SimpleType("int"),
 				Tag:  `bson:"age"`,
 			},
 			{
 				Name: "orderCount",
 				Type: code.PointerType{
-					ContainedType: code.TypeInt,
+					ContainedType: code.SimpleType("int"),
 				},
 			},
 		},

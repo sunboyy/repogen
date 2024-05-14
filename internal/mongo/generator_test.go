@@ -2,6 +2,8 @@ package mongo_test
 
 import (
 	"errors"
+	"go/token"
+	"go/types"
 	"reflect"
 	"testing"
 
@@ -9,77 +11,11 @@ import (
 	"github.com/sunboyy/repogen/internal/codegen"
 	"github.com/sunboyy/repogen/internal/mongo"
 	"github.com/sunboyy/repogen/internal/spec"
+	"github.com/sunboyy/repogen/internal/testutils"
 )
-
-var (
-	idField = code.StructField{
-		Name: "ID",
-		Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"},
-		Tag:  `bson:"_id,omitempty"`,
-	}
-	genderField = code.StructField{
-		Name: "Gender",
-		Type: code.SimpleType("Gender"),
-		Tag:  `bson:"gender"`,
-	}
-	ageField = code.StructField{
-		Name: "Age",
-		Type: code.TypeInt,
-		Tag:  `bson:"age"`,
-	}
-	nameField = code.StructField{
-		Name: "Name",
-		Type: code.SimpleType("NameModel"),
-		Tag:  `bson:"name"`,
-	}
-	referrerField = code.StructField{
-		Name: "Referrer",
-		Type: code.PointerType{ContainedType: code.SimpleType("UserModel")},
-		Tag:  `bson:"referrer"`,
-	}
-	consentHistoryField = code.StructField{
-		Name: "ConsentHistory",
-		Type: code.ArrayType{ContainedType: code.SimpleType("ConsentHistory")},
-		Tag:  `bson:"consent_history"`,
-	}
-	enabledField = code.StructField{
-		Name: "Enabled",
-		Type: code.TypeBool,
-		Tag:  `bson:"enabled"`,
-	}
-	accessTokenField = code.StructField{
-		Name: "AccessToken",
-		Type: code.TypeString,
-	}
-
-	firstNameField = code.StructField{
-		Name: "First",
-		Type: code.TypeString,
-		Tag:  `bson:"first"`,
-	}
-)
-
-var userModel = code.Struct{
-	Name: "UserModel",
-	Fields: code.StructFields{
-		idField,
-		code.StructField{
-			Name: "Username",
-			Type: code.TypeString,
-			Tag:  `bson:"username"`,
-		},
-		genderField,
-		ageField,
-		nameField,
-		referrerField,
-		consentHistoryField,
-		enabledField,
-		accessTokenField,
-	},
-}
 
 func TestImports(t *testing.T) {
-	generator := mongo.NewGenerator(userModel, "UserRepository")
+	generator := mongo.NewGenerator(testutils.Pkg, "User", "UserRepository")
 	expected := [][]code.Import{
 		{
 			{Path: "context"},
@@ -100,10 +36,10 @@ func TestImports(t *testing.T) {
 }
 
 func TestGenerateStruct(t *testing.T) {
-	generator := mongo.NewGenerator(userModel, "UserRepository")
+	generator := mongo.NewGenerator(testutils.Pkg, "User", "UserRepository")
 	expected := codegen.StructBuilder{
 		Name: "UserRepositoryMongo",
-		Fields: []code.StructField{
+		Fields: []code.LegacyStructField{
 			{
 				Name: "collection",
 				Type: code.PointerType{
@@ -135,22 +71,14 @@ func TestGenerateStruct(t *testing.T) {
 }
 
 func TestGenerateConstructor(t *testing.T) {
-	generator := mongo.NewGenerator(userModel, "UserRepository")
+	generator := mongo.NewGenerator(testutils.Pkg, "User", "UserRepository")
 	expected := codegen.FunctionBuilder{
 		Name: "NewUserRepository",
-		Params: []code.Param{
-			{
-				Name: "collection",
-				Type: code.PointerType{
-					ContainedType: code.ExternalType{
-						PackageAlias: "mongo",
-						Name:         "Collection",
-					},
-				},
-			},
-		},
-		Returns: []code.Type{
-			code.SimpleType("UserRepository"),
+		Params: types.NewTuple(
+			types.NewVar(token.NoPos, nil, "collection", types.NewPointer(testutils.TypeCollectionNamed)),
+		),
+		Returns: []types.Type{
+			types.NewNamed(types.NewTypeName(token.NoPos, nil, "UserRepository", nil), nil, nil),
 		},
 		Body: codegen.FunctionBody{
 			codegen.ReturnStatement{
@@ -177,12 +105,29 @@ func TestGenerateConstructor(t *testing.T) {
 			actual.Name,
 		)
 	}
-	if !reflect.DeepEqual(expected.Params, actual.Params) {
+	if expected.Params.Len() != actual.Params.Len() {
 		t.Errorf(
-			"incorrect struct params: expected %+v, got %+v",
-			expected.Params,
-			actual.Params,
+			"incorrect function params length: expected %d, got %d",
+			expected.Params.Len(),
+			actual.Params.Len(),
 		)
+	}
+	for i := 0; i < expected.Params.Len(); i++ {
+		if expected.Params.At(i).Name() != actual.Params.At(i).Name() {
+			t.Errorf(
+				"incorrect function param name: expected %s, got %s",
+				expected.Params.At(i).Name(),
+				actual.Params.At(i).Name(),
+			)
+		}
+		if expected.Params.At(i).Type().String() != actual.Params.At(i).Type().String() {
+			t.Errorf(
+				"incorrect function param type at %d: expected %s, got %s",
+				i,
+				expected.Params.At(i).Type(),
+				actual.Params.At(i).Type(),
+			)
+		}
 	}
 	if !reflect.DeepEqual(expected.Body, actual.Body) {
 		t.Errorf("incorrect function body: expected %+v got %+v",
@@ -217,14 +162,16 @@ func TestGenerateMethod_Invalid(t *testing.T) {
 			Name: "operation not supported",
 			Method: spec.MethodSpec{
 				Name: "SearchByID",
-				Params: []code.Param{
-					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
-				},
-				Returns: []code.Type{
-					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.TypeError,
-				},
+				Signature: createSignature(
+					[]*types.Var{
+						createTypeVar(testutils.TypeContextNamed),
+						createTypeVar(testutils.TypeObjectIDNamed),
+					},
+					[]*types.Var{
+						createTypeVar(types.NewPointer(testutils.TypeUserNamed)),
+						createTypeVar(code.TypeError),
+					},
+				),
 				Operation: StubOperation{},
 			},
 			ExpectedError: mongo.NewOperationNotSupportedError("Stub"),
@@ -233,22 +180,28 @@ func TestGenerateMethod_Invalid(t *testing.T) {
 			Name: "bson tag not found in query",
 			Method: spec.MethodSpec{
 				Name: "FindByAccessToken",
-				Params: []code.Param{
-					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.TypeString},
-				},
-				Returns: []code.Type{
-					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.TypeError,
-				},
+				Signature: createSignature(
+					[]*types.Var{
+						createTypeVar(testutils.TypeContextNamed),
+						createTypeVar(code.TypeString),
+					},
+					[]*types.Var{
+						createTypeVar(types.NewSlice(types.NewPointer(testutils.TypeUserNamed))),
+						createTypeVar(code.TypeError),
+					},
+				),
 				Operation: spec.FindOperation{
 					Mode: spec.QueryModeOne,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
 							{
-								FieldReference: spec.FieldReference{accessTokenField},
-								Comparator:     spec.ComparatorEqual,
-								ParamIndex:     1,
+								FieldReference: spec.FieldReference{
+									{
+										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "AccessToken"),
+									},
+								},
+								Comparator: spec.ComparatorEqual,
+								ParamIndex: 1,
 							},
 						},
 					},
@@ -260,17 +213,26 @@ func TestGenerateMethod_Invalid(t *testing.T) {
 			Name: "bson tag not found in sort",
 			Method: spec.MethodSpec{
 				Name: "FindAllOrderByAccessToken",
-				Params: []code.Param{
-					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-				},
-				Returns: []code.Type{
-					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.TypeError,
-				},
+				Signature: createSignature(
+					[]*types.Var{
+						createTypeVar(testutils.TypeContextNamed),
+					},
+					[]*types.Var{
+						createTypeVar(types.NewSlice(types.NewPointer(testutils.TypeUserNamed))),
+						createTypeVar(code.TypeError),
+					},
+				),
 				Operation: spec.FindOperation{
 					Mode: spec.QueryModeOne,
 					Sorts: []spec.Sort{
-						{FieldReference: spec.FieldReference{accessTokenField}, Ordering: spec.OrderingAscending},
+						{
+							FieldReference: spec.FieldReference{
+								{
+									Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "AccessToken"),
+								},
+							},
+							Ordering: spec.OrderingAscending,
+						},
 					},
 				},
 			},
@@ -280,30 +242,41 @@ func TestGenerateMethod_Invalid(t *testing.T) {
 			Name: "bson tag not found in update field",
 			Method: spec.MethodSpec{
 				Name: "UpdateAccessTokenByID",
-				Params: []code.Param{
-					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.TypeString},
-					{Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
-				},
-				Returns: []code.Type{
-					code.TypeBool,
-					code.TypeError,
-				},
+				Signature: createSignature(
+					[]*types.Var{
+						createTypeVar(testutils.TypeContextNamed),
+						createTypeVar(code.TypeString),
+						createTypeVar(testutils.TypeObjectIDNamed),
+					},
+					[]*types.Var{
+						createTypeVar(code.TypeBool),
+						createTypeVar(code.TypeError),
+					},
+				),
 				Operation: spec.UpdateOperation{
 					Update: spec.UpdateFields{
 						spec.UpdateField{
-							FieldReference: spec.FieldReference{accessTokenField},
-							ParamIndex:     1,
-							Operator:       spec.UpdateOperatorSet,
+							FieldReference: spec.FieldReference{
+								{
+									Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "AccessToken"),
+								},
+							},
+							ParamIndex: 1,
+							Operator:   spec.UpdateOperatorSet,
 						},
 					},
 					Mode: spec.QueryModeOne,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
 							{
-								FieldReference: spec.FieldReference{idField},
-								Comparator:     spec.ComparatorEqual,
-								ParamIndex:     2,
+								FieldReference: spec.FieldReference{
+									{
+										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "ID"),
+										Tag: `bson:"_id,omitempty"`,
+									},
+								},
+								Comparator: spec.ComparatorEqual,
+								ParamIndex: 2,
 							},
 						},
 					},
@@ -315,24 +288,31 @@ func TestGenerateMethod_Invalid(t *testing.T) {
 			Name: "update type not supported",
 			Method: spec.MethodSpec{
 				Name: "UpdateAgeByID",
-				Params: []code.Param{
-					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.TypeInt},
-					{Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
-				},
-				Returns: []code.Type{
-					code.TypeBool,
-					code.TypeError,
-				},
+				Signature: createSignature(
+					[]*types.Var{
+						createTypeVar(testutils.TypeContextNamed),
+						createTypeVar(code.TypeInt),
+						createTypeVar(testutils.TypeObjectIDNamed),
+					},
+					[]*types.Var{
+						createTypeVar(code.TypeBool),
+						createTypeVar(code.TypeError),
+					},
+				),
 				Operation: spec.UpdateOperation{
 					Update: StubUpdate{},
 					Mode:   spec.QueryModeOne,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
 							{
-								FieldReference: spec.FieldReference{idField},
-								Comparator:     spec.ComparatorEqual,
-								ParamIndex:     2,
+								FieldReference: spec.FieldReference{
+									{
+										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "ID"),
+										Tag: `bson:"_id,omitempty"`,
+									},
+								},
+								Comparator: spec.ComparatorEqual,
+								ParamIndex: 2,
 							},
 						},
 					},
@@ -344,30 +324,42 @@ func TestGenerateMethod_Invalid(t *testing.T) {
 			Name: "update operator not supported",
 			Method: spec.MethodSpec{
 				Name: "UpdateConsentHistoryAppendByID",
-				Params: []code.Param{
-					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.TypeInt},
-					{Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
-				},
-				Returns: []code.Type{
-					code.TypeBool,
-					code.TypeError,
-				},
+				Signature: createSignature(
+					[]*types.Var{
+						createTypeVar(testutils.TypeContextNamed),
+						createTypeVar(code.TypeInt),
+						createTypeVar(testutils.TypeObjectIDNamed),
+					},
+					[]*types.Var{
+						createTypeVar(code.TypeBool),
+						createTypeVar(code.TypeError),
+					},
+				),
 				Operation: spec.UpdateOperation{
 					Update: spec.UpdateFields{
 						spec.UpdateField{
-							FieldReference: spec.FieldReference{consentHistoryField},
-							ParamIndex:     1,
-							Operator:       "APPEND",
+							FieldReference: spec.FieldReference{
+								{
+									Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "ConsentHistory"),
+									Tag: `bson:"consent_history"`,
+								},
+							},
+							ParamIndex: 1,
+							Operator:   "APPEND",
 						},
 					},
 					Mode: spec.QueryModeOne,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
 							{
-								FieldReference: spec.FieldReference{idField},
-								Comparator:     spec.ComparatorEqual,
-								ParamIndex:     2,
+								FieldReference: spec.FieldReference{
+									{
+										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "ID"),
+										Tag: `bson:"_id,omitempty"`,
+									},
+								},
+								Comparator: spec.ComparatorEqual,
+								ParamIndex: 2,
 							},
 						},
 					},
@@ -379,7 +371,7 @@ func TestGenerateMethod_Invalid(t *testing.T) {
 
 	for _, testCase := range testTable {
 		t.Run(testCase.Name, func(t *testing.T) {
-			generator := mongo.NewGenerator(userModel, "UserRepository")
+			generator := mongo.NewGenerator(testutils.Pkg, "User", "UserRepository")
 
 			_, err := generator.GenerateMethod(testCase.Method)
 

@@ -1,6 +1,8 @@
 package codegen_test
 
 import (
+	"go/token"
+	"go/types"
 	"testing"
 
 	"github.com/sunboyy/repogen/internal/code"
@@ -55,7 +57,7 @@ func TestBuilderBuild(t *testing.T) {
 	})
 	builder.AddImplementer(codegen.StructBuilder{
 		Name: "User",
-		Fields: code.StructFields{
+		Fields: []code.LegacyStructField{
 			{
 				Name: "ID",
 				Type: code.ExternalType{
@@ -66,16 +68,18 @@ func TestBuilderBuild(t *testing.T) {
 			},
 			{
 				Name: "Username",
-				Type: code.TypeString,
+				Type: code.SimpleType("string"),
 			},
 		},
 	})
 	builder.AddImplementer(codegen.FunctionBuilder{
 		Name: "NewUser",
-		Params: []code.Param{
-			{Name: "username", Type: code.TypeString},
+		Params: types.NewTuple(
+			types.NewVar(token.NoPos, nil, "username", code.TypeString),
+		),
+		Returns: []types.Type{
+			types.NewNamed(types.NewTypeName(token.NoPos, nil, "User", nil), nil, nil),
 		},
-		Returns: []code.Type{code.SimpleType("User")},
 		Body: codegen.FunctionBody{
 			codegen.ReturnStatement{
 				codegen.StructStatement{
@@ -103,7 +107,7 @@ func TestBuilderBuild(t *testing.T) {
 		Receiver: codegen.MethodReceiver{Name: "u", Type: code.SimpleType("User")},
 		Name:     "IDHex",
 		Params:   nil,
-		Returns:  []code.Type{code.TypeString},
+		Returns:  []types.Type{code.TypeString},
 		Body: codegen.FunctionBody{
 			codegen.ReturnStatement{
 				codegen.ChainStatement{

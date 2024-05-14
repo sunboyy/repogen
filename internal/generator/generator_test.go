@@ -1,6 +1,8 @@
 package generator_test
 
 import (
+	"go/token"
+	"go/types"
 	"os"
 	"testing"
 
@@ -10,52 +12,43 @@ import (
 	"github.com/sunboyy/repogen/internal/testutils"
 )
 
-var (
-	idField = code.StructField{
-		Name: "ID",
-		Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"},
-		Tag:  `bson:"_id,omitempty"`,
-	}
-	genderField = code.StructField{
-		Name: "Gender",
-		Type: code.SimpleType("Gender"),
-		Tag:  `bson:"gender"`,
-	}
-	ageField = code.StructField{
-		Name: "Age",
-		Type: code.TypeInt,
-		Tag:  `bson:"age"`,
-	}
-)
+func createSignature(params []*types.Var, results []*types.Var) *types.Signature {
+	return types.NewSignatureType(nil, nil, nil, types.NewTuple(params...), types.NewTuple(results...), false)
+}
+
+func createTypeVar(t types.Type) *types.Var {
+	return types.NewVar(token.NoPos, nil, "", t)
+}
 
 func TestGenerateMongoRepository(t *testing.T) {
-	userModel := code.Struct{
-		Name: "UserModel",
-		Fields: code.StructFields{
-			idField,
-			code.StructField{
-				Name: "Username",
-				Type: code.TypeString,
-				Tag:  `bson:"username"`,
-			},
-			genderField,
-			ageField,
-		},
-	}
 	methods := []spec.MethodSpec{
 		// test find: One mode
 		{
 			Name: "FindByID",
-			Params: []code.Param{
-				{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-				{Name: "id", Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
-			},
-			Returns: []code.Type{code.PointerType{ContainedType: code.SimpleType("UserModel")}, code.TypeError},
+			Signature: createSignature(
+				[]*types.Var{
+					createTypeVar(testutils.TypeContextNamed),
+					createTypeVar(testutils.TypeObjectIDNamed),
+				},
+				[]*types.Var{
+					createTypeVar(types.NewPointer(testutils.TypeUserNamed)),
+					createTypeVar(code.TypeError),
+				},
+			),
 			Operation: spec.FindOperation{
 				Mode: spec.QueryModeOne,
 				Query: spec.QuerySpec{
 					Predicates: []spec.Predicate{
-						{FieldReference: spec.FieldReference{idField}, Comparator: spec.ComparatorEqual, ParamIndex: 1},
+						{
+							FieldReference: spec.FieldReference{
+								{
+									Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "ID"),
+									Tag: `bson:"_id,omitempty"`,
+								},
+							},
+							Comparator: spec.ComparatorEqual,
+							ParamIndex: 1,
+						},
 					},
 				},
 			},
@@ -63,29 +56,41 @@ func TestGenerateMongoRepository(t *testing.T) {
 		// test find: Many mode, And operator, NOT and LessThan comparator
 		{
 			Name: "FindByGenderNotAndAgeLessThan",
-			Params: []code.Param{
-				{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-				{Name: "gender", Type: code.SimpleType("Gender")},
-				{Name: "age", Type: code.TypeInt},
-			},
-			Returns: []code.Type{
-				code.PointerType{ContainedType: code.SimpleType("UserModel")},
-				code.TypeError,
-			},
+			Signature: createSignature(
+				[]*types.Var{
+					createTypeVar(testutils.TypeContextNamed),
+					createTypeVar(testutils.TypeGenderNamed),
+					createTypeVar(code.TypeInt),
+				},
+				[]*types.Var{
+					createTypeVar(types.NewPointer(testutils.TypeUserNamed)),
+					createTypeVar(code.TypeError),
+				},
+			),
 			Operation: spec.FindOperation{
 				Mode: spec.QueryModeMany,
 				Query: spec.QuerySpec{
 					Operator: spec.OperatorAnd,
 					Predicates: []spec.Predicate{
 						{
-							FieldReference: spec.FieldReference{genderField},
-							Comparator:     spec.ComparatorNot,
-							ParamIndex:     1,
+							FieldReference: spec.FieldReference{
+								{
+									Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender"),
+									Tag: `bson:"gender"`,
+								},
+							},
+							Comparator: spec.ComparatorNot,
+							ParamIndex: 1,
 						},
 						{
-							FieldReference: spec.FieldReference{ageField},
-							Comparator:     spec.ComparatorLessThan,
-							ParamIndex:     2,
+							FieldReference: spec.FieldReference{
+								{
+									Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
+									Tag: `bson:"age"`,
+								},
+							},
+							Comparator: spec.ComparatorLessThan,
+							ParamIndex: 2,
 						},
 					},
 				},
@@ -93,101 +98,153 @@ func TestGenerateMongoRepository(t *testing.T) {
 		},
 		{
 			Name: "FindByAgeLessThanEqualOrderByAge",
-			Params: []code.Param{
-				{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-				{Name: "age", Type: code.TypeInt},
-			},
-			Returns: []code.Type{
-				code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-				code.TypeError,
-			},
+			Signature: createSignature(
+				[]*types.Var{
+					createTypeVar(testutils.TypeContextNamed),
+					createTypeVar(code.TypeInt),
+				},
+				[]*types.Var{
+					createTypeVar(types.NewSlice(types.NewPointer(testutils.TypeUserNamed))),
+					createTypeVar(code.TypeError),
+				},
+			),
 			Operation: spec.FindOperation{
 				Mode: spec.QueryModeMany,
 				Query: spec.QuerySpec{
 					Predicates: []spec.Predicate{
 						{
-							FieldReference: spec.FieldReference{ageField},
-							Comparator:     spec.ComparatorLessThanEqual,
-							ParamIndex:     1,
+							FieldReference: spec.FieldReference{
+								{
+									Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
+									Tag: `bson:"age"`,
+								},
+							},
+							Comparator: spec.ComparatorLessThanEqual,
+							ParamIndex: 1,
 						},
 					},
 				},
 				Sorts: []spec.Sort{
-					{FieldReference: spec.FieldReference{ageField}, Ordering: spec.OrderingAscending},
+					{
+						FieldReference: spec.FieldReference{
+							{
+								Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
+								Tag: `bson:"age"`,
+							},
+						},
+						Ordering: spec.OrderingAscending,
+					},
 				},
 			},
 		},
 		{
 			Name: "FindByAgeGreaterThanOrderByAgeAsc",
-			Params: []code.Param{
-				{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-				{Name: "age", Type: code.TypeInt},
-			},
-			Returns: []code.Type{
-				code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-				code.TypeError,
-			},
+			Signature: createSignature(
+				[]*types.Var{
+					createTypeVar(testutils.TypeContextNamed),
+					createTypeVar(code.TypeInt),
+				},
+				[]*types.Var{
+					createTypeVar(types.NewSlice(types.NewPointer(testutils.TypeUserNamed))),
+					createTypeVar(code.TypeError),
+				},
+			),
 			Operation: spec.FindOperation{
 				Mode: spec.QueryModeMany,
 				Query: spec.QuerySpec{
 					Predicates: []spec.Predicate{
 						{
-							FieldReference: spec.FieldReference{ageField},
-							Comparator:     spec.ComparatorGreaterThan,
-							ParamIndex:     1,
+							FieldReference: spec.FieldReference{
+								{
+									Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
+									Tag: `bson:"age"`,
+								},
+							},
+							Comparator: spec.ComparatorGreaterThan,
+							ParamIndex: 1,
 						},
 					},
 				},
 				Sorts: []spec.Sort{
-					{FieldReference: spec.FieldReference{ageField}, Ordering: spec.OrderingAscending},
+					{
+						FieldReference: spec.FieldReference{
+							{
+								Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
+								Tag: `bson:"age"`,
+							},
+						},
+						Ordering: spec.OrderingAscending,
+					},
 				},
 			},
 		},
 		{
 			Name: "FindByAgeGreaterThanEqualOrderByAgeDesc",
-			Params: []code.Param{
-				{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-				{Name: "age", Type: code.TypeInt},
-			},
-			Returns: []code.Type{
-				code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-				code.TypeError,
-			},
+			Signature: createSignature(
+				[]*types.Var{
+					createTypeVar(testutils.TypeContextNamed),
+					createTypeVar(code.TypeInt),
+				},
+				[]*types.Var{
+					createTypeVar(types.NewSlice(types.NewPointer(testutils.TypeUserNamed))),
+					createTypeVar(code.TypeError),
+				},
+			),
 			Operation: spec.FindOperation{
 				Mode: spec.QueryModeMany,
 				Query: spec.QuerySpec{
 					Predicates: []spec.Predicate{
 						{
-							FieldReference: spec.FieldReference{ageField},
-							Comparator:     spec.ComparatorGreaterThanEqual,
-							ParamIndex:     1,
+							FieldReference: spec.FieldReference{
+								{
+									Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
+									Tag: `bson:"age"`,
+								},
+							},
+							Comparator: spec.ComparatorGreaterThanEqual,
+							ParamIndex: 1,
 						},
 					},
 				},
 				Sorts: []spec.Sort{
-					{FieldReference: spec.FieldReference{ageField}, Ordering: spec.OrderingDescending},
+					{
+						FieldReference: spec.FieldReference{
+							{
+								Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
+								Tag: `bson:"age"`,
+							},
+						},
+						Ordering: spec.OrderingDescending,
+					},
 				},
 			},
 		},
 		{
 			Name: "FindByAgeBetween",
-			Params: []code.Param{
-				{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-				{Name: "fromAge", Type: code.TypeInt},
-				{Name: "toAge", Type: code.TypeInt},
-			},
-			Returns: []code.Type{
-				code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-				code.TypeError,
-			},
+			Signature: createSignature(
+				[]*types.Var{
+					createTypeVar(testutils.TypeContextNamed),
+					createTypeVar(code.TypeInt),
+					createTypeVar(code.TypeInt),
+				},
+				[]*types.Var{
+					createTypeVar(types.NewSlice(types.NewPointer(testutils.TypeUserNamed))),
+					createTypeVar(code.TypeError),
+				},
+			),
 			Operation: spec.FindOperation{
 				Mode: spec.QueryModeMany,
 				Query: spec.QuerySpec{
 					Predicates: []spec.Predicate{
 						{
-							FieldReference: spec.FieldReference{ageField},
-							Comparator:     spec.ComparatorBetween,
-							ParamIndex:     1,
+							FieldReference: spec.FieldReference{
+								{
+									Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
+									Tag: `bson:"age"`,
+								},
+							},
+							Comparator: spec.ComparatorBetween,
+							ParamIndex: 1,
 						},
 					},
 				},
@@ -195,29 +252,41 @@ func TestGenerateMongoRepository(t *testing.T) {
 		},
 		{
 			Name: "FindByGenderOrAge",
-			Params: []code.Param{
-				{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-				{Name: "gender", Type: code.SimpleType("Gender")},
-				{Name: "age", Type: code.TypeInt},
-			},
-			Returns: []code.Type{
-				code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-				code.TypeError,
-			},
+			Signature: createSignature(
+				[]*types.Var{
+					createTypeVar(testutils.TypeContextNamed),
+					createTypeVar(testutils.TypeGenderNamed),
+					createTypeVar(code.TypeInt),
+				},
+				[]*types.Var{
+					createTypeVar(types.NewSlice(types.NewPointer(testutils.TypeUserNamed))),
+					createTypeVar(code.TypeError),
+				},
+			),
 			Operation: spec.FindOperation{
 				Mode: spec.QueryModeMany,
 				Query: spec.QuerySpec{
 					Operator: spec.OperatorOr,
 					Predicates: []spec.Predicate{
 						{
-							FieldReference: spec.FieldReference{genderField},
-							Comparator:     spec.ComparatorEqual,
-							ParamIndex:     1,
+							FieldReference: spec.FieldReference{
+								{
+									Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender"),
+									Tag: `bson:"gender"`,
+								},
+							},
+							Comparator: spec.ComparatorEqual,
+							ParamIndex: 1,
 						},
 						{
-							FieldReference: spec.FieldReference{ageField},
-							Comparator:     spec.ComparatorEqual,
-							ParamIndex:     2,
+							FieldReference: spec.FieldReference{
+								{
+									Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
+									Tag: `bson:"age"`,
+								},
+							},
+							Comparator: spec.ComparatorEqual,
+							ParamIndex: 2,
 						},
 					},
 				},
@@ -230,7 +299,7 @@ func TestGenerateMongoRepository(t *testing.T) {
 	}
 	expectedCode := string(expectedBytes)
 
-	code, err := generator.GenerateRepository("user", userModel, "UserRepository", methods)
+	code, err := generator.GenerateRepository(testutils.Pkg, "User", "UserRepository", methods)
 
 	if err != nil {
 		t.Fatal(err)

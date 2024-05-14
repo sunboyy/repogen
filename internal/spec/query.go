@@ -1,8 +1,6 @@
 package spec
 
-import (
-	"github.com/sunboyy/repogen/internal/code"
-)
+import "go/types"
 
 // QuerySpec is a set of conditions of querying the database
 type QuerySpec struct {
@@ -50,10 +48,10 @@ const (
 
 // ArgumentTypeFromFieldType returns a type of required argument from the given
 // struct field type.
-func (c Comparator) ArgumentTypeFromFieldType(t code.Type) code.Type {
+func (c Comparator) ArgumentTypeFromFieldType(t types.Type) types.Type {
 	switch c {
 	case ComparatorIn, ComparatorNotIn:
-		return code.ArrayType{ContainedType: t}
+		return types.NewSlice(t)
 	default:
 		return t
 	}
@@ -80,8 +78,7 @@ type Predicate struct {
 }
 
 type queryParser struct {
-	fieldResolver fieldResolver
-	StructModel   code.Struct
+	UnderlyingStruct *types.Struct
 }
 
 func (p queryParser) parseQuery(rawTokens []string, paramIndex int) (QuerySpec,
@@ -200,7 +197,7 @@ func (p queryParser) parsePredicate(t []string, paramIndex int) (Predicate,
 func (p queryParser) createPredicate(t []string, comparator Comparator,
 	paramIndex int) (Predicate, error) {
 
-	fields, ok := p.fieldResolver.ResolveStructField(p.StructModel, t)
+	fields, ok := resolveStructField(p.UnderlyingStruct, t)
 	if !ok {
 		return Predicate{}, NewStructFieldNotFoundError(t)
 	}

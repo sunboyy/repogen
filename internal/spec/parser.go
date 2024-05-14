@@ -1,6 +1,7 @@
 package spec
 
 import (
+	"go/types"
 	"strconv"
 
 	"github.com/fatih/camelcase"
@@ -9,24 +10,24 @@ import (
 
 // ParseInterfaceMethod returns repository method spec from declared interface
 // method.
-func ParseInterfaceMethod(structs map[string]code.Struct, structModel code.Struct,
-	method code.Method) (MethodSpec, error) {
+func ParseInterfaceMethod(pkg *types.Package, namedStruct *types.Named,
+	method *types.Func) (MethodSpec, error) {
 
 	parser := interfaceMethodParser{
-		fieldResolver: fieldResolver{
-			Structs: structs,
-		},
-		StructModel: structModel,
-		Method:      method,
+		NamedStruct:      namedStruct,
+		UnderlyingStruct: namedStruct.Underlying().(*types.Struct),
+		MethodName:       method.Name(),
+		Signature:        method.Type().(*types.Signature),
 	}
 
 	return parser.Parse()
 }
 
 type interfaceMethodParser struct {
-	fieldResolver fieldResolver
-	StructModel   code.Struct
-	Method        code.Method
+	NamedStruct      *types.Named
+	UnderlyingStruct *types.Struct
+	MethodName       string
+	Signature        *types.Signature
 }
 
 func (p interfaceMethodParser) Parse() (MethodSpec, error) {
@@ -36,15 +37,14 @@ func (p interfaceMethodParser) Parse() (MethodSpec, error) {
 	}
 
 	return MethodSpec{
-		Name:      p.Method.Name,
-		Params:    p.Method.Params,
-		Returns:   p.Method.Returns,
+		Name:      p.MethodName,
+		Signature: p.Signature,
 		Operation: operation,
 	}, nil
 }
 
 func (p interfaceMethodParser) parseMethod() (Operation, error) {
-	methodNameTokens := camelcase.Split(p.Method.Name)
+	methodNameTokens := camelcase.Split(p.MethodName)
 	switch methodNameTokens[0] {
 	case "Insert":
 		return p.parseInsertOperation(methodNameTokens[1:])
@@ -61,7 +61,7 @@ func (p interfaceMethodParser) parseMethod() (Operation, error) {
 }
 
 func (p interfaceMethodParser) parseInsertOperation(tokens []string) (Operation, error) {
-	mode, err := p.extractInsertReturns(p.Method.Returns)
+	mode, err := p.extractInsertReturns(p.Signature.Results())
 	if err != nil {
 		return nil, err
 	}
@@ -70,13 +70,13 @@ func (p interfaceMethodParser) parseInsertOperation(tokens []string) (Operation,
 		return nil, err
 	}
 
-	pointerType := code.PointerType{ContainedType: p.StructModel.ReferencedType()}
-	if mode == QueryModeOne && p.Method.Params[1].Type != pointerType {
+	pointerType := types.NewPointer(p.NamedStruct)
+	if mode == QueryModeOne && !types.Identical(p.Signature.Params().At(1).Type(), pointerType) {
 		return nil, ErrInvalidParam
 	}
 
-	arrayType := code.ArrayType{ContainedType: pointerType}
-	if mode == QueryModeMany && p.Method.Params[1].Type != arrayType {
+	arrayType := types.NewSlice(pointerType)
+	if mode == QueryModeMany && !types.Identical(p.Signature.Params().At(1).Type(), arrayType) {
 		return nil, ErrInvalidParam
 	}
 
@@ -85,33 +85,33 @@ func (p interfaceMethodParser) parseInsertOperation(tokens []string) (Operation,
 	}, nil
 }
 
-func (p interfaceMethodParser) extractInsertReturns(returns []code.Type) (QueryMode, error) {
-	if len(returns) != 2 {
+func (p interfaceMethodParser) extractInsertReturns(returns *types.Tuple) (QueryMode, error) {
+	if returns.Len() != 2 {
 		return "", NewOperationReturnCountUnmatchedError(2)
 	}
 
-	if returns[1] != code.TypeError {
-		return "", NewUnsupportedReturnError(returns[1], 1)
+	if !types.Identical(returns.At(1).Type(), code.TypeError) {
+		return "", NewUnsupportedReturnError(returns.At(1).Type(), 1)
 	}
 
-	switch t := returns[0].(type) {
-	case code.InterfaceType:
-		if len(t.Methods) == 0 {
+	switch t := returns.At(0).Type().(type) {
+	case *types.Interface:
+		if t.Empty() {
 			return QueryModeOne, nil
 		}
 
-	case code.ArrayType:
-		interfaceType, ok := t.ContainedType.(code.InterfaceType)
-		if ok && len(interfaceType.Methods) == 0 {
+	case *types.Slice:
+		interfaceType, ok := t.Elem().(*types.Interface)
+		if ok && interfaceType.Empty() {
 			return QueryModeMany, nil
 		}
 	}
 
-	return "", NewUnsupportedReturnError(returns[0], 0)
+	return "", NewUnsupportedReturnError(returns.At(0).Type(), 0)
 }
 
 func (p interfaceMethodParser) parseFindOperation(tokens []string) (Operation, error) {
-	mode, err := p.extractModelOrSliceReturns(p.Method.Returns)
+	mode, err := p.extractModelOrSliceReturns(p.Signature.Results())
 	if err != nil {
 		return nil, err
 	}
@@ -140,7 +140,7 @@ func (p interfaceMethodParser) parseFindOperation(tokens []string) (Operation, e
 		return nil, err
 	}
 
-	if err := p.validateQueryFromParams(p.Method.Params[1:], querySpec); err != nil {
+	if err := p.validateQueryFromParams(p.Signature.Params(), 1, querySpec); err != nil {
 		return nil, err
 	}
 
@@ -207,7 +207,7 @@ func (p interfaceMethodParser) parseSortToken(t []string) (Sort, error) {
 }
 
 func (p interfaceMethodParser) createSort(t []string, ordering Ordering) (Sort, error) {
-	fields, ok := p.fieldResolver.ResolveStructField(p.StructModel, t)
+	fields, ok := resolveStructField(p.UnderlyingStruct, t)
 	if !ok {
 		return Sort{}, NewStructFieldNotFoundError(t)
 	}
@@ -234,33 +234,31 @@ func (p interfaceMethodParser) splitQueryAndSortTokens(tokens []string) ([]strin
 	return queryTokens, sortTokens
 }
 
-func (p interfaceMethodParser) extractModelOrSliceReturns(returns []code.Type) (QueryMode, error) {
-	if len(returns) != 2 {
+func (p interfaceMethodParser) extractModelOrSliceReturns(returns *types.Tuple) (QueryMode, error) {
+	if returns.Len() != 2 {
 		return "", NewOperationReturnCountUnmatchedError(2)
 	}
 
-	if returns[1] != code.TypeError {
-		return "", NewUnsupportedReturnError(returns[1], 1)
+	if !types.Identical(returns.At(1).Type(), code.TypeError) {
+		return "", NewUnsupportedReturnError(returns.At(1).Type(), 1)
 	}
 
-	switch t := returns[0].(type) {
-	case code.PointerType:
-		simpleType := t.ContainedType
-		if simpleType == code.SimpleType(p.StructModel.Name) {
+	switch t := returns.At(0).Type().(type) {
+	case *types.Pointer:
+		if types.Identical(t.Elem(), p.NamedStruct) {
 			return QueryModeOne, nil
 		}
 
-	case code.ArrayType:
-		pointerType, ok := t.ContainedType.(code.PointerType)
+	case *types.Slice:
+		pointerType, ok := t.Elem().(*types.Pointer)
 		if ok {
-			simpleType := pointerType.ContainedType
-			if simpleType == code.SimpleType(p.StructModel.Name) {
+			if types.Identical(pointerType.Elem(), p.NamedStruct) {
 				return QueryModeMany, nil
 			}
 		}
 	}
 
-	return "", NewUnsupportedReturnError(returns[0], 0)
+	return "", NewUnsupportedReturnError(returns.At(0).Type(), 0)
 }
 
 func splitByAnd(tokens []string) ([][]string, bool) {
@@ -302,7 +300,7 @@ func (p interfaceMethodParser) splitUpdateAndQueryTokens(tokens []string) ([]str
 }
 
 func (p interfaceMethodParser) parseDeleteOperation(tokens []string) (Operation, error) {
-	mode, err := p.extractIntOrBoolReturns(p.Method.Returns)
+	mode, err := p.extractIntOrBoolReturns(p.Signature.Results())
 	if err != nil {
 		return nil, err
 	}
@@ -316,7 +314,7 @@ func (p interfaceMethodParser) parseDeleteOperation(tokens []string) (Operation,
 		return nil, err
 	}
 
-	if err := p.validateQueryFromParams(p.Method.Params[1:], querySpec); err != nil {
+	if err := p.validateQueryFromParams(p.Signature.Params(), 1, querySpec); err != nil {
 		return nil, err
 	}
 
@@ -327,7 +325,7 @@ func (p interfaceMethodParser) parseDeleteOperation(tokens []string) (Operation,
 }
 
 func (p interfaceMethodParser) parseCountOperation(tokens []string) (Operation, error) {
-	if err := p.validateCountReturns(p.Method.Returns); err != nil {
+	if err := p.validateCountReturns(p.Signature.Results()); err != nil {
 		return nil, err
 	}
 
@@ -340,7 +338,7 @@ func (p interfaceMethodParser) parseCountOperation(tokens []string) (Operation, 
 		return nil, err
 	}
 
-	if err := p.validateQueryFromParams(p.Method.Params[1:], querySpec); err != nil {
+	if err := p.validateQueryFromParams(p.Signature.Params(), 1, querySpec); err != nil {
 		return nil, err
 	}
 
@@ -349,73 +347,72 @@ func (p interfaceMethodParser) parseCountOperation(tokens []string) (Operation, 
 	}, nil
 }
 
-func (p interfaceMethodParser) validateCountReturns(returns []code.Type) error {
-	if len(returns) != 2 {
+func (p interfaceMethodParser) validateCountReturns(returns *types.Tuple) error {
+	if returns.Len() != 2 {
 		return NewOperationReturnCountUnmatchedError(2)
 	}
 
-	if returns[0] != code.TypeInt {
-		return NewUnsupportedReturnError(returns[0], 0)
+	if !types.Identical(returns.At(0).Type(), code.TypeInt) {
+		return NewUnsupportedReturnError(returns.At(0).Type(), 0)
 	}
 
-	if returns[1] != code.TypeError {
-		return NewUnsupportedReturnError(returns[1], 1)
+	if !types.Identical(returns.At(1).Type(), code.TypeError) {
+		return NewUnsupportedReturnError(returns.At(1).Type(), 1)
 	}
 
 	return nil
 }
 
-func (p interfaceMethodParser) extractIntOrBoolReturns(returns []code.Type) (QueryMode, error) {
-	if len(returns) != 2 {
+func (p interfaceMethodParser) extractIntOrBoolReturns(returns *types.Tuple) (QueryMode, error) {
+	if returns.Len() != 2 {
 		return "", NewOperationReturnCountUnmatchedError(2)
 	}
 
-	if returns[1] != code.TypeError {
-		return "", NewUnsupportedReturnError(returns[1], 1)
+	if !types.Identical(returns.At(1).Type(), code.TypeError) {
+		return "", NewUnsupportedReturnError(returns.At(1).Type(), 1)
 	}
 
-	simpleType, ok := returns[0].(code.SimpleType)
+	basicType, ok := returns.At(0).Type().(*types.Basic)
 	if ok {
-		if simpleType == code.TypeBool {
+		if types.Identical(basicType, code.TypeBool) {
 			return QueryModeOne, nil
 		}
-		if simpleType == code.TypeInt {
+		if types.Identical(basicType, code.TypeInt) {
 			return QueryModeMany, nil
 		}
 	}
 
-	return "", NewUnsupportedReturnError(returns[0], 0)
+	return "", NewUnsupportedReturnError(returns.At(0).Type(), 0)
 }
 
 func (p interfaceMethodParser) validateContextParam() error {
-	contextType := code.ExternalType{PackageAlias: "context", Name: "Context"}
-	if len(p.Method.Params) == 0 || p.Method.Params[0].Type != contextType {
+	if p.Signature.Params().Len() == 0 || p.Signature.Params().At(0).Type().String() != "context.Context" {
 		return ErrContextParamRequired
 	}
 	return nil
 }
 
-func (p interfaceMethodParser) validateQueryFromParams(params []code.Param, querySpec QuerySpec) error {
-	if querySpec.NumberOfArguments() != len(params) {
+func (p interfaceMethodParser) validateQueryFromParams(params *types.Tuple, startIndex int, querySpec QuerySpec) error {
+	if params.Len()-startIndex != querySpec.NumberOfArguments() {
 		return ErrInvalidParam
 	}
 
-	var currentParamIndex int
+	currentParamIndex := startIndex
 	for _, predicate := range querySpec.Predicates {
 		if (predicate.Comparator == ComparatorTrue || predicate.Comparator == ComparatorFalse) &&
-			predicate.FieldReference.ReferencedField().Type != code.TypeBool {
+			!types.Identical(predicate.FieldReference.ReferencedField().Var.Type(), code.TypeBool) {
 			return NewIncompatibleComparatorError(predicate.Comparator,
 				predicate.FieldReference.ReferencedField())
 		}
 
 		for i := 0; i < predicate.Comparator.NumberOfArguments(); i++ {
 			requiredType := predicate.Comparator.ArgumentTypeFromFieldType(
-				predicate.FieldReference.ReferencedField().Type,
+				predicate.FieldReference.ReferencedField().Var.Type(),
 			)
 
-			if params[currentParamIndex].Type != requiredType {
+			if !types.Identical(params.At(currentParamIndex).Type(), requiredType) {
 				return NewArgumentTypeNotMatchedError(predicate.FieldReference.ReferencingCode(), requiredType,
-					params[currentParamIndex].Type)
+					params.At(currentParamIndex).Type())
 			}
 			currentParamIndex++
 		}
@@ -426,8 +423,7 @@ func (p interfaceMethodParser) validateQueryFromParams(params []code.Param, quer
 
 func (p interfaceMethodParser) parseQuery(queryTokens []string, paramIndex int) (QuerySpec, error) {
 	queryParser := queryParser{
-		fieldResolver: p.fieldResolver,
-		StructModel:   p.StructModel,
+		UnderlyingStruct: p.UnderlyingStruct,
 	}
 	return queryParser.parseQuery(queryTokens, paramIndex)
 }

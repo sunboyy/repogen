@@ -2,6 +2,8 @@ package mongo_test
 
 import (
 	"fmt"
+	"go/token"
+	"go/types"
 	"reflect"
 	"testing"
 
@@ -18,28 +20,35 @@ func TestGenerateMethod_Find(t *testing.T) {
 			Name: "simple find one method",
 			MethodSpec: spec.MethodSpec{
 				Name: "FindByID",
-				Params: []code.Param{
-					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Name: "id", Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
-				},
-				Returns: []code.Type{
-					code.PointerType{ContainedType: code.SimpleType("UserModel")},
-					code.TypeError,
-				},
+				Signature: createSignature(
+					[]*types.Var{
+						createTypeVar(testutils.TypeContextNamed),
+						createTypeVar(testutils.TypeObjectIDNamed),
+					},
+					[]*types.Var{
+						createTypeVar(types.NewPointer(testutils.TypeUserNamed)),
+						createTypeVar(code.TypeError),
+					},
+				),
 				Operation: spec.FindOperation{
 					Mode: spec.QueryModeOne,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
 							{
-								Comparator:     spec.ComparatorEqual,
-								FieldReference: spec.FieldReference{idField},
-								ParamIndex:     1,
+								Comparator: spec.ComparatorEqual,
+								FieldReference: spec.FieldReference{
+									{
+										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "ID"),
+										Tag: `bson:"_id,omitempty"`,
+									},
+								},
+								ParamIndex: 1,
 							},
 						},
 					},
 				},
 			},
-			ExpectedBody: `	var entity UserModel
+			ExpectedBody: `	var entity User
 	if err := r.collection.FindOne(arg0, bson.M{
 		"_id": arg1,
 	}, options.FindOne().SetSort(bson.M{
@@ -52,22 +61,29 @@ func TestGenerateMethod_Find(t *testing.T) {
 			Name: "simple find many method",
 			MethodSpec: spec.MethodSpec{
 				Name: "FindByGender",
-				Params: []code.Param{
-					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Name: "gender", Type: code.SimpleType("Gender")},
-				},
-				Returns: []code.Type{
-					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.TypeError,
-				},
+				Signature: createSignature(
+					[]*types.Var{
+						createTypeVar(testutils.TypeContextNamed),
+						createTypeVar(testutils.TypeGenderNamed),
+					},
+					[]*types.Var{
+						createTypeVar(types.NewSlice(types.NewPointer(testutils.TypeUserStruct))),
+						createTypeVar(code.TypeError),
+					},
+				),
 				Operation: spec.FindOperation{
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
 							{
-								Comparator:     spec.ComparatorEqual,
-								FieldReference: spec.FieldReference{genderField},
-								ParamIndex:     1,
+								Comparator: spec.ComparatorEqual,
+								FieldReference: spec.FieldReference{
+									{
+										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender"),
+										Tag: `bson:"gender"`,
+									},
+								},
+								ParamIndex: 1,
 							},
 						},
 					},
@@ -80,7 +96,7 @@ func TestGenerateMethod_Find(t *testing.T) {
 	if err != nil {
 		return nil, err
 	}
-	entities := []*UserModel{
+	entities := []*User{
 	}
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
@@ -91,28 +107,39 @@ func TestGenerateMethod_Find(t *testing.T) {
 			Name: "find with deep field reference",
 			MethodSpec: spec.MethodSpec{
 				Name: "FindByNameFirst",
-				Params: []code.Param{
-					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Name: "firstName", Type: code.TypeString},
-				},
-				Returns: []code.Type{
-					code.PointerType{ContainedType: code.SimpleType("UserModel")},
-					code.TypeError,
-				},
+				Signature: createSignature(
+					[]*types.Var{
+						createTypeVar(testutils.TypeContextNamed),
+						createTypeVar(code.TypeString),
+					},
+					[]*types.Var{
+						createTypeVar(types.NewPointer(testutils.TypeUserStruct)),
+						createTypeVar(code.TypeError),
+					},
+				),
 				Operation: spec.FindOperation{
 					Mode: spec.QueryModeOne,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
 							{
-								Comparator:     spec.ComparatorEqual,
-								FieldReference: spec.FieldReference{nameField, firstNameField},
-								ParamIndex:     1,
+								Comparator: spec.ComparatorEqual,
+								FieldReference: spec.FieldReference{
+									{
+										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Name"),
+										Tag: `bson:"name"`,
+									},
+									{
+										Var: testutils.FindStructFieldByName(testutils.TypeNameStruct, "First"),
+										Tag: `bson:"first"`,
+									},
+								},
+								ParamIndex: 1,
 							},
 						},
 					},
 				},
 			},
-			ExpectedBody: `	var entity UserModel
+			ExpectedBody: `	var entity User
 	if err := r.collection.FindOne(arg0, bson.M{
 		"name.first": arg1,
 	}, options.FindOne().SetSort(bson.M{
@@ -125,29 +152,41 @@ func TestGenerateMethod_Find(t *testing.T) {
 			Name: "find with And operator",
 			MethodSpec: spec.MethodSpec{
 				Name: "FindByGenderAndAge",
-				Params: []code.Param{
-					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Name: "gender", Type: code.SimpleType("Gender")},
-					{Name: "age", Type: code.TypeInt},
-				},
-				Returns: []code.Type{
-					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.TypeError,
-				},
+				Signature: createSignature(
+					[]*types.Var{
+						createTypeVar(testutils.TypeContextNamed),
+						createTypeVar(testutils.TypeGenderNamed),
+						createTypeVar(code.TypeInt),
+					},
+					[]*types.Var{
+						createTypeVar(types.NewSlice(types.NewPointer(testutils.TypeUserStruct))),
+						createTypeVar(code.TypeError),
+					},
+				),
 				Operation: spec.FindOperation{
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Operator: spec.OperatorAnd,
 						Predicates: []spec.Predicate{
 							{
-								Comparator:     spec.ComparatorEqual,
-								FieldReference: spec.FieldReference{genderField},
-								ParamIndex:     1,
+								Comparator: spec.ComparatorEqual,
+								FieldReference: spec.FieldReference{
+									{
+										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender"),
+										Tag: `bson:"gender"`,
+									},
+								},
+								ParamIndex: 1,
 							},
 							{
-								Comparator:     spec.ComparatorEqual,
-								FieldReference: spec.FieldReference{ageField},
-								ParamIndex:     2,
+								Comparator: spec.ComparatorEqual,
+								FieldReference: spec.FieldReference{
+									{
+										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
+										Tag: `bson:"age"`,
+									},
+								},
+								ParamIndex: 2,
 							},
 						},
 					},
@@ -167,7 +206,7 @@ func TestGenerateMethod_Find(t *testing.T) {
 	if err != nil {
 		return nil, err
 	}
-	entities := []*UserModel{
+	entities := []*User{
 	}
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
@@ -178,29 +217,41 @@ func TestGenerateMethod_Find(t *testing.T) {
 			Name: "find with Or operator",
 			MethodSpec: spec.MethodSpec{
 				Name: "FindByGenderOrAge",
-				Params: []code.Param{
-					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Name: "gender", Type: code.SimpleType("Gender")},
-					{Name: "age", Type: code.TypeInt},
-				},
-				Returns: []code.Type{
-					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.TypeError,
-				},
+				Signature: createSignature(
+					[]*types.Var{
+						createTypeVar(testutils.TypeContextNamed),
+						createTypeVar(testutils.TypeGenderNamed),
+						createTypeVar(code.TypeInt),
+					},
+					[]*types.Var{
+						createTypeVar(types.NewSlice(types.NewPointer(testutils.TypeUserStruct))),
+						createTypeVar(code.TypeError),
+					},
+				),
 				Operation: spec.FindOperation{
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Operator: spec.OperatorOr,
 						Predicates: []spec.Predicate{
 							{
-								Comparator:     spec.ComparatorEqual,
-								FieldReference: spec.FieldReference{genderField},
-								ParamIndex:     1,
+								Comparator: spec.ComparatorEqual,
+								FieldReference: spec.FieldReference{
+									{
+										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender"),
+										Tag: `bson:"gender"`,
+									},
+								},
+								ParamIndex: 1,
 							},
 							{
-								Comparator:     spec.ComparatorEqual,
-								FieldReference: spec.FieldReference{ageField},
-								ParamIndex:     2,
+								Comparator: spec.ComparatorEqual,
+								FieldReference: spec.FieldReference{
+									{
+										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
+										Tag: `bson:"age"`,
+									},
+								},
+								ParamIndex: 2,
 							},
 						},
 					},
@@ -220,7 +271,7 @@ func TestGenerateMethod_Find(t *testing.T) {
 	if err != nil {
 		return nil, err
 	}
-	entities := []*UserModel{
+	entities := []*User{
 	}
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
@@ -231,22 +282,29 @@ func TestGenerateMethod_Find(t *testing.T) {
 			Name: "find with Not comparator",
 			MethodSpec: spec.MethodSpec{
 				Name: "FindByGenderNot",
-				Params: []code.Param{
-					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Name: "gender", Type: code.SimpleType("Gender")},
-				},
-				Returns: []code.Type{
-					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.TypeError,
-				},
+				Signature: createSignature(
+					[]*types.Var{
+						createTypeVar(testutils.TypeContextNamed),
+						createTypeVar(testutils.TypeGenderNamed),
+					},
+					[]*types.Var{
+						createTypeVar(types.NewSlice(types.NewPointer(testutils.TypeUserStruct))),
+						createTypeVar(code.TypeError),
+					},
+				),
 				Operation: spec.FindOperation{
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
 							{
-								Comparator:     spec.ComparatorNot,
-								FieldReference: spec.FieldReference{genderField},
-								ParamIndex:     1,
+								Comparator: spec.ComparatorNot,
+								FieldReference: spec.FieldReference{
+									{
+										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender"),
+										Tag: `bson:"gender"`,
+									},
+								},
+								ParamIndex: 1,
 							},
 						},
 					},
@@ -261,7 +319,7 @@ func TestGenerateMethod_Find(t *testing.T) {
 	if err != nil {
 		return nil, err
 	}
-	entities := []*UserModel{
+	entities := []*User{
 	}
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
@@ -272,22 +330,29 @@ func TestGenerateMethod_Find(t *testing.T) {
 			Name: "find with LessThan comparator",
 			MethodSpec: spec.MethodSpec{
 				Name: "FindByAgeLessThan",
-				Params: []code.Param{
-					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Name: "age", Type: code.TypeInt},
-				},
-				Returns: []code.Type{
-					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.TypeError,
-				},
+				Signature: createSignature(
+					[]*types.Var{
+						createTypeVar(testutils.TypeContextNamed),
+						createTypeVar(code.TypeInt),
+					},
+					[]*types.Var{
+						createTypeVar(types.NewSlice(types.NewPointer(testutils.TypeUserStruct))),
+						createTypeVar(code.TypeError),
+					},
+				),
 				Operation: spec.FindOperation{
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
 							{
-								Comparator:     spec.ComparatorLessThan,
-								FieldReference: spec.FieldReference{ageField},
-								ParamIndex:     1,
+								Comparator: spec.ComparatorLessThan,
+								FieldReference: spec.FieldReference{
+									{
+										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
+										Tag: `bson:"age"`,
+									},
+								},
+								ParamIndex: 1,
 							},
 						},
 					},
@@ -302,7 +367,7 @@ func TestGenerateMethod_Find(t *testing.T) {
 	if err != nil {
 		return nil, err
 	}
-	entities := []*UserModel{
+	entities := []*User{
 	}
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
@@ -313,22 +378,29 @@ func TestGenerateMethod_Find(t *testing.T) {
 			Name: "find with LessThanEqual comparator",
 			MethodSpec: spec.MethodSpec{
 				Name: "FindByAgeLessThanEqual",
-				Params: []code.Param{
-					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Name: "age", Type: code.TypeInt},
-				},
-				Returns: []code.Type{
-					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.TypeError,
-				},
+				Signature: createSignature(
+					[]*types.Var{
+						createTypeVar(testutils.TypeContextNamed),
+						createTypeVar(code.TypeInt),
+					},
+					[]*types.Var{
+						createTypeVar(types.NewSlice(types.NewPointer(testutils.TypeUserStruct))),
+						createTypeVar(code.TypeError),
+					},
+				),
 				Operation: spec.FindOperation{
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
 							{
-								Comparator:     spec.ComparatorLessThanEqual,
-								FieldReference: spec.FieldReference{ageField},
-								ParamIndex:     1,
+								Comparator: spec.ComparatorLessThanEqual,
+								FieldReference: spec.FieldReference{
+									{
+										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
+										Tag: `bson:"age"`,
+									},
+								},
+								ParamIndex: 1,
 							},
 						},
 					},
@@ -343,7 +415,7 @@ func TestGenerateMethod_Find(t *testing.T) {
 	if err != nil {
 		return nil, err
 	}
-	entities := []*UserModel{
+	entities := []*User{
 	}
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
@@ -354,22 +426,29 @@ func TestGenerateMethod_Find(t *testing.T) {
 			Name: "find with GreaterThan comparator",
 			MethodSpec: spec.MethodSpec{
 				Name: "FindByAgeGreaterThan",
-				Params: []code.Param{
-					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Name: "age", Type: code.TypeInt},
-				},
-				Returns: []code.Type{
-					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.TypeError,
-				},
+				Signature: createSignature(
+					[]*types.Var{
+						createTypeVar(testutils.TypeContextNamed),
+						createTypeVar(code.TypeInt),
+					},
+					[]*types.Var{
+						createTypeVar(types.NewSlice(types.NewPointer(testutils.TypeUserStruct))),
+						createTypeVar(code.TypeError),
+					},
+				),
 				Operation: spec.FindOperation{
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
 							{
-								Comparator:     spec.ComparatorGreaterThan,
-								FieldReference: spec.FieldReference{ageField},
-								ParamIndex:     1,
+								Comparator: spec.ComparatorGreaterThan,
+								FieldReference: spec.FieldReference{
+									{
+										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
+										Tag: `bson:"age"`,
+									},
+								},
+								ParamIndex: 1,
 							},
 						},
 					},
@@ -384,7 +463,7 @@ func TestGenerateMethod_Find(t *testing.T) {
 	if err != nil {
 		return nil, err
 	}
-	entities := []*UserModel{
+	entities := []*User{
 	}
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
@@ -395,22 +474,29 @@ func TestGenerateMethod_Find(t *testing.T) {
 			Name: "find with GreaterThanEqual comparator",
 			MethodSpec: spec.MethodSpec{
 				Name: "FindByAgeGreaterThanEqual",
-				Params: []code.Param{
-					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Name: "age", Type: code.TypeInt},
-				},
-				Returns: []code.Type{
-					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.TypeError,
-				},
+				Signature: createSignature(
+					[]*types.Var{
+						createTypeVar(testutils.TypeContextNamed),
+						createTypeVar(code.TypeInt),
+					},
+					[]*types.Var{
+						createTypeVar(types.NewSlice(types.NewPointer(testutils.TypeUserStruct))),
+						createTypeVar(code.TypeError),
+					},
+				),
 				Operation: spec.FindOperation{
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
 							{
-								Comparator:     spec.ComparatorGreaterThanEqual,
-								FieldReference: spec.FieldReference{ageField},
-								ParamIndex:     1,
+								Comparator: spec.ComparatorGreaterThanEqual,
+								FieldReference: spec.FieldReference{
+									{
+										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
+										Tag: `bson:"age"`,
+									},
+								},
+								ParamIndex: 1,
 							},
 						},
 					},
@@ -425,7 +511,7 @@ func TestGenerateMethod_Find(t *testing.T) {
 	if err != nil {
 		return nil, err
 	}
-	entities := []*UserModel{
+	entities := []*User{
 	}
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
@@ -436,23 +522,30 @@ func TestGenerateMethod_Find(t *testing.T) {
 			Name: "find with Between comparator",
 			MethodSpec: spec.MethodSpec{
 				Name: "FindByAgeBetween",
-				Params: []code.Param{
-					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Name: "fromAge", Type: code.TypeInt},
-					{Name: "toAge", Type: code.TypeInt},
-				},
-				Returns: []code.Type{
-					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.TypeError,
-				},
+				Signature: createSignature(
+					[]*types.Var{
+						createTypeVar(testutils.TypeContextNamed),
+						createTypeVar(code.TypeInt),
+						createTypeVar(code.TypeInt),
+					},
+					[]*types.Var{
+						createTypeVar(types.NewSlice(types.NewPointer(testutils.TypeUserStruct))),
+						createTypeVar(code.TypeError),
+					},
+				),
 				Operation: spec.FindOperation{
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
 							{
-								Comparator:     spec.ComparatorBetween,
-								FieldReference: spec.FieldReference{ageField},
-								ParamIndex:     1,
+								Comparator: spec.ComparatorBetween,
+								FieldReference: spec.FieldReference{
+									{
+										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
+										Tag: `bson:"age"`,
+									},
+								},
+								ParamIndex: 1,
 							},
 						},
 					},
@@ -468,7 +561,7 @@ func TestGenerateMethod_Find(t *testing.T) {
 	if err != nil {
 		return nil, err
 	}
-	entities := []*UserModel{
+	entities := []*User{
 	}
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
@@ -479,22 +572,29 @@ func TestGenerateMethod_Find(t *testing.T) {
 			Name: "find with In comparator",
 			MethodSpec: spec.MethodSpec{
 				Name: "FindByGenderIn",
-				Params: []code.Param{
-					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Name: "gender", Type: code.ArrayType{ContainedType: code.SimpleType("Gender")}},
-				},
-				Returns: []code.Type{
-					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.TypeError,
-				},
+				Signature: createSignature(
+					[]*types.Var{
+						createTypeVar(testutils.TypeContextNamed),
+						createTypeVar(testutils.TypeGenderNamed),
+					},
+					[]*types.Var{
+						createTypeVar(types.NewSlice(types.NewPointer(testutils.TypeUserStruct))),
+						createTypeVar(code.TypeError),
+					},
+				),
 				Operation: spec.FindOperation{
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
 							{
-								Comparator:     spec.ComparatorIn,
-								FieldReference: spec.FieldReference{genderField},
-								ParamIndex:     1,
+								Comparator: spec.ComparatorIn,
+								FieldReference: spec.FieldReference{
+									{
+										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender"),
+										Tag: `bson:"gender"`,
+									},
+								},
+								ParamIndex: 1,
 							},
 						},
 					},
@@ -509,7 +609,7 @@ func TestGenerateMethod_Find(t *testing.T) {
 	if err != nil {
 		return nil, err
 	}
-	entities := []*UserModel{
+	entities := []*User{
 	}
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
@@ -520,22 +620,29 @@ func TestGenerateMethod_Find(t *testing.T) {
 			Name: "find with NotIn comparator",
 			MethodSpec: spec.MethodSpec{
 				Name: "FindByGenderNotIn",
-				Params: []code.Param{
-					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Name: "gender", Type: code.ArrayType{ContainedType: code.SimpleType("Gender")}},
-				},
-				Returns: []code.Type{
-					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.TypeError,
-				},
+				Signature: createSignature(
+					[]*types.Var{
+						createTypeVar(testutils.TypeContextNamed),
+						createTypeVar(testutils.TypeGenderNamed),
+					},
+					[]*types.Var{
+						createTypeVar(types.NewSlice(types.NewPointer(testutils.TypeUserStruct))),
+						createTypeVar(code.TypeError),
+					},
+				),
 				Operation: spec.FindOperation{
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
 							{
-								Comparator:     spec.ComparatorNotIn,
-								FieldReference: spec.FieldReference{genderField},
-								ParamIndex:     1,
+								Comparator: spec.ComparatorNotIn,
+								FieldReference: spec.FieldReference{
+									{
+										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender"),
+										Tag: `bson:"gender"`,
+									},
+								},
+								ParamIndex: 1,
 							},
 						},
 					},
@@ -550,7 +657,7 @@ func TestGenerateMethod_Find(t *testing.T) {
 	if err != nil {
 		return nil, err
 	}
-	entities := []*UserModel{
+	entities := []*User{
 	}
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
@@ -561,21 +668,28 @@ func TestGenerateMethod_Find(t *testing.T) {
 			Name: "find with True comparator",
 			MethodSpec: spec.MethodSpec{
 				Name: "FindByEnabledTrue",
-				Params: []code.Param{
-					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-				},
-				Returns: []code.Type{
-					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.TypeError,
-				},
+				Signature: createSignature(
+					[]*types.Var{
+						createTypeVar(testutils.TypeContextNamed),
+					},
+					[]*types.Var{
+						createTypeVar(types.NewSlice(types.NewPointer(testutils.TypeUserStruct))),
+						createTypeVar(code.TypeError),
+					},
+				),
 				Operation: spec.FindOperation{
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
 							{
-								Comparator:     spec.ComparatorTrue,
-								FieldReference: spec.FieldReference{enabledField},
-								ParamIndex:     1,
+								Comparator: spec.ComparatorTrue,
+								FieldReference: spec.FieldReference{
+									{
+										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Enabled"),
+										Tag: `bson:"enabled"`,
+									},
+								},
+								ParamIndex: 1,
 							},
 						},
 					},
@@ -588,7 +702,7 @@ func TestGenerateMethod_Find(t *testing.T) {
 	if err != nil {
 		return nil, err
 	}
-	entities := []*UserModel{
+	entities := []*User{
 	}
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
@@ -599,21 +713,28 @@ func TestGenerateMethod_Find(t *testing.T) {
 			Name: "find with False comparator",
 			MethodSpec: spec.MethodSpec{
 				Name: "FindByEnabledFalse",
-				Params: []code.Param{
-					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-				},
-				Returns: []code.Type{
-					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.TypeError,
-				},
+				Signature: createSignature(
+					[]*types.Var{
+						createTypeVar(testutils.TypeContextNamed),
+					},
+					[]*types.Var{
+						createTypeVar(types.NewSlice(types.NewPointer(testutils.TypeUserStruct))),
+						createTypeVar(code.TypeError),
+					},
+				),
 				Operation: spec.FindOperation{
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
 							{
-								Comparator:     spec.ComparatorFalse,
-								FieldReference: spec.FieldReference{enabledField},
-								ParamIndex:     1,
+								Comparator: spec.ComparatorFalse,
+								FieldReference: spec.FieldReference{
+									{
+										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Enabled"),
+										Tag: `bson:"enabled"`,
+									},
+								},
+								ParamIndex: 1,
 							},
 						},
 					},
@@ -626,7 +747,7 @@ func TestGenerateMethod_Find(t *testing.T) {
 	if err != nil {
 		return nil, err
 	}
-	entities := []*UserModel{
+	entities := []*User{
 	}
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
@@ -637,21 +758,28 @@ func TestGenerateMethod_Find(t *testing.T) {
 			Name: "find with Exists comparator",
 			MethodSpec: spec.MethodSpec{
 				Name: "FindByReferrerExists",
-				Params: []code.Param{
-					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-				},
-				Returns: []code.Type{
-					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.TypeError,
-				},
+				Signature: createSignature(
+					[]*types.Var{
+						createTypeVar(testutils.TypeContextNamed),
+					},
+					[]*types.Var{
+						createTypeVar(types.NewSlice(types.NewPointer(testutils.TypeUserStruct))),
+						createTypeVar(code.TypeError),
+					},
+				),
 				Operation: spec.FindOperation{
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
 							{
-								Comparator:     spec.ComparatorExists,
-								FieldReference: spec.FieldReference{referrerField},
-								ParamIndex:     1,
+								Comparator: spec.ComparatorExists,
+								FieldReference: spec.FieldReference{
+									{
+										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Referrer"),
+										Tag: `bson:"referrer"`,
+									},
+								},
+								ParamIndex: 1,
 							},
 						},
 					},
@@ -666,7 +794,7 @@ func TestGenerateMethod_Find(t *testing.T) {
 	if err != nil {
 		return nil, err
 	}
-	entities := []*UserModel{
+	entities := []*User{
 	}
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
@@ -677,21 +805,28 @@ func TestGenerateMethod_Find(t *testing.T) {
 			Name: "find with NotExists comparator",
 			MethodSpec: spec.MethodSpec{
 				Name: "FindByReferrerNotExists",
-				Params: []code.Param{
-					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-				},
-				Returns: []code.Type{
-					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.TypeError,
-				},
+				Signature: createSignature(
+					[]*types.Var{
+						createTypeVar(testutils.TypeContextNamed),
+					},
+					[]*types.Var{
+						createTypeVar(types.NewSlice(types.NewPointer(testutils.TypeUserStruct))),
+						createTypeVar(code.TypeError),
+					},
+				),
 				Operation: spec.FindOperation{
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
 							{
-								Comparator:     spec.ComparatorNotExists,
-								FieldReference: spec.FieldReference{referrerField},
-								ParamIndex:     1,
+								Comparator: spec.ComparatorNotExists,
+								FieldReference: spec.FieldReference{
+									{
+										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Referrer"),
+										Tag: `bson:"referrer"`,
+									},
+								},
+								ParamIndex: 1,
 							},
 						},
 					},
@@ -706,7 +841,7 @@ func TestGenerateMethod_Find(t *testing.T) {
 	if err != nil {
 		return nil, err
 	}
-	entities := []*UserModel{
+	entities := []*User{
 	}
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
@@ -717,17 +852,27 @@ func TestGenerateMethod_Find(t *testing.T) {
 			Name: "find with sort ascending",
 			MethodSpec: spec.MethodSpec{
 				Name: "FindAllOrderByAge",
-				Params: []code.Param{
-					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-				},
-				Returns: []code.Type{
-					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.TypeError,
-				},
+				Signature: createSignature(
+					[]*types.Var{
+						createTypeVar(testutils.TypeContextNamed),
+					},
+					[]*types.Var{
+						createTypeVar(types.NewSlice(types.NewPointer(testutils.TypeUserStruct))),
+						createTypeVar(code.TypeError),
+					},
+				),
 				Operation: spec.FindOperation{
 					Mode: spec.QueryModeMany,
 					Sorts: []spec.Sort{
-						{FieldReference: spec.FieldReference{ageField}, Ordering: spec.OrderingAscending},
+						{
+							FieldReference: spec.FieldReference{
+								{
+									Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
+									Tag: `bson:"age"`,
+								},
+							},
+							Ordering: spec.OrderingAscending,
+						},
 					},
 				},
 			},
@@ -738,7 +883,7 @@ func TestGenerateMethod_Find(t *testing.T) {
 	if err != nil {
 		return nil, err
 	}
-	entities := []*UserModel{
+	entities := []*User{
 	}
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
@@ -749,17 +894,27 @@ func TestGenerateMethod_Find(t *testing.T) {
 			Name: "find with sort descending",
 			MethodSpec: spec.MethodSpec{
 				Name: "FindAllOrderByAgeDesc",
-				Params: []code.Param{
-					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-				},
-				Returns: []code.Type{
-					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.TypeError,
-				},
+				Signature: createSignature(
+					[]*types.Var{
+						createTypeVar(testutils.TypeContextNamed),
+					},
+					[]*types.Var{
+						createTypeVar(types.NewSlice(types.NewPointer(testutils.TypeUserStruct))),
+						createTypeVar(code.TypeError),
+					},
+				),
 				Operation: spec.FindOperation{
 					Mode: spec.QueryModeMany,
 					Sorts: []spec.Sort{
-						{FieldReference: spec.FieldReference{ageField}, Ordering: spec.OrderingDescending},
+						{
+							FieldReference: spec.FieldReference{
+								{
+									Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
+									Tag: `bson:"age"`,
+								},
+							},
+							Ordering: spec.OrderingDescending,
+						},
 					},
 				},
 			},
@@ -770,7 +925,7 @@ func TestGenerateMethod_Find(t *testing.T) {
 	if err != nil {
 		return nil, err
 	}
-	entities := []*UserModel{
+	entities := []*User{
 	}
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
@@ -781,19 +936,30 @@ func TestGenerateMethod_Find(t *testing.T) {
 			Name: "find with deep sort ascending",
 			MethodSpec: spec.MethodSpec{
 				Name: "FindAllOrderByNameFirst",
-				Params: []code.Param{
-					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-				},
-				Returns: []code.Type{
-					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.TypeError,
-				},
+				Signature: createSignature(
+					[]*types.Var{
+						createTypeVar(testutils.TypeContextNamed),
+					},
+					[]*types.Var{
+						createTypeVar(types.NewSlice(types.NewPointer(testutils.TypeUserStruct))),
+						createTypeVar(code.TypeError),
+					},
+				),
 				Operation: spec.FindOperation{
 					Mode: spec.QueryModeMany,
 					Sorts: []spec.Sort{
 						{
-							FieldReference: spec.FieldReference{nameField, firstNameField},
-							Ordering:       spec.OrderingAscending,
+							FieldReference: spec.FieldReference{
+								{
+									Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Name"),
+									Tag: `bson:"name"`,
+								},
+								{
+									Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "First"),
+									Tag: `bson:"first"`,
+								},
+							},
+							Ordering: spec.OrderingAscending,
 						},
 					},
 				},
@@ -805,7 +971,7 @@ func TestGenerateMethod_Find(t *testing.T) {
 	if err != nil {
 		return nil, err
 	}
-	entities := []*UserModel{
+	entities := []*User{
 	}
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
@@ -816,18 +982,36 @@ func TestGenerateMethod_Find(t *testing.T) {
 			Name: "find with multiple sorts",
 			MethodSpec: spec.MethodSpec{
 				Name: "FindAllOrderByGenderAndAgeDesc",
-				Params: []code.Param{
-					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-				},
-				Returns: []code.Type{
-					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.TypeError,
-				},
+				Signature: createSignature(
+					[]*types.Var{
+						createTypeVar(testutils.TypeContextNamed),
+					},
+					[]*types.Var{
+						createTypeVar(types.NewSlice(types.NewPointer(testutils.TypeUserStruct))),
+						createTypeVar(code.TypeError),
+					},
+				),
 				Operation: spec.FindOperation{
 					Mode: spec.QueryModeMany,
 					Sorts: []spec.Sort{
-						{FieldReference: spec.FieldReference{genderField}, Ordering: spec.OrderingAscending},
-						{FieldReference: spec.FieldReference{ageField}, Ordering: spec.OrderingDescending},
+						{
+							FieldReference: spec.FieldReference{
+								{
+									Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender"),
+									Tag: `bson:"gender"`,
+								},
+							},
+							Ordering: spec.OrderingAscending,
+						},
+						{
+							FieldReference: spec.FieldReference{
+								{
+									Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
+									Tag: `bson:"age"`,
+								},
+							},
+							Ordering: spec.OrderingDescending,
+						},
 					},
 				},
 			},
@@ -839,7 +1023,7 @@ func TestGenerateMethod_Find(t *testing.T) {
 	if err != nil {
 		return nil, err
 	}
-	entities := []*UserModel{
+	entities := []*User{
 	}
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
@@ -850,17 +1034,27 @@ func TestGenerateMethod_Find(t *testing.T) {
 			Name: "find with limit",
 			MethodSpec: spec.MethodSpec{
 				Name: "FindTop5AllOrderByAgeDesc",
-				Params: []code.Param{
-					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-				},
-				Returns: []code.Type{
-					code.ArrayType{ContainedType: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					code.TypeError,
-				},
+				Signature: createSignature(
+					[]*types.Var{
+						createTypeVar(testutils.TypeContextNamed),
+					},
+					[]*types.Var{
+						createTypeVar(types.NewSlice(types.NewPointer(testutils.TypeUserStruct))),
+						createTypeVar(code.TypeError),
+					},
+				),
 				Operation: spec.FindOperation{
 					Mode: spec.QueryModeMany,
 					Sorts: []spec.Sort{
-						{FieldReference: spec.FieldReference{ageField}, Ordering: spec.OrderingDescending},
+						{
+							FieldReference: spec.FieldReference{
+								{
+									Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
+									Tag: `bson:"age"`,
+								},
+							},
+							Ordering: spec.OrderingDescending,
+						},
 					},
 					Limit: 5,
 				},
@@ -872,7 +1066,7 @@ func TestGenerateMethod_Find(t *testing.T) {
 	if err != nil {
 		return nil, err
 	}
-	entities := []*UserModel{
+	entities := []*User{
 	}
 	if err := cursor.All(arg0, &entities); err != nil {
 		return nil, err
@@ -883,18 +1077,24 @@ func TestGenerateMethod_Find(t *testing.T) {
 
 	for _, testCase := range testTable {
 		t.Run(testCase.Name, func(t *testing.T) {
-			generator := mongo.NewGenerator(userModel, "UserRepository")
+			generator := mongo.NewGenerator(testutils.Pkg, "User", "UserRepository")
 			expectedReceiver := codegen.MethodReceiver{
 				Name:    "r",
 				Type:    "UserRepositoryMongo",
 				Pointer: true,
 			}
-			var expectedParams []code.Param
-			for i, param := range testCase.MethodSpec.Params {
-				expectedParams = append(expectedParams, code.Param{
-					Name: fmt.Sprintf("arg%d", i),
-					Type: param.Type,
-				})
+
+			params := testCase.MethodSpec.Signature.Params()
+			var expectedParamVars []*types.Var
+			for i := 0; i < params.Len(); i++ {
+				expectedParamVars = append(expectedParamVars, types.NewVar(token.NoPos, nil, fmt.Sprintf("arg%d", i),
+					params.At(i).Type()))
+			}
+			expectedParams := types.NewTuple(expectedParamVars...)
+			returns := testCase.MethodSpec.Signature.Results()
+			var expectedReturns []types.Type
+			for i := 0; i < returns.Len(); i++ {
+				expectedReturns = append(expectedReturns, returns.At(i).Type())
 			}
 
 			actual, err := generator.GenerateMethod(testCase.MethodSpec)
@@ -923,10 +1123,10 @@ func TestGenerateMethod_Find(t *testing.T) {
 					actual.Params,
 				)
 			}
-			if !reflect.DeepEqual(testCase.MethodSpec.Returns, actual.Returns) {
+			if !reflect.DeepEqual(expectedReturns, actual.Returns) {
 				t.Errorf(
 					"incorrect struct returns: expected %+v, got %+v",
-					testCase.MethodSpec.Returns,
+					expectedReturns,
 					actual.Returns,
 				)
 			}
