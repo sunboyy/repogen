@@ -2,6 +2,8 @@ package mongo_test
 
 import (
 	"fmt"
+	"go/token"
+	"go/types"
 	"reflect"
 	"testing"
 
@@ -18,19 +20,29 @@ func TestGenerateMethod_Delete(t *testing.T) {
 			Name: "simple delete one method",
 			MethodSpec: spec.MethodSpec{
 				Name: "DeleteByID",
-				Params: []code.Param{
-					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Name: "id", Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
-				},
-				Returns: []code.Type{code.TypeBool, code.TypeError},
+				Signature: createSignature(
+					[]*types.Var{
+						createTypeVar(testutils.TypeContextNamed),
+						createTypeVar(testutils.TypeObjectIDNamed),
+					},
+					[]*types.Var{
+						createTypeVar(code.TypeBool),
+						createTypeVar(code.TypeError),
+					},
+				),
 				Operation: spec.DeleteOperation{
 					Mode: spec.QueryModeOne,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
 							{
-								Comparator:     spec.ComparatorEqual,
-								FieldReference: spec.FieldReference{idField},
-								ParamIndex:     1,
+								Comparator: spec.ComparatorEqual,
+								FieldReference: spec.FieldReference{
+									{
+										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "ID"),
+										Tag: `bson:"_id,omitempty"`,
+									},
+								},
+								ParamIndex: 1,
 							},
 						},
 					},
@@ -48,22 +60,29 @@ func TestGenerateMethod_Delete(t *testing.T) {
 			Name: "simple delete many method",
 			MethodSpec: spec.MethodSpec{
 				Name: "DeleteByGender",
-				Params: []code.Param{
-					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Name: "gender", Type: code.SimpleType("Gender")},
-				},
-				Returns: []code.Type{
-					code.TypeInt,
-					code.TypeError,
-				},
+				Signature: createSignature(
+					[]*types.Var{
+						createTypeVar(testutils.TypeContextNamed),
+						createTypeVar(testutils.TypeGenderNamed),
+					},
+					[]*types.Var{
+						createTypeVar(code.TypeInt),
+						createTypeVar(code.TypeError),
+					},
+				),
 				Operation: spec.DeleteOperation{
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
 							{
-								Comparator:     spec.ComparatorEqual,
-								FieldReference: spec.FieldReference{genderField},
-								ParamIndex:     1,
+								Comparator: spec.ComparatorEqual,
+								FieldReference: spec.FieldReference{
+									{
+										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender"),
+										Tag: `bson:"gender"`,
+									},
+								},
+								ParamIndex: 1,
 							},
 						},
 					},
@@ -81,29 +100,41 @@ func TestGenerateMethod_Delete(t *testing.T) {
 			Name: "delete with And operator",
 			MethodSpec: spec.MethodSpec{
 				Name: "DeleteByGenderAndAge",
-				Params: []code.Param{
-					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Name: "gender", Type: code.SimpleType("Gender")},
-					{Name: "age", Type: code.TypeInt},
-				},
-				Returns: []code.Type{
-					code.TypeInt,
-					code.TypeError,
-				},
+				Signature: createSignature(
+					[]*types.Var{
+						createTypeVar(testutils.TypeContextNamed),
+						createTypeVar(testutils.TypeGenderNamed),
+						createTypeVar(code.TypeInt),
+					},
+					[]*types.Var{
+						createTypeVar(code.TypeInt),
+						createTypeVar(code.TypeError),
+					},
+				),
 				Operation: spec.DeleteOperation{
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Operator: spec.OperatorAnd,
 						Predicates: []spec.Predicate{
 							{
-								Comparator:     spec.ComparatorEqual,
-								FieldReference: spec.FieldReference{genderField},
-								ParamIndex:     1,
+								Comparator: spec.ComparatorEqual,
+								FieldReference: spec.FieldReference{
+									{
+										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender"),
+										Tag: `bson:"gender"`,
+									},
+								},
+								ParamIndex: 1,
 							},
 							{
-								Comparator:     spec.ComparatorEqual,
-								FieldReference: spec.FieldReference{ageField},
-								ParamIndex:     2,
+								Comparator: spec.ComparatorEqual,
+								FieldReference: spec.FieldReference{
+									{
+										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
+										Tag: `bson:"age"`,
+									},
+								},
+								ParamIndex: 2,
 							},
 						},
 					},
@@ -128,29 +159,41 @@ func TestGenerateMethod_Delete(t *testing.T) {
 			Name: "delete with Or operator",
 			MethodSpec: spec.MethodSpec{
 				Name: "DeleteByGenderOrAge",
-				Params: []code.Param{
-					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Name: "gender", Type: code.SimpleType("Gender")},
-					{Name: "age", Type: code.TypeInt},
-				},
-				Returns: []code.Type{
-					code.TypeInt,
-					code.TypeError,
-				},
+				Signature: createSignature(
+					[]*types.Var{
+						createTypeVar(testutils.TypeContextNamed),
+						createTypeVar(testutils.TypeGenderNamed),
+						createTypeVar(code.TypeInt),
+					},
+					[]*types.Var{
+						createTypeVar(code.TypeInt),
+						createTypeVar(code.TypeError),
+					},
+				),
 				Operation: spec.DeleteOperation{
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Operator: spec.OperatorOr,
 						Predicates: []spec.Predicate{
 							{
-								Comparator:     spec.ComparatorEqual,
-								FieldReference: spec.FieldReference{genderField},
-								ParamIndex:     1,
+								Comparator: spec.ComparatorEqual,
+								FieldReference: spec.FieldReference{
+									{
+										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender"),
+										Tag: `bson:"gender"`,
+									},
+								},
+								ParamIndex: 1,
 							},
 							{
-								Comparator:     spec.ComparatorEqual,
-								FieldReference: spec.FieldReference{ageField},
-								ParamIndex:     2,
+								Comparator: spec.ComparatorEqual,
+								FieldReference: spec.FieldReference{
+									{
+										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
+										Tag: `bson:"age"`,
+									},
+								},
+								ParamIndex: 2,
 							},
 						},
 					},
@@ -175,22 +218,29 @@ func TestGenerateMethod_Delete(t *testing.T) {
 			Name: "delete with Not comparator",
 			MethodSpec: spec.MethodSpec{
 				Name: "DeleteByGenderNot",
-				Params: []code.Param{
-					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Name: "gender", Type: code.SimpleType("Gender")},
-				},
-				Returns: []code.Type{
-					code.TypeInt,
-					code.TypeError,
-				},
+				Signature: createSignature(
+					[]*types.Var{
+						createTypeVar(testutils.TypeContextNamed),
+						createTypeVar(testutils.TypeGenderNamed),
+					},
+					[]*types.Var{
+						createTypeVar(code.TypeInt),
+						createTypeVar(code.TypeError),
+					},
+				),
 				Operation: spec.DeleteOperation{
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
 							{
-								Comparator:     spec.ComparatorNot,
-								FieldReference: spec.FieldReference{genderField},
-								ParamIndex:     1,
+								Comparator: spec.ComparatorNot,
+								FieldReference: spec.FieldReference{
+									{
+										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender"),
+										Tag: `bson:"gender"`,
+									},
+								},
+								ParamIndex: 1,
 							},
 						},
 					},
@@ -210,22 +260,29 @@ func TestGenerateMethod_Delete(t *testing.T) {
 			Name: "delete with LessThan comparator",
 			MethodSpec: spec.MethodSpec{
 				Name: "DeleteByAgeLessThan",
-				Params: []code.Param{
-					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Name: "age", Type: code.TypeInt},
-				},
-				Returns: []code.Type{
-					code.TypeInt,
-					code.TypeError,
-				},
+				Signature: createSignature(
+					[]*types.Var{
+						createTypeVar(testutils.TypeContextNamed),
+						createTypeVar(code.TypeInt),
+					},
+					[]*types.Var{
+						createTypeVar(code.TypeInt),
+						createTypeVar(code.TypeError),
+					},
+				),
 				Operation: spec.DeleteOperation{
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
 							{
-								Comparator:     spec.ComparatorLessThan,
-								FieldReference: spec.FieldReference{ageField},
-								ParamIndex:     1,
+								Comparator: spec.ComparatorLessThan,
+								FieldReference: spec.FieldReference{
+									{
+										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
+										Tag: `bson:"age"`,
+									},
+								},
+								ParamIndex: 1,
 							},
 						},
 					},
@@ -245,22 +302,29 @@ func TestGenerateMethod_Delete(t *testing.T) {
 			Name: "delete with LessThanEqual comparator",
 			MethodSpec: spec.MethodSpec{
 				Name: "DeleteByAgeLessThanEqual",
-				Params: []code.Param{
-					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Name: "age", Type: code.TypeInt},
-				},
-				Returns: []code.Type{
-					code.TypeInt,
-					code.TypeError,
-				},
+				Signature: createSignature(
+					[]*types.Var{
+						createTypeVar(testutils.TypeContextNamed),
+						createTypeVar(code.TypeInt),
+					},
+					[]*types.Var{
+						createTypeVar(code.TypeInt),
+						createTypeVar(code.TypeError),
+					},
+				),
 				Operation: spec.DeleteOperation{
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
 							{
-								Comparator:     spec.ComparatorLessThanEqual,
-								FieldReference: spec.FieldReference{ageField},
-								ParamIndex:     1,
+								Comparator: spec.ComparatorLessThanEqual,
+								FieldReference: spec.FieldReference{
+									{
+										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
+										Tag: `bson:"age"`,
+									},
+								},
+								ParamIndex: 1,
 							},
 						},
 					},
@@ -280,22 +344,29 @@ func TestGenerateMethod_Delete(t *testing.T) {
 			Name: "delete with GreaterThan comparator",
 			MethodSpec: spec.MethodSpec{
 				Name: "DeleteByAgeGreaterThan",
-				Params: []code.Param{
-					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Name: "age", Type: code.TypeInt},
-				},
-				Returns: []code.Type{
-					code.TypeInt,
-					code.TypeError,
-				},
+				Signature: createSignature(
+					[]*types.Var{
+						createTypeVar(testutils.TypeContextNamed),
+						createTypeVar(code.TypeInt),
+					},
+					[]*types.Var{
+						createTypeVar(code.TypeInt),
+						createTypeVar(code.TypeError),
+					},
+				),
 				Operation: spec.DeleteOperation{
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
 							{
-								Comparator:     spec.ComparatorGreaterThan,
-								FieldReference: spec.FieldReference{ageField},
-								ParamIndex:     1,
+								Comparator: spec.ComparatorGreaterThan,
+								FieldReference: spec.FieldReference{
+									{
+										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
+										Tag: `bson:"age"`,
+									},
+								},
+								ParamIndex: 1,
 							},
 						},
 					},
@@ -315,22 +386,29 @@ func TestGenerateMethod_Delete(t *testing.T) {
 			Name: "delete with GreaterThanEqual comparator",
 			MethodSpec: spec.MethodSpec{
 				Name: "DeleteByAgeGreaterThanEqual",
-				Params: []code.Param{
-					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Name: "age", Type: code.TypeInt},
-				},
-				Returns: []code.Type{
-					code.TypeInt,
-					code.TypeError,
-				},
+				Signature: createSignature(
+					[]*types.Var{
+						createTypeVar(testutils.TypeContextNamed),
+						createTypeVar(code.TypeInt),
+					},
+					[]*types.Var{
+						createTypeVar(code.TypeInt),
+						createTypeVar(code.TypeError),
+					},
+				),
 				Operation: spec.DeleteOperation{
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
 							{
-								Comparator:     spec.ComparatorGreaterThanEqual,
-								FieldReference: spec.FieldReference{ageField},
-								ParamIndex:     1,
+								Comparator: spec.ComparatorGreaterThanEqual,
+								FieldReference: spec.FieldReference{
+									{
+										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
+										Tag: `bson:"age"`,
+									},
+								},
+								ParamIndex: 1,
 							},
 						},
 					},
@@ -350,23 +428,30 @@ func TestGenerateMethod_Delete(t *testing.T) {
 			Name: "delete with Between comparator",
 			MethodSpec: spec.MethodSpec{
 				Name: "DeleteByAgeBetween",
-				Params: []code.Param{
-					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Name: "fromAge", Type: code.TypeInt},
-					{Name: "toAge", Type: code.TypeInt},
-				},
-				Returns: []code.Type{
-					code.TypeInt,
-					code.TypeError,
-				},
+				Signature: createSignature(
+					[]*types.Var{
+						createTypeVar(testutils.TypeContextNamed),
+						createTypeVar(code.TypeInt),
+						createTypeVar(code.TypeInt),
+					},
+					[]*types.Var{
+						createTypeVar(code.TypeInt),
+						createTypeVar(code.TypeError),
+					},
+				),
 				Operation: spec.DeleteOperation{
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
 							{
-								Comparator:     spec.ComparatorBetween,
-								FieldReference: spec.FieldReference{ageField},
-								ParamIndex:     1,
+								Comparator: spec.ComparatorBetween,
+								FieldReference: spec.FieldReference{
+									{
+										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
+										Tag: `bson:"age"`,
+									},
+								},
+								ParamIndex: 1,
 							},
 						},
 					},
@@ -387,22 +472,29 @@ func TestGenerateMethod_Delete(t *testing.T) {
 			Name: "delete with In comparator",
 			MethodSpec: spec.MethodSpec{
 				Name: "DeleteByGenderIn",
-				Params: []code.Param{
-					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Name: "gender", Type: code.ArrayType{ContainedType: code.SimpleType("Gender")}},
-				},
-				Returns: []code.Type{
-					code.TypeInt,
-					code.TypeError,
-				},
+				Signature: createSignature(
+					[]*types.Var{
+						createTypeVar(testutils.TypeContextNamed),
+						createTypeVar(testutils.TypeGenderNamed),
+					},
+					[]*types.Var{
+						createTypeVar(code.TypeInt),
+						createTypeVar(code.TypeError),
+					},
+				),
 				Operation: spec.DeleteOperation{
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
 							{
-								Comparator:     spec.ComparatorIn,
-								FieldReference: spec.FieldReference{genderField},
-								ParamIndex:     1,
+								Comparator: spec.ComparatorIn,
+								FieldReference: spec.FieldReference{
+									{
+										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender"),
+										Tag: `bson:"gender"`,
+									},
+								},
+								ParamIndex: 1,
 							},
 						},
 					},
@@ -422,18 +514,24 @@ func TestGenerateMethod_Delete(t *testing.T) {
 
 	for _, testCase := range testTable {
 		t.Run(testCase.Name, func(t *testing.T) {
-			generator := mongo.NewGenerator(userModel, "UserRepository")
+			generator := mongo.NewGenerator(testutils.Pkg, "User", "UserRepository")
 			expectedReceiver := codegen.MethodReceiver{
 				Name:    "r",
 				Type:    "UserRepositoryMongo",
 				Pointer: true,
 			}
-			var expectedParams []code.Param
-			for i, param := range testCase.MethodSpec.Params {
-				expectedParams = append(expectedParams, code.Param{
-					Name: fmt.Sprintf("arg%d", i),
-					Type: param.Type,
-				})
+
+			params := testCase.MethodSpec.Signature.Params()
+			var expectedParamVars []*types.Var
+			for i := 0; i < params.Len(); i++ {
+				expectedParamVars = append(expectedParamVars, types.NewVar(token.NoPos, nil, fmt.Sprintf("arg%d", i),
+					params.At(i).Type()))
+			}
+			expectedParams := types.NewTuple(expectedParamVars...)
+			returns := testCase.MethodSpec.Signature.Results()
+			var expectedReturns []types.Type
+			for i := 0; i < returns.Len(); i++ {
+				expectedReturns = append(expectedReturns, returns.At(i).Type())
 			}
 
 			actual, err := generator.GenerateMethod(testCase.MethodSpec)
@@ -462,10 +560,10 @@ func TestGenerateMethod_Delete(t *testing.T) {
 					actual.Params,
 				)
 			}
-			if !reflect.DeepEqual(testCase.MethodSpec.Returns, actual.Returns) {
+			if !reflect.DeepEqual(expectedReturns, actual.Returns) {
 				t.Errorf(
 					"incorrect struct returns: expected %+v, got %+v",
-					testCase.MethodSpec.Returns,
+					expectedReturns,
 					actual.Returns,
 				)
 			}

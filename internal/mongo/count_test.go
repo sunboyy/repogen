@@ -2,6 +2,8 @@ package mongo_test
 
 import (
 	"fmt"
+	"go/token"
+	"go/types"
 	"reflect"
 	"testing"
 
@@ -18,21 +20,28 @@ func TestGenerateMethod_Count(t *testing.T) {
 			Name: "simple count method",
 			MethodSpec: spec.MethodSpec{
 				Name: "CountByGender",
-				Params: []code.Param{
-					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("Gender")},
-				},
-				Returns: []code.Type{
-					code.TypeInt,
-					code.TypeError,
-				},
+				Signature: createSignature(
+					[]*types.Var{
+						createTypeVar(testutils.TypeContextNamed),
+						createTypeVar(testutils.TypeGenderNamed),
+					},
+					[]*types.Var{
+						createTypeVar(code.TypeInt),
+						createTypeVar(code.TypeError),
+					},
+				),
 				Operation: spec.CountOperation{
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
 							{
-								FieldReference: spec.FieldReference{genderField},
-								Comparator:     spec.ComparatorEqual,
-								ParamIndex:     1,
+								FieldReference: spec.FieldReference{
+									{
+										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender"),
+										Tag: `bson:"gender"`,
+									},
+								},
+								Comparator: spec.ComparatorEqual,
+								ParamIndex: 1,
 							},
 						},
 					},
@@ -50,28 +59,40 @@ func TestGenerateMethod_Count(t *testing.T) {
 			Name: "count with And operator",
 			MethodSpec: spec.MethodSpec{
 				Name: "CountByGenderAndCity",
-				Params: []code.Param{
-					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("Gender")},
-					{Type: code.TypeInt},
-				},
-				Returns: []code.Type{
-					code.TypeInt,
-					code.TypeError,
-				},
+				Signature: createSignature(
+					[]*types.Var{
+						createTypeVar(testutils.TypeContextNamed),
+						createTypeVar(testutils.TypeGenderNamed),
+						createTypeVar(code.TypeInt),
+					},
+					[]*types.Var{
+						createTypeVar(code.TypeInt),
+						createTypeVar(code.TypeError),
+					},
+				),
 				Operation: spec.CountOperation{
 					Query: spec.QuerySpec{
 						Operator: spec.OperatorAnd,
 						Predicates: []spec.Predicate{
 							{
-								FieldReference: spec.FieldReference{genderField},
-								Comparator:     spec.ComparatorEqual,
-								ParamIndex:     1,
+								FieldReference: spec.FieldReference{
+									{
+										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender"),
+										Tag: `bson:"gender"`,
+									},
+								},
+								Comparator: spec.ComparatorEqual,
+								ParamIndex: 1,
 							},
 							{
-								FieldReference: spec.FieldReference{ageField},
-								Comparator:     spec.ComparatorEqual,
-								ParamIndex:     2,
+								FieldReference: spec.FieldReference{
+									{
+										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
+										Tag: `bson:"age"`,
+									},
+								},
+								Comparator: spec.ComparatorEqual,
+								ParamIndex: 2,
 							},
 						},
 					},
@@ -96,28 +117,40 @@ func TestGenerateMethod_Count(t *testing.T) {
 			Name: "count with Or operator",
 			MethodSpec: spec.MethodSpec{
 				Name: "CountByGenderOrCity",
-				Params: []code.Param{
-					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("Gender")},
-					{Type: code.TypeInt},
-				},
-				Returns: []code.Type{
-					code.TypeInt,
-					code.TypeError,
-				},
+				Signature: createSignature(
+					[]*types.Var{
+						createTypeVar(testutils.TypeContextNamed),
+						createTypeVar(testutils.TypeGenderNamed),
+						createTypeVar(code.TypeInt),
+					},
+					[]*types.Var{
+						createTypeVar(code.TypeInt),
+						createTypeVar(code.TypeError),
+					},
+				),
 				Operation: spec.CountOperation{
 					Query: spec.QuerySpec{
 						Operator: spec.OperatorOr,
 						Predicates: []spec.Predicate{
 							{
-								FieldReference: spec.FieldReference{genderField},
-								Comparator:     spec.ComparatorEqual,
-								ParamIndex:     1,
+								FieldReference: spec.FieldReference{
+									{
+										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender"),
+										Tag: `bson:"gender"`,
+									},
+								},
+								Comparator: spec.ComparatorEqual,
+								ParamIndex: 1,
 							},
 							{
-								FieldReference: spec.FieldReference{ageField},
-								Comparator:     spec.ComparatorEqual,
-								ParamIndex:     2,
+								FieldReference: spec.FieldReference{
+									{
+										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
+										Tag: `bson:"age"`,
+									},
+								},
+								Comparator: spec.ComparatorEqual,
+								ParamIndex: 2,
 							},
 						},
 					},
@@ -142,21 +175,28 @@ func TestGenerateMethod_Count(t *testing.T) {
 			Name: "count with Not comparator",
 			MethodSpec: spec.MethodSpec{
 				Name: "CountByGenderNot",
-				Params: []code.Param{
-					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.SimpleType("Gender")},
-				},
-				Returns: []code.Type{
-					code.TypeInt,
-					code.TypeError,
-				},
+				Signature: createSignature(
+					[]*types.Var{
+						createTypeVar(testutils.TypeContextNamed),
+						createTypeVar(testutils.TypeGenderNamed),
+					},
+					[]*types.Var{
+						createTypeVar(code.TypeInt),
+						createTypeVar(code.TypeError),
+					},
+				),
 				Operation: spec.CountOperation{
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
 							{
-								FieldReference: spec.FieldReference{genderField},
-								Comparator:     spec.ComparatorNot,
-								ParamIndex:     1,
+								FieldReference: spec.FieldReference{
+									{
+										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender"),
+										Tag: `bson:"gender"`,
+									},
+								},
+								Comparator: spec.ComparatorNot,
+								ParamIndex: 1,
 							},
 						},
 					},
@@ -176,21 +216,28 @@ func TestGenerateMethod_Count(t *testing.T) {
 			Name: "count with LessThan comparator",
 			MethodSpec: spec.MethodSpec{
 				Name: "CountByAgeLessThan",
-				Params: []code.Param{
-					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.TypeInt},
-				},
-				Returns: []code.Type{
-					code.TypeInt,
-					code.TypeError,
-				},
+				Signature: createSignature(
+					[]*types.Var{
+						createTypeVar(testutils.TypeContextNamed),
+						createTypeVar(code.TypeInt),
+					},
+					[]*types.Var{
+						createTypeVar(code.TypeInt),
+						createTypeVar(code.TypeError),
+					},
+				),
 				Operation: spec.CountOperation{
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
 							{
-								FieldReference: spec.FieldReference{ageField},
-								Comparator:     spec.ComparatorLessThan,
-								ParamIndex:     1,
+								FieldReference: spec.FieldReference{
+									{
+										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
+										Tag: `bson:"age"`,
+									},
+								},
+								Comparator: spec.ComparatorLessThan,
+								ParamIndex: 1,
 							},
 						},
 					},
@@ -210,21 +257,28 @@ func TestGenerateMethod_Count(t *testing.T) {
 			Name: "count with LessThanEqual comparator",
 			MethodSpec: spec.MethodSpec{
 				Name: "CountByAgeLessThanEqual",
-				Params: []code.Param{
-					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.TypeInt},
-				},
-				Returns: []code.Type{
-					code.TypeInt,
-					code.TypeError,
-				},
+				Signature: createSignature(
+					[]*types.Var{
+						createTypeVar(testutils.TypeContextNamed),
+						createTypeVar(code.TypeInt),
+					},
+					[]*types.Var{
+						createTypeVar(code.TypeInt),
+						createTypeVar(code.TypeError),
+					},
+				),
 				Operation: spec.CountOperation{
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
 							{
-								FieldReference: spec.FieldReference{ageField},
-								Comparator:     spec.ComparatorLessThanEqual,
-								ParamIndex:     1,
+								FieldReference: spec.FieldReference{
+									{
+										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
+										Tag: `bson:"age"`,
+									},
+								},
+								Comparator: spec.ComparatorLessThanEqual,
+								ParamIndex: 1,
 							},
 						},
 					},
@@ -244,21 +298,28 @@ func TestGenerateMethod_Count(t *testing.T) {
 			Name: "count with GreaterThan comparator",
 			MethodSpec: spec.MethodSpec{
 				Name: "CountByAgeGreaterThan",
-				Params: []code.Param{
-					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.TypeInt},
-				},
-				Returns: []code.Type{
-					code.TypeInt,
-					code.TypeError,
-				},
+				Signature: createSignature(
+					[]*types.Var{
+						createTypeVar(testutils.TypeContextNamed),
+						createTypeVar(code.TypeInt),
+					},
+					[]*types.Var{
+						createTypeVar(code.TypeInt),
+						createTypeVar(code.TypeError),
+					},
+				),
 				Operation: spec.CountOperation{
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
 							{
-								FieldReference: spec.FieldReference{ageField},
-								Comparator:     spec.ComparatorGreaterThan,
-								ParamIndex:     1,
+								FieldReference: spec.FieldReference{
+									{
+										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
+										Tag: `bson:"age"`,
+									},
+								},
+								Comparator: spec.ComparatorGreaterThan,
+								ParamIndex: 1,
 							},
 						},
 					},
@@ -278,21 +339,28 @@ func TestGenerateMethod_Count(t *testing.T) {
 			Name: "count with GreaterThanEqual comparator",
 			MethodSpec: spec.MethodSpec{
 				Name: "CountByAgeGreaterThanEqual",
-				Params: []code.Param{
-					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.TypeInt},
-				},
-				Returns: []code.Type{
-					code.TypeInt,
-					code.TypeError,
-				},
+				Signature: createSignature(
+					[]*types.Var{
+						createTypeVar(testutils.TypeContextNamed),
+						createTypeVar(code.TypeInt),
+					},
+					[]*types.Var{
+						createTypeVar(code.TypeInt),
+						createTypeVar(code.TypeError),
+					},
+				),
 				Operation: spec.CountOperation{
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
 							{
-								FieldReference: spec.FieldReference{ageField},
-								Comparator:     spec.ComparatorGreaterThanEqual,
-								ParamIndex:     1,
+								FieldReference: spec.FieldReference{
+									{
+										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
+										Tag: `bson:"age"`,
+									},
+								},
+								Comparator: spec.ComparatorGreaterThanEqual,
+								ParamIndex: 1,
 							},
 						},
 					},
@@ -312,22 +380,29 @@ func TestGenerateMethod_Count(t *testing.T) {
 			Name: "count with Between comparator",
 			MethodSpec: spec.MethodSpec{
 				Name: "CountByAgeBetween",
-				Params: []code.Param{
-					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.TypeInt},
-					{Type: code.TypeInt},
-				},
-				Returns: []code.Type{
-					code.TypeInt,
-					code.TypeError,
-				},
+				Signature: createSignature(
+					[]*types.Var{
+						createTypeVar(testutils.TypeContextNamed),
+						createTypeVar(code.TypeInt),
+						createTypeVar(code.TypeInt),
+					},
+					[]*types.Var{
+						createTypeVar(code.TypeInt),
+						createTypeVar(code.TypeError),
+					},
+				),
 				Operation: spec.CountOperation{
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
 							{
-								FieldReference: spec.FieldReference{ageField},
-								Comparator:     spec.ComparatorBetween,
-								ParamIndex:     1,
+								FieldReference: spec.FieldReference{
+									{
+										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
+										Tag: `bson:"age"`,
+									},
+								},
+								Comparator: spec.ComparatorBetween,
+								ParamIndex: 1,
 							},
 						},
 					},
@@ -348,21 +423,28 @@ func TestGenerateMethod_Count(t *testing.T) {
 			Name: "count with In comparator",
 			MethodSpec: spec.MethodSpec{
 				Name: "CountByAgeIn",
-				Params: []code.Param{
-					{Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Type: code.ArrayType{ContainedType: code.TypeInt}},
-				},
-				Returns: []code.Type{
-					code.TypeInt,
-					code.TypeError,
-				},
+				Signature: createSignature(
+					[]*types.Var{
+						createTypeVar(testutils.TypeContextNamed),
+						createTypeVar(testutils.TypeObjectIDNamed),
+					},
+					[]*types.Var{
+						createTypeVar(code.TypeInt),
+						createTypeVar(code.TypeError),
+					},
+				),
 				Operation: spec.CountOperation{
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
 							{
-								FieldReference: spec.FieldReference{ageField},
-								Comparator:     spec.ComparatorIn,
-								ParamIndex:     1,
+								FieldReference: spec.FieldReference{
+									{
+										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
+										Tag: `bson:"age"`,
+									},
+								},
+								Comparator: spec.ComparatorIn,
+								ParamIndex: 1,
 							},
 						},
 					},
@@ -382,18 +464,24 @@ func TestGenerateMethod_Count(t *testing.T) {
 
 	for _, testCase := range testTable {
 		t.Run(testCase.Name, func(t *testing.T) {
-			generator := mongo.NewGenerator(userModel, "UserRepository")
+			generator := mongo.NewGenerator(testutils.Pkg, "User", "UserRepository")
 			expectedReceiver := codegen.MethodReceiver{
 				Name:    "r",
 				Type:    "UserRepositoryMongo",
 				Pointer: true,
 			}
-			var expectedParams []code.Param
-			for i, param := range testCase.MethodSpec.Params {
-				expectedParams = append(expectedParams, code.Param{
-					Name: fmt.Sprintf("arg%d", i),
-					Type: param.Type,
-				})
+
+			params := testCase.MethodSpec.Signature.Params()
+			var expectedParamVars []*types.Var
+			for i := 0; i < params.Len(); i++ {
+				expectedParamVars = append(expectedParamVars, types.NewVar(token.NoPos, nil, fmt.Sprintf("arg%d", i),
+					params.At(i).Type()))
+			}
+			expectedParams := types.NewTuple(expectedParamVars...)
+			returns := testCase.MethodSpec.Signature.Results()
+			var expectedReturns []types.Type
+			for i := 0; i < returns.Len(); i++ {
+				expectedReturns = append(expectedReturns, returns.At(i).Type())
 			}
 
 			actual, err := generator.GenerateMethod(testCase.MethodSpec)
@@ -422,10 +510,10 @@ func TestGenerateMethod_Count(t *testing.T) {
 					actual.Params,
 				)
 			}
-			if !reflect.DeepEqual(testCase.MethodSpec.Returns, actual.Returns) {
+			if !reflect.DeepEqual(expectedReturns, actual.Returns) {
 				t.Errorf(
 					"incorrect struct returns: expected %+v, got %+v",
-					testCase.MethodSpec.Returns,
+					expectedReturns,
 					actual.Returns,
 				)
 			}

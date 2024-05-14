@@ -2,17 +2,21 @@ package mongo
 
 import (
 	"fmt"
+	"go/token"
+	"go/types"
 
 	"github.com/sunboyy/repogen/internal/code"
 	"github.com/sunboyy/repogen/internal/codegen"
 	"github.com/sunboyy/repogen/internal/spec"
+	"golang.org/x/tools/go/packages"
 )
 
 // NewGenerator creates a new instance of MongoDB repository generator
-func NewGenerator(structModel code.Struct, interfaceName string) RepositoryGenerator {
+func NewGenerator(pkg *types.Package, structModelName string, interfaceName string) RepositoryGenerator {
 	return RepositoryGenerator{
 		baseMethodGenerator: baseMethodGenerator{
-			structModel: structModel,
+			pkg:             pkg,
+			structModelName: structModelName,
 		},
 		InterfaceName: interfaceName,
 	}
@@ -45,7 +49,7 @@ func (g RepositoryGenerator) Imports() [][]code.Import {
 func (g RepositoryGenerator) GenerateStruct() codegen.StructBuilder {
 	return codegen.StructBuilder{
 		Name: g.repoImplStructName(),
-		Fields: code.StructFields{
+		Fields: []code.LegacyStructField{
 			{
 				Name: "collection",
 				Type: code.PointerType{
@@ -62,23 +66,21 @@ func (g RepositoryGenerator) GenerateStruct() codegen.StructBuilder {
 // GenerateConstructor creates codegen.FunctionBuilder of a constructor for
 // mongo repository implementation struct.
 func (g RepositoryGenerator) GenerateConstructor() (codegen.FunctionBuilder, error) {
+	mongoPkgs, err := packages.Load(&packages.Config{Mode: packages.NeedTypes}, "go.mongodb.org/mongo-driver/mongo")
+	if err != nil {
+		return codegen.FunctionBuilder{}, err
+	}
+	mongoPkg := mongoPkgs[0]
+	collectionObj := mongoPkg.Types.Scope().Lookup("Collection")
+	collectionType := collectionObj.Type()
+
 	return codegen.FunctionBuilder{
-		Name: "New" + g.InterfaceName,
-		Params: []code.Param{
-			{
-				Name: "collection",
-				Type: code.PointerType{
-					ContainedType: code.ExternalType{
-						PackageAlias: "mongo",
-						Name:         "Collection",
-					},
-				},
-			},
-		},
-		Returns: []code.Type{
-			code.PointerType{
-				ContainedType: code.SimpleType(g.repoImplStructName()),
-			},
+		Pkg:    g.pkg,
+		Name:   "New" + g.InterfaceName,
+		Params: types.NewTuple(types.NewVar(token.NoPos, nil, "collection", types.NewPointer(collectionType))),
+		Returns: []types.Type{
+			types.NewPointer(types.NewNamed(
+				types.NewTypeName(token.NoPos, nil, g.repoImplStructName(), nil), nil, nil)),
 		},
 		Body: codegen.FunctionBody{
 			codegen.ReturnStatement{
@@ -97,12 +99,16 @@ func (g RepositoryGenerator) GenerateConstructor() (codegen.FunctionBuilder, err
 // GenerateMethod creates codegen.MethodBuilder of repository method from the
 // provided method specification.
 func (g RepositoryGenerator) GenerateMethod(methodSpec spec.MethodSpec) (codegen.MethodBuilder, error) {
-	var params []code.Param
-	for i, param := range methodSpec.Params {
-		params = append(params, code.Param{
-			Name: fmt.Sprintf("arg%d", i),
-			Type: param.Type,
-		})
+	var paramVars []*types.Var
+	for i := 0; i < methodSpec.Signature.Params().Len(); i++ {
+		param := types.NewVar(token.NoPos, nil, fmt.Sprintf("arg%d", i),
+			methodSpec.Signature.Params().At(i).Type())
+		paramVars = append(paramVars, param)
+	}
+
+	var returns []types.Type
+	for i := 0; i < methodSpec.Signature.Results().Len(); i++ {
+		returns = append(returns, methodSpec.Signature.Results().At(i).Type())
 	}
 
 	implementation, err := g.generateMethodImplementation(methodSpec)
@@ -111,14 +117,15 @@ func (g RepositoryGenerator) GenerateMethod(methodSpec spec.MethodSpec) (codegen
 	}
 
 	return codegen.MethodBuilder{
+		Pkg: g.pkg,
 		Receiver: codegen.MethodReceiver{
 			Name:    "r",
 			Type:    code.SimpleType(g.repoImplStructName()),
 			Pointer: true,
 		},
 		Name:    methodSpec.Name,
-		Params:  params,
-		Returns: methodSpec.Returns,
+		Params:  types.NewTuple(paramVars...),
+		Returns: returns,
 		Body:    implementation,
 	}, nil
 }

@@ -1,6 +1,6 @@
 package spec
 
-import "github.com/sunboyy/repogen/internal/code"
+import "go/types"
 
 // UpdateOperation is a method specification for update operations
 type UpdateOperation struct {
@@ -72,18 +72,18 @@ func (o UpdateOperator) NumberOfArguments() int {
 }
 
 // ArgumentType returns type that is required for function parameter
-func (o UpdateOperator) ArgumentType(fieldType code.Type) code.Type {
+func (o UpdateOperator) ArgumentType(fieldType types.Type) types.Type {
 	switch o {
 	case UpdateOperatorPush:
-		arrayType := fieldType.(code.ArrayType)
-		return arrayType.ContainedType
+		sliceType := fieldType.(*types.Slice)
+		return sliceType.Elem()
 	default:
 		return fieldType
 	}
 }
 
 func (p interfaceMethodParser) parseUpdateOperation(tokens []string) (Operation, error) {
-	mode, err := p.extractIntOrBoolReturns(p.Method.Returns)
+	mode, err := p.extractIntOrBoolReturns(p.Signature.Results())
 	if err != nil {
 		return nil, err
 	}
@@ -104,7 +104,7 @@ func (p interfaceMethodParser) parseUpdateOperation(tokens []string) (Operation,
 		return nil, err
 	}
 
-	if err := p.validateQueryFromParams(p.Method.Params[update.NumberOfArguments()+1:], querySpec); err != nil {
+	if err := p.validateQueryFromParams(p.Signature.Params(), 1+update.NumberOfArguments(), querySpec); err != nil {
 		return nil, err
 	}
 
@@ -117,8 +117,8 @@ func (p interfaceMethodParser) parseUpdateOperation(tokens []string) (Operation,
 
 func (p interfaceMethodParser) parseUpdate(tokens []string) (Update, error) {
 	if len(tokens) == 0 {
-		requiredType := code.PointerType{ContainedType: p.StructModel.ReferencedType()}
-		if len(p.Method.Params) <= 1 || p.Method.Params[1].Type != requiredType {
+		expectedType := types.NewPointer(p.NamedStruct)
+		if p.Signature.Params().Len() <= 1 || !types.Identical(p.Signature.Params().At(1).Type(), expectedType) {
 			return nil, ErrInvalidUpdateFields
 		}
 		return UpdateModel{}, nil
@@ -143,16 +143,16 @@ func (p interfaceMethodParser) parseUpdate(tokens []string) (Update, error) {
 	}
 
 	for _, field := range updateFields {
-		if len(p.Method.Params) < field.ParamIndex+field.Operator.NumberOfArguments() {
+		if p.Signature.Params().Len() < field.ParamIndex+field.Operator.NumberOfArguments() {
 			return nil, ErrInvalidUpdateFields
 		}
 
-		requiredType := field.Operator.ArgumentType(field.FieldReference.ReferencedField().Type)
+		expectedType := field.Operator.ArgumentType(field.FieldReference.ReferencedField().Var.Type())
 
 		for i := 0; i < field.Operator.NumberOfArguments(); i++ {
-			if requiredType != p.Method.Params[field.ParamIndex+i].Type {
-				return nil, NewArgumentTypeNotMatchedError(field.FieldReference.ReferencingCode(), requiredType,
-					p.Method.Params[field.ParamIndex+i].Type)
+			if !types.Identical(p.Signature.Params().At(field.ParamIndex+i).Type(), expectedType) {
+				return nil, NewArgumentTypeNotMatchedError(field.FieldReference.ReferencingCode(), expectedType,
+					p.Signature.Params().At(field.ParamIndex+i).Type())
 			}
 		}
 	}
@@ -175,12 +175,12 @@ func (p interfaceMethodParser) parseUpdateField(t []string,
 func (p interfaceMethodParser) createUpdateField(t []string,
 	operator UpdateOperator, paramIndex int) (UpdateField, error) {
 
-	fieldReference, ok := p.fieldResolver.ResolveStructField(p.StructModel, t)
+	fieldReference, ok := resolveStructField(p.UnderlyingStruct, t)
 	if !ok {
 		return UpdateField{}, NewStructFieldNotFoundError(t)
 	}
 
-	if !p.validateUpdateOperator(fieldReference.ReferencedField().Type, operator) {
+	if !p.validateUpdateOperator(fieldReference.ReferencedField().Var.Type(), operator) {
 		return UpdateField{}, NewIncompatibleUpdateOperatorError(operator, fieldReference)
 	}
 
@@ -191,13 +191,26 @@ func (p interfaceMethodParser) createUpdateField(t []string,
 	}, nil
 }
 
-func (p interfaceMethodParser) validateUpdateOperator(referencedType code.Type, operator UpdateOperator) bool {
+func (p interfaceMethodParser) validateUpdateOperator(referencedType types.Type, operator UpdateOperator) bool {
 	switch operator {
 	case UpdateOperatorPush:
-		_, ok := referencedType.(code.ArrayType)
+		_, ok := referencedType.(*types.Slice)
 		return ok
+
 	case UpdateOperatorInc:
-		return referencedType.IsNumber()
+		switch t := referencedType.(type) {
+		case *types.Basic:
+			return t.Info()&types.IsNumeric != 0
+
+		case *types.Pointer:
+			return p.validateUpdateOperator(t.Elem(), operator)
+
+		case *types.Named:
+			return p.validateUpdateOperator(t.Underlying(), operator)
+
+		default:
+			return false
+		}
 	}
 	return true
 }

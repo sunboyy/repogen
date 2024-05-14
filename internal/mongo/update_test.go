@@ -2,6 +2,8 @@ package mongo_test
 
 import (
 	"fmt"
+	"go/token"
+	"go/types"
 	"reflect"
 	"testing"
 
@@ -18,24 +20,31 @@ func TestGenerateMethod_Update(t *testing.T) {
 			Name: "update model method",
 			MethodSpec: spec.MethodSpec{
 				Name: "UpdateByID",
-				Params: []code.Param{
-					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Name: "model", Type: code.PointerType{ContainedType: code.SimpleType("UserModel")}},
-					{Name: "id", Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
-				},
-				Returns: []code.Type{
-					code.TypeBool,
-					code.TypeError,
-				},
+				Signature: createSignature(
+					[]*types.Var{
+						createTypeVar(testutils.TypeContextNamed),
+						createTypeVar(testutils.TypeUserNamed),
+						createTypeVar(testutils.TypeObjectIDNamed),
+					},
+					[]*types.Var{
+						createTypeVar(code.TypeBool),
+						createTypeVar(code.TypeError),
+					},
+				),
 				Operation: spec.UpdateOperation{
 					Update: spec.UpdateModel{},
 					Mode:   spec.QueryModeOne,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
 							{
-								FieldReference: spec.FieldReference{idField},
-								Comparator:     spec.ComparatorEqual,
-								ParamIndex:     2,
+								FieldReference: spec.FieldReference{
+									{
+										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "ID"),
+										Tag: `bson:"_id,omitempty"`,
+									},
+								},
+								Comparator: spec.ComparatorEqual,
+								ParamIndex: 2,
 							},
 						},
 					},
@@ -55,30 +64,42 @@ func TestGenerateMethod_Update(t *testing.T) {
 			Name: "simple update one method",
 			MethodSpec: spec.MethodSpec{
 				Name: "UpdateAgeByID",
-				Params: []code.Param{
-					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Name: "age", Type: code.TypeInt},
-					{Name: "id", Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
-				},
-				Returns: []code.Type{
-					code.TypeBool,
-					code.TypeError,
-				},
+				Signature: createSignature(
+					[]*types.Var{
+						createTypeVar(testutils.TypeContextNamed),
+						createTypeVar(code.TypeInt),
+						createTypeVar(testutils.TypeObjectIDNamed),
+					},
+					[]*types.Var{
+						createTypeVar(code.TypeBool),
+						createTypeVar(code.TypeError),
+					},
+				),
 				Operation: spec.UpdateOperation{
 					Update: spec.UpdateFields{
 						spec.UpdateField{
-							FieldReference: spec.FieldReference{ageField},
-							ParamIndex:     1,
-							Operator:       spec.UpdateOperatorSet,
+							FieldReference: spec.FieldReference{
+								{
+									Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
+									Tag: `bson:"age"`,
+								},
+							},
+							ParamIndex: 1,
+							Operator:   spec.UpdateOperatorSet,
 						},
 					},
 					Mode: spec.QueryModeOne,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
 							{
-								FieldReference: spec.FieldReference{idField},
-								Comparator:     spec.ComparatorEqual,
-								ParamIndex:     2,
+								FieldReference: spec.FieldReference{
+									{
+										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "ID"),
+										Tag: `bson:"_id,omitempty"`,
+									},
+								},
+								Comparator: spec.ComparatorEqual,
+								ParamIndex: 2,
 							},
 						},
 					},
@@ -100,30 +121,42 @@ func TestGenerateMethod_Update(t *testing.T) {
 			Name: "simple update many method",
 			MethodSpec: spec.MethodSpec{
 				Name: "UpdateAgeByGender",
-				Params: []code.Param{
-					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Name: "age", Type: code.TypeInt},
-					{Name: "gender", Type: code.SimpleType("Gender")},
-				},
-				Returns: []code.Type{
-					code.TypeInt,
-					code.TypeError,
-				},
+				Signature: createSignature(
+					[]*types.Var{
+						createTypeVar(testutils.TypeContextNamed),
+						createTypeVar(code.TypeInt),
+						createTypeVar(testutils.TypeGenderNamed),
+					},
+					[]*types.Var{
+						createTypeVar(code.TypeInt),
+						createTypeVar(code.TypeError),
+					},
+				),
 				Operation: spec.UpdateOperation{
 					Update: spec.UpdateFields{
 						spec.UpdateField{
-							FieldReference: spec.FieldReference{ageField},
-							ParamIndex:     1,
-							Operator:       spec.UpdateOperatorSet,
+							FieldReference: spec.FieldReference{
+								{
+									Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
+									Tag: `bson:"age"`,
+								},
+							},
+							ParamIndex: 1,
+							Operator:   spec.UpdateOperatorSet,
 						},
 					},
 					Mode: spec.QueryModeMany,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
 							{
-								FieldReference: spec.FieldReference{genderField},
-								Comparator:     spec.ComparatorEqual,
-								ParamIndex:     2,
+								FieldReference: spec.FieldReference{
+									{
+										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender"),
+										Tag: `bson:"gender"`,
+									},
+								},
+								Comparator: spec.ComparatorEqual,
+								ParamIndex: 2,
 							},
 						},
 					},
@@ -145,30 +178,42 @@ func TestGenerateMethod_Update(t *testing.T) {
 			Name: "simple update push method",
 			MethodSpec: spec.MethodSpec{
 				Name: "UpdateConsentHistoryPushByID",
-				Params: []code.Param{
-					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Name: "consentHistory", Type: code.SimpleType("ConsentHistory")},
-					{Name: "id", Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
-				},
-				Returns: []code.Type{
-					code.TypeBool,
-					code.TypeError,
-				},
+				Signature: createSignature(
+					[]*types.Var{
+						createTypeVar(testutils.TypeContextNamed),
+						createTypeVar(testutils.TypeConsentHistoryNamed),
+						createTypeVar(testutils.TypeObjectIDNamed),
+					},
+					[]*types.Var{
+						createTypeVar(code.TypeBool),
+						createTypeVar(code.TypeError),
+					},
+				),
 				Operation: spec.UpdateOperation{
 					Update: spec.UpdateFields{
 						spec.UpdateField{
-							FieldReference: spec.FieldReference{consentHistoryField},
-							ParamIndex:     1,
-							Operator:       spec.UpdateOperatorPush,
+							FieldReference: spec.FieldReference{
+								{
+									Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "ConsentHistory"),
+									Tag: `bson:"consent_history"`,
+								},
+							},
+							ParamIndex: 1,
+							Operator:   spec.UpdateOperatorPush,
 						},
 					},
 					Mode: spec.QueryModeOne,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
 							{
-								FieldReference: spec.FieldReference{idField},
-								Comparator:     spec.ComparatorEqual,
-								ParamIndex:     2,
+								FieldReference: spec.FieldReference{
+									{
+										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "ID"),
+										Tag: `bson:"_id,omitempty"`,
+									},
+								},
+								Comparator: spec.ComparatorEqual,
+								ParamIndex: 2,
 							},
 						},
 					},
@@ -190,30 +235,42 @@ func TestGenerateMethod_Update(t *testing.T) {
 			Name: "simple update inc method",
 			MethodSpec: spec.MethodSpec{
 				Name: "UpdateAgeIncByID",
-				Params: []code.Param{
-					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Name: "age", Type: code.TypeInt},
-					{Name: "id", Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
-				},
-				Returns: []code.Type{
-					code.TypeBool,
-					code.TypeError,
-				},
+				Signature: createSignature(
+					[]*types.Var{
+						createTypeVar(testutils.TypeContextNamed),
+						createTypeVar(code.TypeInt),
+						createTypeVar(testutils.TypeObjectIDNamed),
+					},
+					[]*types.Var{
+						createTypeVar(code.TypeBool),
+						createTypeVar(code.TypeError),
+					},
+				),
 				Operation: spec.UpdateOperation{
 					Update: spec.UpdateFields{
 						spec.UpdateField{
-							FieldReference: spec.FieldReference{ageField},
-							ParamIndex:     1,
-							Operator:       spec.UpdateOperatorInc,
+							FieldReference: spec.FieldReference{
+								{
+									Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
+									Tag: `bson:"age"`,
+								},
+							},
+							ParamIndex: 1,
+							Operator:   spec.UpdateOperatorInc,
 						},
 					},
 					Mode: spec.QueryModeOne,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
 							{
-								FieldReference: spec.FieldReference{idField},
-								Comparator:     spec.ComparatorEqual,
-								ParamIndex:     2,
+								FieldReference: spec.FieldReference{
+									{
+										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "ID"),
+										Tag: `bson:"_id,omitempty"`,
+									},
+								},
+								Comparator: spec.ComparatorEqual,
+								ParamIndex: 2,
 							},
 						},
 					},
@@ -235,36 +292,53 @@ func TestGenerateMethod_Update(t *testing.T) {
 			Name: "simple update set and push method",
 			MethodSpec: spec.MethodSpec{
 				Name: "UpdateEnabledAndConsentHistoryPushByID",
-				Params: []code.Param{
-					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Name: "enabled", Type: code.TypeBool},
-					{Name: "consentHistory", Type: code.SimpleType("ConsentHistory")},
-					{Name: "gender", Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
-				},
-				Returns: []code.Type{
-					code.TypeBool,
-					code.TypeError,
-				},
+				Signature: createSignature(
+					[]*types.Var{
+						createTypeVar(testutils.TypeContextNamed),
+						createTypeVar(code.TypeBool),
+						createTypeVar(testutils.TypeConsentHistoryNamed),
+						createTypeVar(testutils.TypeGenderNamed),
+					},
+					[]*types.Var{
+						createTypeVar(code.TypeBool),
+						createTypeVar(code.TypeError),
+					},
+				),
 				Operation: spec.UpdateOperation{
 					Update: spec.UpdateFields{
 						spec.UpdateField{
-							FieldReference: spec.FieldReference{enabledField},
-							ParamIndex:     1,
-							Operator:       spec.UpdateOperatorSet,
+							FieldReference: spec.FieldReference{
+								{
+									Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Enabled"),
+									Tag: `bson:"enabled"`,
+								},
+							},
+							ParamIndex: 1,
+							Operator:   spec.UpdateOperatorSet,
 						},
 						spec.UpdateField{
-							FieldReference: spec.FieldReference{consentHistoryField},
-							ParamIndex:     2,
-							Operator:       spec.UpdateOperatorPush,
+							FieldReference: spec.FieldReference{
+								{
+									Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "ConsentHistory"),
+									Tag: `bson:"consent_history"`,
+								},
+							},
+							ParamIndex: 2,
+							Operator:   spec.UpdateOperatorPush,
 						},
 					},
 					Mode: spec.QueryModeOne,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
 							{
-								FieldReference: spec.FieldReference{idField},
-								Comparator:     spec.ComparatorEqual,
-								ParamIndex:     3,
+								FieldReference: spec.FieldReference{
+									{
+										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "ID"),
+										Tag: `bson:"_id,omitempty"`,
+									},
+								},
+								Comparator: spec.ComparatorEqual,
+								ParamIndex: 3,
 							},
 						},
 					},
@@ -289,30 +363,46 @@ func TestGenerateMethod_Update(t *testing.T) {
 			Name: "update with deeply referenced field",
 			MethodSpec: spec.MethodSpec{
 				Name: "UpdateNameFirstByID",
-				Params: []code.Param{
-					{Name: "ctx", Type: code.ExternalType{PackageAlias: "context", Name: "Context"}},
-					{Name: "firstName", Type: code.TypeString},
-					{Name: "id", Type: code.ExternalType{PackageAlias: "primitive", Name: "ObjectID"}},
-				},
-				Returns: []code.Type{
-					code.TypeBool,
-					code.TypeError,
-				},
+				Signature: createSignature(
+					[]*types.Var{
+						createTypeVar(testutils.TypeContextNamed),
+						createTypeVar(code.TypeString),
+						createTypeVar(testutils.TypeObjectIDNamed),
+					},
+					[]*types.Var{
+						createTypeVar(code.TypeBool),
+						createTypeVar(code.TypeError),
+					},
+				),
 				Operation: spec.UpdateOperation{
 					Update: spec.UpdateFields{
 						spec.UpdateField{
-							FieldReference: spec.FieldReference{nameField, firstNameField},
-							ParamIndex:     1,
-							Operator:       spec.UpdateOperatorSet,
+							FieldReference: spec.FieldReference{
+								{
+									Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Name"),
+									Tag: `bson:"name"`,
+								},
+								{
+									Var: testutils.FindStructFieldByName(testutils.TypeNameStruct, "FirstName"),
+									Tag: `bson:"first"`,
+								},
+							},
+							ParamIndex: 1,
+							Operator:   spec.UpdateOperatorSet,
 						},
 					},
 					Mode: spec.QueryModeOne,
 					Query: spec.QuerySpec{
 						Predicates: []spec.Predicate{
 							{
-								FieldReference: spec.FieldReference{idField},
-								Comparator:     spec.ComparatorEqual,
-								ParamIndex:     2,
+								FieldReference: spec.FieldReference{
+									{
+										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "ID"),
+										Tag: `bson:"_id,omitempty"`,
+									},
+								},
+								Comparator: spec.ComparatorEqual,
+								ParamIndex: 2,
 							},
 						},
 					},
@@ -334,18 +424,24 @@ func TestGenerateMethod_Update(t *testing.T) {
 
 	for _, testCase := range testTable {
 		t.Run(testCase.Name, func(t *testing.T) {
-			generator := mongo.NewGenerator(userModel, "UserRepository")
+			generator := mongo.NewGenerator(testutils.Pkg, "User", "UserRepository")
 			expectedReceiver := codegen.MethodReceiver{
 				Name:    "r",
 				Type:    "UserRepositoryMongo",
 				Pointer: true,
 			}
-			var expectedParams []code.Param
-			for i, param := range testCase.MethodSpec.Params {
-				expectedParams = append(expectedParams, code.Param{
-					Name: fmt.Sprintf("arg%d", i),
-					Type: param.Type,
-				})
+
+			params := testCase.MethodSpec.Signature.Params()
+			var expectedParamVars []*types.Var
+			for i := 0; i < params.Len(); i++ {
+				expectedParamVars = append(expectedParamVars, types.NewVar(token.NoPos, nil, fmt.Sprintf("arg%d", i),
+					params.At(i).Type()))
+			}
+			expectedParams := types.NewTuple(expectedParamVars...)
+			returns := testCase.MethodSpec.Signature.Results()
+			var expectedReturns []types.Type
+			for i := 0; i < returns.Len(); i++ {
+				expectedReturns = append(expectedReturns, returns.At(i).Type())
 			}
 
 			actual, err := generator.GenerateMethod(testCase.MethodSpec)
@@ -374,10 +470,10 @@ func TestGenerateMethod_Update(t *testing.T) {
 					actual.Params,
 				)
 			}
-			if !reflect.DeepEqual(testCase.MethodSpec.Returns, actual.Returns) {
+			if !reflect.DeepEqual(expectedReturns, actual.Returns) {
 				t.Errorf(
 					"incorrect struct returns: expected %+v, got %+v",
-					testCase.MethodSpec.Returns,
+					expectedReturns,
 					actual.Returns,
 				)
 			}

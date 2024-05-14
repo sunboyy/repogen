@@ -2,6 +2,8 @@ package codegen_test
 
 import (
 	"bytes"
+	"go/token"
+	"go/types"
 	"testing"
 
 	"github.com/sunboyy/repogen/internal/code"
@@ -56,7 +58,7 @@ func TestMethodBuilderBuild_IgnorePoinerReceiverOneReturn(t *testing.T) {
 		},
 		Name:    "Init",
 		Params:  nil,
-		Returns: []code.Type{code.TypeError},
+		Returns: []types.Type{code.TypeError},
 		Body: codegen.FunctionBody{
 			codegen.ReturnStatement{
 				codegen.ChainStatement{
@@ -99,10 +101,13 @@ func TestMethodBuilderBuild_UseReceiverMultiReturn(t *testing.T) {
 			Type: "User",
 		},
 		Name: "WithAge",
-		Params: []code.Param{
-			{Name: "age", Type: code.TypeInt},
+		Params: types.NewTuple(
+			types.NewVar(token.NoPos, nil, "age", code.TypeInt),
+		),
+		Returns: []types.Type{
+			types.NewNamed(types.NewTypeName(token.NoPos, nil, "User", nil), nil, nil),
+			code.TypeError,
 		},
-		Returns: []code.Type{code.SimpleType("User"), code.TypeError},
 		Body: codegen.FunctionBody{
 			codegen.AssignStatement{
 				Vars: []string{"u.Age"},
@@ -145,9 +150,9 @@ func TestMethodBuilderBuild_UsePointerReceiverNoReturn(t *testing.T) {
 			Pointer: true,
 		},
 		Name: "SetAge",
-		Params: []code.Param{
-			{Name: "age", Type: code.TypeInt},
-		},
+		Params: types.NewTuple(
+			types.NewVar(token.NoPos, nil, "age", code.TypeInt),
+		),
 		Returns: nil,
 		Body: codegen.FunctionBody{
 			codegen.AssignStatement{

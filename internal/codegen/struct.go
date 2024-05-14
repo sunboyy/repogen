@@ -18,7 +18,7 @@ type {{.Name}} struct {
 // StructBuilder is an implementer of a struct.
 type StructBuilder struct {
 	Name   string
-	Fields code.StructFields
+	Fields []code.LegacyStructField
 }
 
 // Impl writes struct declatation code to the buffer.

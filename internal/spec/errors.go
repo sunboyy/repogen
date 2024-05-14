@@ -3,6 +3,7 @@ package spec
 import (
 	"errors"
 	"fmt"
+	"go/types"
 	"strings"
 
 	"github.com/sunboyy/repogen/internal/code"
@@ -20,7 +21,7 @@ var (
 )
 
 // NewUnsupportedReturnError creates unsupportedReturnError
-func NewUnsupportedReturnError(givenType code.Type, index int) error {
+func NewUnsupportedReturnError(givenType types.Type, index int) error {
 	return unsupportedReturnError{
 		GivenType: givenType,
 		Index:     index,
@@ -28,12 +29,12 @@ func NewUnsupportedReturnError(givenType code.Type, index int) error {
 }
 
 type unsupportedReturnError struct {
-	GivenType code.Type
+	GivenType types.Type
 	Index     int
 }
 
 func (err unsupportedReturnError) Error() string {
-	return fmt.Sprintf("return type '%s' at index %d is not supported", err.GivenType.Code(), err.Index)
+	return fmt.Sprintf("return type '%s' at index %d is not supported", err.GivenType.String(), err.Index)
 }
 
 // NewOperationReturnCountUnmatchedError creates
@@ -79,7 +80,7 @@ func (err invalidSortError) Error() string {
 }
 
 // NewArgumentTypeNotMatchedError creates argumentTypeNotMatchedError
-func NewArgumentTypeNotMatchedError(fieldName string, requiredType code.Type, givenType code.Type) error {
+func NewArgumentTypeNotMatchedError(fieldName string, requiredType types.Type, givenType types.Type) error {
 	return argumentTypeNotMatchedError{
 		FieldName:    fieldName,
 		RequiredType: requiredType,
@@ -89,13 +90,13 @@ func NewArgumentTypeNotMatchedError(fieldName string, requiredType code.Type, gi
 
 type argumentTypeNotMatchedError struct {
 	FieldName    string
-	RequiredType code.Type
-	GivenType    code.Type
+	RequiredType types.Type
+	GivenType    types.Type
 }
 
 func (err argumentTypeNotMatchedError) Error() string {
 	return fmt.Sprintf("field '%s' requires an argument of type '%s' (got '%s')",
-		err.FieldName, err.RequiredType.Code(), err.GivenType.Code())
+		err.FieldName, err.RequiredType.String(), err.GivenType.String())
 }
 
 // NewUnknownOperationError creates unknownOperationError
@@ -139,7 +140,7 @@ type incompatibleComparatorError struct {
 
 func (err incompatibleComparatorError) Error() string {
 	return fmt.Sprintf("cannot use comparator %s with struct field '%s' of type '%s'",
-		err.Comparator, err.Field.Name, err.Field.Type.Code())
+		err.Comparator, err.Field.Var.Name(), err.Field.Var.Type())
 }
 
 // NewIncompatibleUpdateOperatorError creates incompatibleUpdateOperatorError
@@ -147,17 +148,17 @@ func NewIncompatibleUpdateOperatorError(updateOperator UpdateOperator, fieldRefe
 	return incompatibleUpdateOperatorError{
 		UpdateOperator:  updateOperator,
 		ReferencingCode: fieldReference.ReferencingCode(),
-		ReferencedType:  fieldReference.ReferencedField().Type,
+		ReferencedType:  fieldReference.ReferencedField().Var.Type(),
 	}
 }
 
 type incompatibleUpdateOperatorError struct {
 	UpdateOperator  UpdateOperator
 	ReferencingCode string
-	ReferencedType  code.Type
+	ReferencedType  types.Type
 }
 
 func (err incompatibleUpdateOperatorError) Error() string {
 	return fmt.Sprintf("cannot use update operator %s with struct field '%s' of type '%s'",
-		err.UpdateOperator, err.ReferencingCode, err.ReferencedType.Code())
+		err.UpdateOperator, err.ReferencingCode, err.ReferencedType.String())
 }

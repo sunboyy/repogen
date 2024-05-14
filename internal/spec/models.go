@@ -1,8 +1,6 @@
 package spec
 
-import (
-	"github.com/sunboyy/repogen/internal/code"
-)
+import "go/types"
 
 // QueryMode one or many
 type QueryMode string
@@ -16,8 +14,7 @@ const (
 // MethodSpec is a method specification inside repository specification
 type MethodSpec struct {
 	Name      string
-	Params    []code.Param
-	Returns   []code.Type
+	Signature *types.Signature
 	Operation Operation
 }
 
