@@ -1,9 +1,9 @@
 package mongo
 
 import (
+	"go/types"
 	"strconv"
 
-	"github.com/sunboyy/repogen/internal/code"
 	"github.com/sunboyy/repogen/internal/codegen"
 	"github.com/sunboyy/repogen/internal/spec"
 )
@@ -44,10 +44,7 @@ func (g findBodyGenerator) generateFindOneBody(querySpec querySpec,
 	sortsCode codegen.MapStatement) codegen.FunctionBody {
 
 	return codegen.FunctionBody{
-		codegen.DeclStatement{
-			Name: "entity",
-			Type: code.SimpleType(g.structModelName),
-		},
+		codegen.NewDeclStatement(g.targetPkg, "entity", g.structModelNamed),
 		codegen.IfBlock{
 			Condition: []codegen.Statement{
 				codegen.DeclAssignStatement{
@@ -101,14 +98,11 @@ func (g findBodyGenerator) generateFindManyBody(querySpec querySpec,
 		codegen.DeclAssignStatement{
 			Vars: []string{"entities"},
 			Values: []codegen.Statement{
-				codegen.SliceStatement{
-					Type: code.ArrayType{
-						ContainedType: code.PointerType{
-							ContainedType: code.SimpleType(g.structModelName),
-						},
-					},
-					Values: []codegen.Statement{},
-				},
+				codegen.NewSliceStatement(
+					g.targetPkg,
+					types.NewSlice(types.NewPointer(g.structModelNamed)),
+					[]codegen.Statement{},
+				),
 			},
 		},
 		codegen.IfBlock{

@@ -51,25 +51,25 @@ func generateParams(pkg *types.Package, params *types.Tuple) string {
 
 		paramList = append(
 			paramList,
-			fmt.Sprintf("%s %s", param.Name(), typeToString(pkg, param.Type())),
+			fmt.Sprintf("%s %s", param.Name(), TypeToString(pkg, param.Type())),
 		)
 	}
 	return strings.Join(paramList, ", ")
 }
 
-func typeToString(pkg *types.Package, t types.Type) string {
+func TypeToString(pkg *types.Package, t types.Type) string {
 	switch t := t.(type) {
 	case *types.Pointer:
-		return fmt.Sprintf("*%s", typeToString(pkg, t.Elem()))
+		return fmt.Sprintf("*%s", TypeToString(pkg, t.Elem()))
 
 	case *types.Slice:
-		return fmt.Sprintf("[]%s", typeToString(pkg, t.Elem()))
+		return fmt.Sprintf("[]%s", TypeToString(pkg, t.Elem()))
 
 	case *types.Named:
-		if t.Obj().Pkg() == nil || t.Obj().Pkg().Path() == pkg.Path() {
-			return t.Obj().Name()
+		if pkg == nil || (t.Obj().Pkg() != nil && t.Obj().Pkg().Path() != pkg.Path()) {
+			return fmt.Sprintf("%s.%s", t.Obj().Pkg().Name(), t.Obj().Name())
 		}
-		return fmt.Sprintf("%s.%s", t.Obj().Pkg().Name(), t.Obj().Name())
+		return t.Obj().Name()
 
 	default:
 		return t.String()
@@ -82,12 +82,12 @@ func generateReturns(pkg *types.Package, returns []types.Type) string {
 	}
 
 	if len(returns) == 1 {
-		return " " + typeToString(pkg, returns[0])
+		return " " + TypeToString(pkg, returns[0])
 	}
 
 	var returnList []string
 	for _, ret := range returns {
-		returnList = append(returnList, typeToString(pkg, ret))
+		returnList = append(returnList, TypeToString(pkg, ret))
 	}
 
 	return fmt.Sprintf(" (%s)", strings.Join(returnList, ", "))

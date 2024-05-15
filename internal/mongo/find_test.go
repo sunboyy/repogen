@@ -1077,11 +1077,11 @@ func TestGenerateMethod_Find(t *testing.T) {
 
 	for _, testCase := range testTable {
 		t.Run(testCase.Name, func(t *testing.T) {
-			generator := mongo.NewGenerator(testutils.Pkg, "User", "UserRepository")
+			generator := mongo.NewGenerator(testutils.Pkg, testutils.TypeUserNamed, "UserRepository")
 			expectedReceiver := codegen.MethodReceiver{
-				Name:    "r",
-				Type:    "UserRepositoryMongo",
-				Pointer: true,
+				Name:     "r",
+				TypeName: "UserRepositoryMongo",
+				Pointer:  true,
 			}
 
 			params := testCase.MethodSpec.Signature.Params()

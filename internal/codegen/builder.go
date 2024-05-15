@@ -4,9 +4,14 @@ import (
 	"bytes"
 	"text/template"
 
-	"github.com/sunboyy/repogen/internal/code"
 	"golang.org/x/tools/imports"
 )
+
+// Import is a model for package imports
+type Import struct {
+	Name string
+	Path string
+}
 
 type Builder struct {
 	// Program defines generator program name in the generated file.
@@ -17,7 +22,7 @@ type Builder struct {
 
 	// Imports defines necessary imports to reduce ambiguity when generating
 	// formatting the raw-generated code.
-	Imports [][]code.Import
+	Imports [][]Import
 
 	implementers []Implementer
 }
@@ -29,7 +34,7 @@ type Implementer interface {
 }
 
 // NewBuilder is a constructor of Builder struct.
-func NewBuilder(program string, packageName string, imports [][]code.Import) *Builder {
+func NewBuilder(program string, packageName string, imports [][]Import) *Builder {
 	return &Builder{
 		Program:     program,
 		PackageName: packageName,

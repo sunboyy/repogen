@@ -38,7 +38,7 @@ func (u User) IDHex() string {
 `
 
 func TestBuilderBuild(t *testing.T) {
-	builder := codegen.NewBuilder("repogen", "user", [][]code.Import{
+	builder := codegen.NewBuilder("repogen", "user", [][]codegen.Import{
 		{
 			{
 				Name: "_",
@@ -56,23 +56,20 @@ func TestBuilderBuild(t *testing.T) {
 		},
 	})
 	builder.AddImplementer(codegen.StructBuilder{
+		Pkg:  testutils.Pkg,
 		Name: "User",
-		Fields: []code.LegacyStructField{
+		Fields: []code.StructField{
 			{
-				Name: "ID",
-				Type: code.ExternalType{
-					PackageAlias: "primitive",
-					Name:         "ObjectID",
-				},
+				Var: types.NewVar(token.NoPos, nil, "ID", testutils.TypeObjectIDNamed),
 				Tag: `bson:"id" json:"id,omitempty"`,
 			},
 			{
-				Name: "Username",
-				Type: code.SimpleType("string"),
+				Var: types.NewVar(token.NoPos, nil, "Username", code.TypeString),
 			},
 		},
 	})
 	builder.AddImplementer(codegen.FunctionBuilder{
+		Pkg:  testutils.Pkg,
 		Name: "NewUser",
 		Params: types.NewTuple(
 			types.NewVar(token.NoPos, nil, "username", code.TypeString),
@@ -104,7 +101,8 @@ func TestBuilderBuild(t *testing.T) {
 		},
 	})
 	builder.AddImplementer(codegen.MethodBuilder{
-		Receiver: codegen.MethodReceiver{Name: "u", Type: code.SimpleType("User")},
+		Pkg:      testutils.Pkg,
+		Receiver: codegen.MethodReceiver{Name: "u", TypeName: "User"},
 		Name:     "IDHex",
 		Params:   nil,
 		Returns:  []types.Type{code.TypeString},

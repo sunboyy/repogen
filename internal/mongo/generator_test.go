@@ -15,8 +15,8 @@ import (
 )
 
 func TestImports(t *testing.T) {
-	generator := mongo.NewGenerator(testutils.Pkg, "User", "UserRepository")
-	expected := [][]code.Import{
+	generator := mongo.NewGenerator(testutils.Pkg, testutils.TypeUserNamed, "UserRepository")
+	expected := [][]codegen.Import{
 		{
 			{Path: "context"},
 		},
@@ -36,18 +36,14 @@ func TestImports(t *testing.T) {
 }
 
 func TestGenerateStruct(t *testing.T) {
-	generator := mongo.NewGenerator(testutils.Pkg, "User", "UserRepository")
+	bareMongoPkg := types.NewPackage("go.mongodb.org/mongo-driver/mongo", "mongo")
+	bareCollectionType := types.NewNamed(types.NewTypeName(token.NoPos, bareMongoPkg, "Collection", nil), nil, nil)
+	generator := mongo.NewGenerator(testutils.Pkg, testutils.TypeUserNamed, "UserRepository")
 	expected := codegen.StructBuilder{
 		Name: "UserRepositoryMongo",
-		Fields: []code.LegacyStructField{
+		Fields: []code.StructField{
 			{
-				Name: "collection",
-				Type: code.PointerType{
-					ContainedType: code.ExternalType{
-						PackageAlias: "mongo",
-						Name:         "Collection",
-					},
-				},
+				Var: types.NewVar(token.NoPos, nil, "collection", types.NewPointer(bareCollectionType)),
 			},
 		},
 	}
@@ -71,7 +67,7 @@ func TestGenerateStruct(t *testing.T) {
 }
 
 func TestGenerateConstructor(t *testing.T) {
-	generator := mongo.NewGenerator(testutils.Pkg, "User", "UserRepository")
+	generator := mongo.NewGenerator(testutils.Pkg, testutils.TypeUserNamed, "UserRepository")
 	expected := codegen.FunctionBuilder{
 		Name: "NewUserRepository",
 		Params: types.NewTuple(
@@ -371,7 +367,7 @@ func TestGenerateMethod_Invalid(t *testing.T) {
 
 	for _, testCase := range testTable {
 		t.Run(testCase.Name, func(t *testing.T) {
-			generator := mongo.NewGenerator(testutils.Pkg, "User", "UserRepository")
+			generator := mongo.NewGenerator(testutils.Pkg, testutils.TypeUserNamed, "UserRepository")
 
 			_, err := generator.GenerateMethod(testCase.Method)
 
