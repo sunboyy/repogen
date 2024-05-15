@@ -25,6 +25,8 @@ jobs:
     - name: Vet
       run: go vet ./...
 
-    - uses: codecov/codecov-action@v1
+    - uses: codecov/codecov-action@v4
       with:
         flags: unittests
+        token: ${{ secrets.CODECOV_TOKEN }}
+        exclude: examples
