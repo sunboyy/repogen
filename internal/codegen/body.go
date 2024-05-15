@@ -2,9 +2,8 @@ package codegen
 
 import (
 	"fmt"
+	"go/types"
 	"strings"
-
-	"github.com/sunboyy/repogen/internal/code"
 )
 
 type FunctionBody []Statement
@@ -37,12 +36,21 @@ func (id Identifier) CodeLines() []string {
 }
 
 type DeclStatement struct {
+	Pkg  *types.Package
 	Name string
-	Type code.Type
+	Type types.Type
+}
+
+func NewDeclStatement(pkg *types.Package, name string, typ types.Type) DeclStatement {
+	return DeclStatement{
+		Pkg:  pkg,
+		Name: name,
+		Type: typ,
+	}
 }
 
 func (stmt DeclStatement) CodeLines() []string {
-	return []string{fmt.Sprintf("var %s %s", stmt.Name, stmt.Type.Code())}
+	return []string{fmt.Sprintf("var %s %s", stmt.Name, TypeToString(stmt.Pkg, stmt.Type))}
 }
 
 type DeclAssignStatement struct {
@@ -105,12 +113,22 @@ func (stmt CallStatement) CodeLines() []string {
 }
 
 type SliceStatement struct {
-	Type   code.Type
+	Pkg    *types.Package
+	Type   types.Type
 	Values []Statement
 }
 
+func NewSliceStatement(pkg *types.Package, typ types.Type, values []Statement) SliceStatement {
+	return SliceStatement{
+		Pkg:    pkg,
+		Type:   typ,
+		Values: values,
+	}
+}
+
 func (stmt SliceStatement) CodeLines() []string {
-	lines := []string{stmt.Type.Code() + "{"}
+	lines := []string{TypeToString(stmt.Pkg, stmt.Type) + "{"}
+
 	for _, value := range stmt.Values {
 		stmtLines := value.CodeLines()
 		stmtLines[len(stmtLines)-1] += ","
@@ -118,7 +136,9 @@ func (stmt SliceStatement) CodeLines() []string {
 			lines = append(lines, "\t"+line)
 		}
 	}
+
 	lines = append(lines, "}")
+
 	return lines
 }
 

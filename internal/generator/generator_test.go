@@ -299,7 +299,7 @@ func TestGenerateMongoRepository(t *testing.T) {
 	}
 	expectedCode := string(expectedBytes)
 
-	code, err := generator.GenerateRepository(testutils.Pkg, "User", "UserRepository", methods)
+	code, err := generator.GenerateRepository(testutils.Pkg, testutils.TypeUserNamed, "UserRepository", methods)
 
 	if err != nil {
 		t.Fatal(err)

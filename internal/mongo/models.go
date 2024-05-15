@@ -2,9 +2,9 @@ package mongo
 
 import (
 	"fmt"
+	"go/types"
 	"sort"
 
-	"github.com/sunboyy/repogen/internal/code"
 	"github.com/sunboyy/repogen/internal/codegen"
 	"github.com/sunboyy/repogen/internal/spec"
 )
@@ -66,6 +66,7 @@ func (u updateFields) Code() codegen.Statement {
 }
 
 type querySpec struct {
+	TargetPkg  *types.Package
 	Operator   spec.Operator
 	Predicates []predicate
 }
@@ -89,28 +90,20 @@ func (q querySpec) Code() codegen.Statement {
 	case spec.OperatorOr:
 		stmt.Pairs = append(stmt.Pairs, codegen.MapPair{
 			Key: "$or",
-			Value: codegen.SliceStatement{
-				Type: code.ArrayType{
-					ContainedType: code.ExternalType{
-						PackageAlias: "bson",
-						Name:         "M",
-					},
-				},
-				Values: predicateMaps,
-			},
+			Value: codegen.NewSliceStatement(
+				q.TargetPkg,
+				types.NewSlice(bsonMType),
+				predicateMaps,
+			),
 		})
 	case spec.OperatorAnd:
 		stmt.Pairs = append(stmt.Pairs, codegen.MapPair{
 			Key: "$and",
-			Value: codegen.SliceStatement{
-				Type: code.ArrayType{
-					ContainedType: code.ExternalType{
-						PackageAlias: "bson",
-						Name:         "M",
-					},
-				},
-				Values: predicateMaps,
-			},
+			Value: codegen.NewSliceStatement(
+				q.TargetPkg,
+				types.NewSlice(bsonMType),
+				predicateMaps,
+			),
 		})
 	default:
 		stmt.Pairs = predicatePairs

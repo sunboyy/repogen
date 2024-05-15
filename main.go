@@ -136,5 +136,5 @@ func generateRepository(pkg *types.Package, structModelName, repositoryInterface
 		methodSpecs = append(methodSpecs, methodSpec)
 	}
 
-	return generator.GenerateRepository(pkg, structModelName, repositoryInterfaceName, methodSpecs)
+	return generator.GenerateRepository(pkg, namedStruct, repositoryInterfaceName, methodSpecs)
 }

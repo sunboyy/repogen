@@ -1,6 +1,7 @@
 package mongo
 
 import (
+	"go/token"
 	"go/types"
 	"strings"
 
@@ -8,6 +9,19 @@ import (
 	"github.com/sunboyy/repogen/internal/codegen"
 	"github.com/sunboyy/repogen/internal/spec"
 )
+
+var (
+	mongoCollectionType types.Type
+	bsonMType           types.Type
+)
+
+func init() {
+	bareMongoPkg := types.NewPackage("go.mongodb.org/mongo-driver/mongo", "mongo")
+	mongoCollectionType = types.NewNamed(types.NewTypeName(token.NoPos, bareMongoPkg, "Collection", nil), nil, nil)
+
+	bareBsonPkg := types.NewPackage("go.mongodb.org/mongo-driver/bson", "bson")
+	bsonMType = types.NewNamed(types.NewTypeName(token.NoPos, bareBsonPkg, "M", nil), nil, nil)
+}
 
 var errOccurred = codegen.RawStatement("err != nil")
 
@@ -50,8 +64,8 @@ var ifErrReturnFalseErr = codegen.IfBlock{
 }
 
 type baseMethodGenerator struct {
-	pkg             *types.Package
-	structModelName string
+	targetPkg        *types.Package
+	structModelNamed *types.Named
 }
 
 func (g baseMethodGenerator) bsonFieldReference(fieldReference spec.FieldReference) (string, error) {
@@ -93,6 +107,7 @@ func (g baseMethodGenerator) convertQuerySpec(query spec.QuerySpec) (querySpec, 
 	}
 
 	return querySpec{
+		TargetPkg:  g.targetPkg,
 		Operator:   query.Operator,
 		Predicates: predicates,
 	}, nil

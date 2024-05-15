@@ -3,6 +3,7 @@ package codegen
 import (
 	"bytes"
 	"fmt"
+	"go/types"
 	"strings"
 	"text/template"
 
@@ -17,8 +18,9 @@ type {{.Name}} struct {
 
 // StructBuilder is an implementer of a struct.
 type StructBuilder struct {
+	Pkg    *types.Package
 	Name   string
-	Fields []code.LegacyStructField
+	Fields []code.StructField
 }
 
 // Impl writes struct declatation code to the buffer.
@@ -37,7 +39,7 @@ func (sb StructBuilder) Impl(buffer *bytes.Buffer) error {
 func (sb StructBuilder) GenFields() string {
 	var fieldLines []string
 	for _, field := range sb.Fields {
-		fieldLine := fmt.Sprintf("\t%s %s", field.Name, field.Type.Code())
+		fieldLine := fmt.Sprintf("\t%s %s", field.Var.Name(), TypeToString(sb.Pkg, field.Var.Type()))
 		if len(field.Tag) > 0 {
 			fieldLine += fmt.Sprintf(" `%s`", string(field.Tag))
 		}

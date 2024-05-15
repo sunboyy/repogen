@@ -2,6 +2,8 @@ package codegen_test
 
 import (
 	"bytes"
+	"go/token"
+	"go/types"
 	"testing"
 
 	"github.com/sunboyy/repogen/internal/code"
@@ -20,31 +22,23 @@ type User struct {
 
 func TestStructBuilderBuild(t *testing.T) {
 	sb := codegen.StructBuilder{
+		Pkg:  testutils.Pkg,
 		Name: "User",
-		Fields: []code.LegacyStructField{
+		Fields: []code.StructField{
 			{
-				Name: "ID",
-				Type: code.ExternalType{
-					PackageAlias: "primitive",
-					Name:         "ObjectID",
-				},
+				Var: types.NewVar(token.NoPos, nil, "ID", testutils.TypeObjectIDNamed),
 				Tag: `bson:"id,omitempty" json:"id,omitempty"`,
 			},
 			{
-				Name: "Username",
-				Type: code.SimpleType("string"),
-				Tag:  `bson:"username" json:"username"`,
+				Var: types.NewVar(token.NoPos, nil, "Username", code.TypeString),
+				Tag: `bson:"username" json:"username"`,
 			},
 			{
-				Name: "Age",
-				Type: code.SimpleType("int"),
-				Tag:  `bson:"age"`,
+				Var: types.NewVar(token.NoPos, nil, "Age", code.TypeInt),
+				Tag: `bson:"age"`,
 			},
 			{
-				Name: "orderCount",
-				Type: code.PointerType{
-					ContainedType: code.SimpleType("int"),
-				},
+				Var: types.NewVar(token.NoPos, nil, "orderCount", types.NewPointer(code.TypeInt)),
 			},
 		},
 	}

@@ -1,6 +1,7 @@
 package codegen_test
 
 import (
+	"go/types"
 	"reflect"
 	"testing"
 
@@ -20,10 +21,7 @@ func TestIdentifier(t *testing.T) {
 }
 
 func TestDeclStatement(t *testing.T) {
-	stmt := codegen.DeclStatement{
-		Name: "arrs",
-		Type: code.ArrayType{ContainedType: code.SimpleType("int")},
-	}
+	stmt := codegen.NewDeclStatement(nil, "arrs", types.NewSlice(code.TypeInt))
 	expected := []string{"var arrs []int"}
 
 	actual := stmt.CodeLines()
@@ -139,23 +137,18 @@ func TestCallStatement(t *testing.T) {
 }
 
 func TestSliceStatement(t *testing.T) {
-	stmt := codegen.SliceStatement{
-		Type: code.ArrayType{
-			ContainedType: code.SimpleType("string"),
-		},
-		Values: []codegen.Statement{
-			codegen.Identifier(`"hello"`),
-			codegen.ChainStatement{
-				codegen.CallStatement{
-					FuncName: "GetUser",
-					Params: codegen.StatementList{
-						codegen.Identifier("userID"),
-					},
+	stmt := codegen.NewSliceStatement(nil, types.NewSlice(code.TypeString), []codegen.Statement{
+		codegen.Identifier(`"hello"`),
+		codegen.ChainStatement{
+			codegen.CallStatement{
+				FuncName: "GetUser",
+				Params: codegen.StatementList{
+					codegen.Identifier("userID"),
 				},
-				codegen.Identifier("Name"),
 			},
+			codegen.Identifier("Name"),
 		},
-	}
+	})
 	expected := []string{
 		"[]string{",
 		`	"hello",`,

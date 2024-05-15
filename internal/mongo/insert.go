@@ -1,7 +1,8 @@
 package mongo
 
 import (
-	"github.com/sunboyy/repogen/internal/code"
+	"go/types"
+
 	"github.com/sunboyy/repogen/internal/codegen"
 	"github.com/sunboyy/repogen/internal/spec"
 )
@@ -38,12 +39,11 @@ func (g RepositoryGenerator) generateInsertOneBody() codegen.FunctionBody {
 
 func (g RepositoryGenerator) generateInsertManyBody() codegen.FunctionBody {
 	return codegen.FunctionBody{
-		codegen.DeclStatement{
-			Name: "entities",
-			Type: code.ArrayType{
-				ContainedType: code.InterfaceType{},
-			},
-		},
+		codegen.NewDeclStatement(
+			g.targetPkg,
+			"entities",
+			types.NewSlice(types.NewInterfaceType(nil, nil)),
+		),
 		codegen.RawBlock{
 			Header: []string{"for _, model := range arg1"},
 			Statements: []codegen.Statement{

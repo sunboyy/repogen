@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"go/types"
 	"text/template"
-
-	"github.com/sunboyy/repogen/internal/code"
 )
 
 const methodTemplate = `
@@ -27,9 +25,9 @@ type MethodBuilder struct {
 
 // MethodReceiver describes a specification of a method receiver.
 type MethodReceiver struct {
-	Name    string
-	Type    code.SimpleType
-	Pointer bool
+	Name     string
+	TypeName string
+	Pointer  bool
 }
 
 // Impl writes method declatation code to the buffer.
@@ -54,9 +52,9 @@ func (mb MethodBuilder) GenReceiver() string {
 
 func (mb MethodBuilder) generateReceiverType() string {
 	if !mb.Receiver.Pointer {
-		return mb.Receiver.Type.Code()
+		return mb.Receiver.TypeName
 	}
-	return code.PointerType{ContainedType: mb.Receiver.Type}.Code()
+	return "*" + mb.Receiver.TypeName
 }
 
 func (mb MethodBuilder) GenParams() string {

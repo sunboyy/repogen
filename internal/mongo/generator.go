@@ -8,15 +8,14 @@ import (
 	"github.com/sunboyy/repogen/internal/code"
 	"github.com/sunboyy/repogen/internal/codegen"
 	"github.com/sunboyy/repogen/internal/spec"
-	"golang.org/x/tools/go/packages"
 )
 
 // NewGenerator creates a new instance of MongoDB repository generator
-func NewGenerator(pkg *types.Package, structModelName string, interfaceName string) RepositoryGenerator {
+func NewGenerator(targetPkg *types.Package, structModelNamed *types.Named, interfaceName string) RepositoryGenerator {
 	return RepositoryGenerator{
 		baseMethodGenerator: baseMethodGenerator{
-			pkg:             pkg,
-			structModelName: structModelName,
+			targetPkg:        targetPkg,
+			structModelNamed: structModelNamed,
 		},
 		InterfaceName: interfaceName,
 	}
@@ -30,8 +29,8 @@ type RepositoryGenerator struct {
 }
 
 // Imports returns necessary imports for the mongo repository implementation.
-func (g RepositoryGenerator) Imports() [][]code.Import {
-	return [][]code.Import{
+func (g RepositoryGenerator) Imports() [][]codegen.Import {
+	return [][]codegen.Import{
 		{
 			{Path: "context"},
 		},
@@ -48,16 +47,11 @@ func (g RepositoryGenerator) Imports() [][]code.Import {
 // implementation struct.
 func (g RepositoryGenerator) GenerateStruct() codegen.StructBuilder {
 	return codegen.StructBuilder{
+		Pkg:  g.targetPkg,
 		Name: g.repoImplStructName(),
-		Fields: []code.LegacyStructField{
+		Fields: []code.StructField{
 			{
-				Name: "collection",
-				Type: code.PointerType{
-					ContainedType: code.ExternalType{
-						PackageAlias: "mongo",
-						Name:         "Collection",
-					},
-				},
+				Var: types.NewVar(token.NoPos, nil, "collection", types.NewPointer(mongoCollectionType)),
 			},
 		},
 	}
@@ -66,18 +60,10 @@ func (g RepositoryGenerator) GenerateStruct() codegen.StructBuilder {
 // GenerateConstructor creates codegen.FunctionBuilder of a constructor for
 // mongo repository implementation struct.
 func (g RepositoryGenerator) GenerateConstructor() (codegen.FunctionBuilder, error) {
-	mongoPkgs, err := packages.Load(&packages.Config{Mode: packages.NeedTypes}, "go.mongodb.org/mongo-driver/mongo")
-	if err != nil {
-		return codegen.FunctionBuilder{}, err
-	}
-	mongoPkg := mongoPkgs[0]
-	collectionObj := mongoPkg.Types.Scope().Lookup("Collection")
-	collectionType := collectionObj.Type()
-
 	return codegen.FunctionBuilder{
-		Pkg:    g.pkg,
+		Pkg:    g.targetPkg,
 		Name:   "New" + g.InterfaceName,
-		Params: types.NewTuple(types.NewVar(token.NoPos, nil, "collection", types.NewPointer(collectionType))),
+		Params: types.NewTuple(types.NewVar(token.NoPos, nil, "collection", types.NewPointer(mongoCollectionType))),
 		Returns: []types.Type{
 			types.NewPointer(types.NewNamed(
 				types.NewTypeName(token.NoPos, nil, g.repoImplStructName(), nil), nil, nil)),
@@ -117,11 +103,11 @@ func (g RepositoryGenerator) GenerateMethod(methodSpec spec.MethodSpec) (codegen
 	}
 
 	return codegen.MethodBuilder{
-		Pkg: g.pkg,
+		Pkg: g.targetPkg,
 		Receiver: codegen.MethodReceiver{
-			Name:    "r",
-			Type:    code.SimpleType(g.repoImplStructName()),
-			Pointer: true,
+			Name:     "r",
+			TypeName: g.repoImplStructName(),
+			Pointer:  true,
 		},
 		Name:    methodSpec.Name,
 		Params:  types.NewTuple(paramVars...),

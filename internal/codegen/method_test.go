@@ -13,7 +13,7 @@ import (
 
 func TestMethodBuilderBuild_IgnoreReceiverNoReturn(t *testing.T) {
 	fb := codegen.MethodBuilder{
-		Receiver: codegen.MethodReceiver{Type: "User"},
+		Receiver: codegen.MethodReceiver{TypeName: "User"},
 		Name:     "Init",
 		Params:   nil,
 		Returns:  nil,
@@ -52,9 +52,10 @@ func (User) Init() {
 
 func TestMethodBuilderBuild_IgnorePoinerReceiverOneReturn(t *testing.T) {
 	fb := codegen.MethodBuilder{
+		Pkg: testutils.Pkg,
 		Receiver: codegen.MethodReceiver{
-			Type:    "User",
-			Pointer: true,
+			TypeName: "User",
+			Pointer:  true,
 		},
 		Name:    "Init",
 		Params:  nil,
@@ -96,16 +97,17 @@ func (*User) Init() error {
 
 func TestMethodBuilderBuild_UseReceiverMultiReturn(t *testing.T) {
 	fb := codegen.MethodBuilder{
+		Pkg: testutils.Pkg,
 		Receiver: codegen.MethodReceiver{
-			Name: "u",
-			Type: "User",
+			Name:     "u",
+			TypeName: "User",
 		},
 		Name: "WithAge",
 		Params: types.NewTuple(
 			types.NewVar(token.NoPos, nil, "age", code.TypeInt),
 		),
 		Returns: []types.Type{
-			types.NewNamed(types.NewTypeName(token.NoPos, nil, "User", nil), nil, nil),
+			testutils.TypeUserNamed,
 			code.TypeError,
 		},
 		Body: codegen.FunctionBody{
@@ -145,9 +147,9 @@ func (u User) WithAge(age int) (User, error) {
 func TestMethodBuilderBuild_UsePointerReceiverNoReturn(t *testing.T) {
 	fb := codegen.MethodBuilder{
 		Receiver: codegen.MethodReceiver{
-			Name:    "u",
-			Type:    "User",
-			Pointer: true,
+			Name:     "u",
+			TypeName: "User",
+			Pointer:  true,
 		},
 		Name: "SetAge",
 		Params: types.NewTuple(
