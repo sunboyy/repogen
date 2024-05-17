@@ -37,10 +37,7 @@ func TestGenerateMethod_Delete(t *testing.T) {
 							{
 								Comparator: spec.ComparatorEqual,
 								FieldReference: spec.FieldReference{
-									{
-										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "ID"),
-										Tag: `bson:"_id,omitempty"`,
-									},
+									testutils.FindStructFieldByName(testutils.TypeUserStruct, "ID"),
 								},
 								ParamIndex: 1,
 							},
@@ -77,10 +74,7 @@ func TestGenerateMethod_Delete(t *testing.T) {
 							{
 								Comparator: spec.ComparatorEqual,
 								FieldReference: spec.FieldReference{
-									{
-										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender"),
-										Tag: `bson:"gender"`,
-									},
+									testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender"),
 								},
 								ParamIndex: 1,
 							},
@@ -119,20 +113,14 @@ func TestGenerateMethod_Delete(t *testing.T) {
 							{
 								Comparator: spec.ComparatorEqual,
 								FieldReference: spec.FieldReference{
-									{
-										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender"),
-										Tag: `bson:"gender"`,
-									},
+									testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender"),
 								},
 								ParamIndex: 1,
 							},
 							{
 								Comparator: spec.ComparatorEqual,
 								FieldReference: spec.FieldReference{
-									{
-										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
-										Tag: `bson:"age"`,
-									},
+									testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
 								},
 								ParamIndex: 2,
 							},
@@ -178,20 +166,14 @@ func TestGenerateMethod_Delete(t *testing.T) {
 							{
 								Comparator: spec.ComparatorEqual,
 								FieldReference: spec.FieldReference{
-									{
-										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender"),
-										Tag: `bson:"gender"`,
-									},
+									testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender"),
 								},
 								ParamIndex: 1,
 							},
 							{
 								Comparator: spec.ComparatorEqual,
 								FieldReference: spec.FieldReference{
-									{
-										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
-										Tag: `bson:"age"`,
-									},
+									testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
 								},
 								ParamIndex: 2,
 							},
@@ -235,10 +217,7 @@ func TestGenerateMethod_Delete(t *testing.T) {
 							{
 								Comparator: spec.ComparatorNot,
 								FieldReference: spec.FieldReference{
-									{
-										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender"),
-										Tag: `bson:"gender"`,
-									},
+									testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender"),
 								},
 								ParamIndex: 1,
 							},
@@ -277,10 +256,7 @@ func TestGenerateMethod_Delete(t *testing.T) {
 							{
 								Comparator: spec.ComparatorLessThan,
 								FieldReference: spec.FieldReference{
-									{
-										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
-										Tag: `bson:"age"`,
-									},
+									testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
 								},
 								ParamIndex: 1,
 							},
@@ -319,10 +295,7 @@ func TestGenerateMethod_Delete(t *testing.T) {
 							{
 								Comparator: spec.ComparatorLessThanEqual,
 								FieldReference: spec.FieldReference{
-									{
-										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
-										Tag: `bson:"age"`,
-									},
+									testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
 								},
 								ParamIndex: 1,
 							},
@@ -361,10 +334,7 @@ func TestGenerateMethod_Delete(t *testing.T) {
 							{
 								Comparator: spec.ComparatorGreaterThan,
 								FieldReference: spec.FieldReference{
-									{
-										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
-										Tag: `bson:"age"`,
-									},
+									testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
 								},
 								ParamIndex: 1,
 							},
@@ -403,10 +373,7 @@ func TestGenerateMethod_Delete(t *testing.T) {
 							{
 								Comparator: spec.ComparatorGreaterThanEqual,
 								FieldReference: spec.FieldReference{
-									{
-										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
-										Tag: `bson:"age"`,
-									},
+									testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
 								},
 								ParamIndex: 1,
 							},
@@ -446,10 +413,7 @@ func TestGenerateMethod_Delete(t *testing.T) {
 							{
 								Comparator: spec.ComparatorBetween,
 								FieldReference: spec.FieldReference{
-									{
-										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
-										Tag: `bson:"age"`,
-									},
+									testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
 								},
 								ParamIndex: 1,
 							},
@@ -489,10 +453,7 @@ func TestGenerateMethod_Delete(t *testing.T) {
 							{
 								Comparator: spec.ComparatorIn,
 								FieldReference: spec.FieldReference{
-									{
-										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender"),
-										Tag: `bson:"gender"`,
-									},
+									testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender"),
 								},
 								ParamIndex: 1,
 							},

@@ -37,10 +37,7 @@ func TestGenerateMethod_Find(t *testing.T) {
 							{
 								Comparator: spec.ComparatorEqual,
 								FieldReference: spec.FieldReference{
-									{
-										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "ID"),
-										Tag: `bson:"_id,omitempty"`,
-									},
+									testutils.FindStructFieldByName(testutils.TypeUserStruct, "ID"),
 								},
 								ParamIndex: 1,
 							},
@@ -78,10 +75,7 @@ func TestGenerateMethod_Find(t *testing.T) {
 							{
 								Comparator: spec.ComparatorEqual,
 								FieldReference: spec.FieldReference{
-									{
-										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender"),
-										Tag: `bson:"gender"`,
-									},
+									testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender"),
 								},
 								ParamIndex: 1,
 							},
@@ -124,14 +118,8 @@ func TestGenerateMethod_Find(t *testing.T) {
 							{
 								Comparator: spec.ComparatorEqual,
 								FieldReference: spec.FieldReference{
-									{
-										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Name"),
-										Tag: `bson:"name"`,
-									},
-									{
-										Var: testutils.FindStructFieldByName(testutils.TypeNameStruct, "First"),
-										Tag: `bson:"first"`,
-									},
+									testutils.FindStructFieldByName(testutils.TypeUserStruct, "Name"),
+									testutils.FindStructFieldByName(testutils.TypeNameStruct, "First"),
 								},
 								ParamIndex: 1,
 							},
@@ -171,20 +159,14 @@ func TestGenerateMethod_Find(t *testing.T) {
 							{
 								Comparator: spec.ComparatorEqual,
 								FieldReference: spec.FieldReference{
-									{
-										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender"),
-										Tag: `bson:"gender"`,
-									},
+									testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender"),
 								},
 								ParamIndex: 1,
 							},
 							{
 								Comparator: spec.ComparatorEqual,
 								FieldReference: spec.FieldReference{
-									{
-										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
-										Tag: `bson:"age"`,
-									},
+									testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
 								},
 								ParamIndex: 2,
 							},
@@ -236,20 +218,14 @@ func TestGenerateMethod_Find(t *testing.T) {
 							{
 								Comparator: spec.ComparatorEqual,
 								FieldReference: spec.FieldReference{
-									{
-										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender"),
-										Tag: `bson:"gender"`,
-									},
+									testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender"),
 								},
 								ParamIndex: 1,
 							},
 							{
 								Comparator: spec.ComparatorEqual,
 								FieldReference: spec.FieldReference{
-									{
-										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
-										Tag: `bson:"age"`,
-									},
+									testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
 								},
 								ParamIndex: 2,
 							},
@@ -299,10 +275,7 @@ func TestGenerateMethod_Find(t *testing.T) {
 							{
 								Comparator: spec.ComparatorNot,
 								FieldReference: spec.FieldReference{
-									{
-										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender"),
-										Tag: `bson:"gender"`,
-									},
+									testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender"),
 								},
 								ParamIndex: 1,
 							},
@@ -347,10 +320,7 @@ func TestGenerateMethod_Find(t *testing.T) {
 							{
 								Comparator: spec.ComparatorLessThan,
 								FieldReference: spec.FieldReference{
-									{
-										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
-										Tag: `bson:"age"`,
-									},
+									testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
 								},
 								ParamIndex: 1,
 							},
@@ -395,10 +365,7 @@ func TestGenerateMethod_Find(t *testing.T) {
 							{
 								Comparator: spec.ComparatorLessThanEqual,
 								FieldReference: spec.FieldReference{
-									{
-										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
-										Tag: `bson:"age"`,
-									},
+									testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
 								},
 								ParamIndex: 1,
 							},
@@ -443,10 +410,7 @@ func TestGenerateMethod_Find(t *testing.T) {
 							{
 								Comparator: spec.ComparatorGreaterThan,
 								FieldReference: spec.FieldReference{
-									{
-										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
-										Tag: `bson:"age"`,
-									},
+									testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
 								},
 								ParamIndex: 1,
 							},
@@ -491,10 +455,7 @@ func TestGenerateMethod_Find(t *testing.T) {
 							{
 								Comparator: spec.ComparatorGreaterThanEqual,
 								FieldReference: spec.FieldReference{
-									{
-										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
-										Tag: `bson:"age"`,
-									},
+									testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
 								},
 								ParamIndex: 1,
 							},
@@ -540,10 +501,7 @@ func TestGenerateMethod_Find(t *testing.T) {
 							{
 								Comparator: spec.ComparatorBetween,
 								FieldReference: spec.FieldReference{
-									{
-										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
-										Tag: `bson:"age"`,
-									},
+									testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
 								},
 								ParamIndex: 1,
 							},
@@ -589,10 +547,7 @@ func TestGenerateMethod_Find(t *testing.T) {
 							{
 								Comparator: spec.ComparatorIn,
 								FieldReference: spec.FieldReference{
-									{
-										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender"),
-										Tag: `bson:"gender"`,
-									},
+									testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender"),
 								},
 								ParamIndex: 1,
 							},
@@ -637,10 +592,7 @@ func TestGenerateMethod_Find(t *testing.T) {
 							{
 								Comparator: spec.ComparatorNotIn,
 								FieldReference: spec.FieldReference{
-									{
-										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender"),
-										Tag: `bson:"gender"`,
-									},
+									testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender"),
 								},
 								ParamIndex: 1,
 							},
@@ -684,10 +636,7 @@ func TestGenerateMethod_Find(t *testing.T) {
 							{
 								Comparator: spec.ComparatorTrue,
 								FieldReference: spec.FieldReference{
-									{
-										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Enabled"),
-										Tag: `bson:"enabled"`,
-									},
+									testutils.FindStructFieldByName(testutils.TypeUserStruct, "Enabled"),
 								},
 								ParamIndex: 1,
 							},
@@ -729,10 +678,7 @@ func TestGenerateMethod_Find(t *testing.T) {
 							{
 								Comparator: spec.ComparatorFalse,
 								FieldReference: spec.FieldReference{
-									{
-										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Enabled"),
-										Tag: `bson:"enabled"`,
-									},
+									testutils.FindStructFieldByName(testutils.TypeUserStruct, "Enabled"),
 								},
 								ParamIndex: 1,
 							},
@@ -774,10 +720,7 @@ func TestGenerateMethod_Find(t *testing.T) {
 							{
 								Comparator: spec.ComparatorExists,
 								FieldReference: spec.FieldReference{
-									{
-										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Referrer"),
-										Tag: `bson:"referrer"`,
-									},
+									testutils.FindStructFieldByName(testutils.TypeUserStruct, "Referrer"),
 								},
 								ParamIndex: 1,
 							},
@@ -821,10 +764,7 @@ func TestGenerateMethod_Find(t *testing.T) {
 							{
 								Comparator: spec.ComparatorNotExists,
 								FieldReference: spec.FieldReference{
-									{
-										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Referrer"),
-										Tag: `bson:"referrer"`,
-									},
+									testutils.FindStructFieldByName(testutils.TypeUserStruct, "Referrer"),
 								},
 								ParamIndex: 1,
 							},
@@ -866,10 +806,7 @@ func TestGenerateMethod_Find(t *testing.T) {
 					Sorts: []spec.Sort{
 						{
 							FieldReference: spec.FieldReference{
-								{
-									Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
-									Tag: `bson:"age"`,
-								},
+								testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
 							},
 							Ordering: spec.OrderingAscending,
 						},
@@ -908,10 +845,7 @@ func TestGenerateMethod_Find(t *testing.T) {
 					Sorts: []spec.Sort{
 						{
 							FieldReference: spec.FieldReference{
-								{
-									Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
-									Tag: `bson:"age"`,
-								},
+								testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
 							},
 							Ordering: spec.OrderingDescending,
 						},
@@ -950,14 +884,8 @@ func TestGenerateMethod_Find(t *testing.T) {
 					Sorts: []spec.Sort{
 						{
 							FieldReference: spec.FieldReference{
-								{
-									Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Name"),
-									Tag: `bson:"name"`,
-								},
-								{
-									Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "First"),
-									Tag: `bson:"first"`,
-								},
+								testutils.FindStructFieldByName(testutils.TypeUserStruct, "Name"),
+								testutils.FindStructFieldByName(testutils.TypeNameStruct, "First"),
 							},
 							Ordering: spec.OrderingAscending,
 						},
@@ -996,19 +924,13 @@ func TestGenerateMethod_Find(t *testing.T) {
 					Sorts: []spec.Sort{
 						{
 							FieldReference: spec.FieldReference{
-								{
-									Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender"),
-									Tag: `bson:"gender"`,
-								},
+								testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender"),
 							},
 							Ordering: spec.OrderingAscending,
 						},
 						{
 							FieldReference: spec.FieldReference{
-								{
-									Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
-									Tag: `bson:"age"`,
-								},
+								testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
 							},
 							Ordering: spec.OrderingDescending,
 						},
@@ -1048,10 +970,7 @@ func TestGenerateMethod_Find(t *testing.T) {
 					Sorts: []spec.Sort{
 						{
 							FieldReference: spec.FieldReference{
-								{
-									Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
-									Tag: `bson:"age"`,
-								},
+								testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
 							},
 							Ordering: spec.OrderingDescending,
 						},

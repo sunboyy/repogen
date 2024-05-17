@@ -61,7 +61,7 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 			Query: spec.QuerySpec{Predicates: []spec.Predicate{
 				{
 					FieldReference: spec.FieldReference{
-						code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age")},
+						testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
 					},
 					Comparator: spec.ComparatorBetween,
 					ParamIndex: 1,
@@ -74,7 +74,7 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 			Query: spec.QuerySpec{Predicates: []spec.Predicate{
 				{
 					FieldReference: spec.FieldReference{
-						code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age")},
+						testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
 					},
 					Comparator: spec.ComparatorGreaterThan,
 					ParamIndex: 1,
@@ -87,7 +87,7 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 			Query: spec.QuerySpec{Predicates: []spec.Predicate{
 				{
 					FieldReference: spec.FieldReference{
-						code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age")},
+						testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
 					},
 					Comparator: spec.ComparatorGreaterThanEqual,
 					ParamIndex: 1,
@@ -100,7 +100,7 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 			Query: spec.QuerySpec{Predicates: []spec.Predicate{
 				{
 					FieldReference: spec.FieldReference{
-						code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age")},
+						testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
 					},
 					Comparator: spec.ComparatorLessThan,
 					ParamIndex: 1,
@@ -113,7 +113,7 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 			Query: spec.QuerySpec{Predicates: []spec.Predicate{
 				{
 					FieldReference: spec.FieldReference{
-						code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age")},
+						testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
 					},
 					Comparator: spec.ComparatorLessThanEqual,
 					ParamIndex: 1,
@@ -126,7 +126,7 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 			Query: spec.QuerySpec{Predicates: []spec.Predicate{
 				{
 					FieldReference: spec.FieldReference{
-						code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "City")},
+						testutils.FindStructFieldByName(testutils.TypeUserStruct, "City"),
 					},
 					Comparator: spec.ComparatorEqual,
 					ParamIndex: 1,
@@ -141,14 +141,14 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 				Predicates: []spec.Predicate{
 					{
 						FieldReference: spec.FieldReference{
-							code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "City")},
+							testutils.FindStructFieldByName(testutils.TypeUserStruct, "City"),
 						},
 						Comparator: spec.ComparatorEqual,
 						ParamIndex: 1,
 					},
 					{
 						FieldReference: spec.FieldReference{
-							code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender")},
+							testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender"),
 						},
 						Comparator: spec.ComparatorEqual,
 						ParamIndex: 2,
@@ -162,7 +162,7 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 			Query: spec.QuerySpec{Predicates: []spec.Predicate{
 				{
 					FieldReference: spec.FieldReference{
-						code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "City")},
+						testutils.FindStructFieldByName(testutils.TypeUserStruct, "City"),
 					},
 					Comparator: spec.ComparatorIn,
 					ParamIndex: 1,
@@ -175,7 +175,7 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 			Query: spec.QuerySpec{Predicates: []spec.Predicate{
 				{
 					FieldReference: spec.FieldReference{
-						code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "City")},
+						testutils.FindStructFieldByName(testutils.TypeUserStruct, "City"),
 					},
 					Comparator: spec.ComparatorNot,
 					ParamIndex: 1,
@@ -188,7 +188,7 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 			Query: spec.QuerySpec{Predicates: []spec.Predicate{
 				{
 					FieldReference: spec.FieldReference{
-						code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "City")},
+						testutils.FindStructFieldByName(testutils.TypeUserStruct, "City"),
 					},
 					Comparator: spec.ComparatorNotIn,
 					ParamIndex: 1,
@@ -203,14 +203,14 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 				Predicates: []spec.Predicate{
 					{
 						FieldReference: spec.FieldReference{
-							code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "City")},
+							testutils.FindStructFieldByName(testutils.TypeUserStruct, "City"),
 						},
 						Comparator: spec.ComparatorEqual,
 						ParamIndex: 1,
 					},
 					{
 						FieldReference: spec.FieldReference{
-							code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender")},
+							testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender"),
 						},
 						Comparator: spec.ComparatorEqual,
 						ParamIndex: 2,
@@ -224,7 +224,7 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 			Query: spec.QuerySpec{Predicates: []spec.Predicate{
 				{
 					FieldReference: spec.FieldReference{
-						code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "City")},
+						testutils.FindStructFieldByName(testutils.TypeUserStruct, "City"),
 					},
 					Comparator: spec.ComparatorEqual,
 					ParamIndex: 1,
@@ -233,7 +233,7 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 			Sorts: []spec.Sort{
 				{
 					FieldReference: spec.FieldReference{
-						code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age")},
+						testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
 					},
 					Ordering: spec.OrderingAscending,
 				},
@@ -245,7 +245,7 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 			Query: spec.QuerySpec{Predicates: []spec.Predicate{
 				{
 					FieldReference: spec.FieldReference{
-						code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "City")},
+						testutils.FindStructFieldByName(testutils.TypeUserStruct, "City"),
 					},
 					Comparator: spec.ComparatorEqual,
 					ParamIndex: 1,
@@ -254,7 +254,7 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 			Sorts: []spec.Sort{
 				{
 					FieldReference: spec.FieldReference{
-						code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age")},
+						testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
 					},
 					Ordering: spec.OrderingAscending,
 				},
@@ -266,7 +266,7 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 			Query: spec.QuerySpec{Predicates: []spec.Predicate{
 				{
 					FieldReference: spec.FieldReference{
-						code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "City")},
+						testutils.FindStructFieldByName(testutils.TypeUserStruct, "City"),
 					},
 					Comparator: spec.ComparatorEqual,
 					ParamIndex: 1,
@@ -275,7 +275,7 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 			Sorts: []spec.Sort{
 				{
 					FieldReference: spec.FieldReference{
-						code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age")},
+						testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
 					},
 					Ordering: spec.OrderingDescending,
 				},
@@ -287,7 +287,7 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 			Query: spec.QuerySpec{Predicates: []spec.Predicate{
 				{
 					FieldReference: spec.FieldReference{
-						code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "City")},
+						testutils.FindStructFieldByName(testutils.TypeUserStruct, "City"),
 					},
 					Comparator: spec.ComparatorEqual,
 					ParamIndex: 1,
@@ -296,13 +296,13 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 			Sorts: []spec.Sort{
 				{
 					FieldReference: spec.FieldReference{
-						code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "City")},
+						testutils.FindStructFieldByName(testutils.TypeUserStruct, "City"),
 					},
 					Ordering: spec.OrderingAscending,
 				},
 				{
 					FieldReference: spec.FieldReference{
-						code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age")},
+						testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
 					},
 					Ordering: spec.OrderingDescending,
 				},
@@ -314,7 +314,7 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 			Query: spec.QuerySpec{Predicates: []spec.Predicate{
 				{
 					FieldReference: spec.FieldReference{
-						code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "City")},
+						testutils.FindStructFieldByName(testutils.TypeUserStruct, "City"),
 					},
 					Comparator: spec.ComparatorEqual,
 					ParamIndex: 1,
@@ -323,8 +323,8 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 			Sorts: []spec.Sort{
 				{
 					FieldReference: spec.FieldReference{
-						code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Name")},
-						code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeNameStruct, "First")},
+						testutils.FindStructFieldByName(testutils.TypeUserStruct, "Name"),
+						testutils.FindStructFieldByName(testutils.TypeNameStruct, "First"),
 					},
 					Ordering: spec.OrderingAscending,
 				},
@@ -336,7 +336,7 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 			Query: spec.QuerySpec{Predicates: []spec.Predicate{
 				{
 					FieldReference: spec.FieldReference{
-						code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Enabled")},
+						testutils.FindStructFieldByName(testutils.TypeUserStruct, "Enabled"),
 					},
 					Comparator: spec.ComparatorFalse,
 					ParamIndex: 1,
@@ -349,7 +349,7 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 			Query: spec.QuerySpec{Predicates: []spec.Predicate{
 				{
 					FieldReference: spec.FieldReference{
-						code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Enabled")},
+						testutils.FindStructFieldByName(testutils.TypeUserStruct, "Enabled"),
 					},
 					Comparator: spec.ComparatorTrue,
 					ParamIndex: 1,
@@ -362,7 +362,7 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 			Query: spec.QuerySpec{Predicates: []spec.Predicate{
 				{
 					FieldReference: spec.FieldReference{
-						code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "ID")},
+						testutils.FindStructFieldByName(testutils.TypeUserStruct, "ID"),
 					},
 					Comparator: spec.ComparatorEqual,
 					ParamIndex: 1,
@@ -375,8 +375,8 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 			Query: spec.QuerySpec{Predicates: []spec.Predicate{
 				{
 					FieldReference: spec.FieldReference{
-						code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Name")},
-						code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeNameStruct, "First")},
+						testutils.FindStructFieldByName(testutils.TypeUserStruct, "Name"),
+						testutils.FindStructFieldByName(testutils.TypeNameStruct, "First"),
 					},
 					Comparator: spec.ComparatorEqual,
 					ParamIndex: 1,
@@ -389,9 +389,7 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 			Query: spec.QuerySpec{Predicates: []spec.Predicate{
 				{
 					FieldReference: spec.FieldReference{
-						code.StructField{
-							Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "PhoneNumber"),
-						},
+						testutils.FindStructFieldByName(testutils.TypeUserStruct, "PhoneNumber"),
 					},
 					Comparator: spec.ComparatorEqual,
 					ParamIndex: 1,
@@ -404,9 +402,7 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 			Query: spec.QuerySpec{Predicates: []spec.Predicate{
 				{
 					FieldReference: spec.FieldReference{
-						code.StructField{
-							Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Referrer"),
-						},
+						testutils.FindStructFieldByName(testutils.TypeUserStruct, "Referrer"),
 					},
 					Comparator: spec.ComparatorExists,
 					ParamIndex: 1,
@@ -419,8 +415,8 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 			Query: spec.QuerySpec{Predicates: []spec.Predicate{
 				{
 					FieldReference: spec.FieldReference{
-						code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Referrer")},
-						code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "ID")},
+						testutils.FindStructFieldByName(testutils.TypeUserStruct, "Referrer"),
+						testutils.FindStructFieldByName(testutils.TypeUserStruct, "ID"),
 					},
 					Comparator: spec.ComparatorEqual,
 					ParamIndex: 1,
@@ -433,7 +429,7 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 			Query: spec.QuerySpec{Predicates: []spec.Predicate{
 				{
 					FieldReference: spec.FieldReference{
-						code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Referrer")},
+						testutils.FindStructFieldByName(testutils.TypeUserStruct, "Referrer"),
 					},
 					Comparator: spec.ComparatorNotExists,
 					ParamIndex: 1,
@@ -446,7 +442,7 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 			Query: spec.QuerySpec{Predicates: []spec.Predicate{
 				{
 					FieldReference: spec.FieldReference{
-						code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender")},
+						testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender"),
 					},
 					Comparator: spec.ComparatorEqual,
 					ParamIndex: 1,
@@ -455,7 +451,7 @@ func TestParseInterfaceMethod_Find(t *testing.T) {
 			Sorts: []spec.Sort{
 				{
 					FieldReference: spec.FieldReference{
-						code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age")},
+						testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
 					},
 					Ordering: spec.OrderingDescending,
 				},
@@ -495,7 +491,7 @@ func TestParseInterfaceMethod_Update(t *testing.T) {
 			Update: spec.UpdateFields{
 				spec.UpdateField{
 					FieldReference: spec.FieldReference{
-						code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age")},
+						testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
 					},
 					ParamIndex: 1,
 					Operator:   spec.UpdateOperatorInc,
@@ -505,7 +501,7 @@ func TestParseInterfaceMethod_Update(t *testing.T) {
 			Query: spec.QuerySpec{Predicates: []spec.Predicate{
 				{
 					FieldReference: spec.FieldReference{
-						code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "ID")},
+						testutils.FindStructFieldByName(testutils.TypeUserStruct, "ID"),
 					},
 					Comparator: spec.ComparatorEqual,
 					ParamIndex: 2,
@@ -519,7 +515,7 @@ func TestParseInterfaceMethod_Update(t *testing.T) {
 			Query: spec.QuerySpec{Predicates: []spec.Predicate{
 				{
 					FieldReference: spec.FieldReference{
-						code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "ID")},
+						testutils.FindStructFieldByName(testutils.TypeUserStruct, "ID"),
 					},
 					Comparator: spec.ComparatorEqual,
 					ParamIndex: 2,
@@ -531,9 +527,7 @@ func TestParseInterfaceMethod_Update(t *testing.T) {
 			Update: spec.UpdateFields{
 				spec.UpdateField{
 					FieldReference: spec.FieldReference{
-						code.StructField{
-							Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "ConsentHistory"),
-						},
+						testutils.FindStructFieldByName(testutils.TypeUserStruct, "ConsentHistory"),
 					},
 					ParamIndex: 1,
 					Operator:   spec.UpdateOperatorPush,
@@ -543,7 +537,7 @@ func TestParseInterfaceMethod_Update(t *testing.T) {
 			Query: spec.QuerySpec{Predicates: []spec.Predicate{
 				{
 					FieldReference: spec.FieldReference{
-						code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "ID")},
+						testutils.FindStructFieldByName(testutils.TypeUserStruct, "ID"),
 					},
 					Comparator: spec.ComparatorEqual,
 					ParamIndex: 2,
@@ -555,16 +549,14 @@ func TestParseInterfaceMethod_Update(t *testing.T) {
 			Update: spec.UpdateFields{
 				spec.UpdateField{
 					FieldReference: spec.FieldReference{
-						code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Enabled")},
+						testutils.FindStructFieldByName(testutils.TypeUserStruct, "Enabled"),
 					},
 					ParamIndex: 1,
 					Operator:   spec.UpdateOperatorSet,
 				},
 				spec.UpdateField{
 					FieldReference: spec.FieldReference{
-						code.StructField{
-							Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "ConsentHistory"),
-						},
+						testutils.FindStructFieldByName(testutils.TypeUserStruct, "ConsentHistory"),
 					},
 					ParamIndex: 2,
 					Operator:   spec.UpdateOperatorPush,
@@ -574,7 +566,7 @@ func TestParseInterfaceMethod_Update(t *testing.T) {
 			Query: spec.QuerySpec{Predicates: []spec.Predicate{
 				{
 					FieldReference: spec.FieldReference{
-						code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "ID")},
+						testutils.FindStructFieldByName(testutils.TypeUserStruct, "ID"),
 					},
 					Comparator: spec.ComparatorEqual,
 					ParamIndex: 3,
@@ -586,14 +578,14 @@ func TestParseInterfaceMethod_Update(t *testing.T) {
 			Update: spec.UpdateFields{
 				spec.UpdateField{
 					FieldReference: spec.FieldReference{
-						code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender")},
+						testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender"),
 					},
 					ParamIndex: 1,
 					Operator:   spec.UpdateOperatorSet,
 				},
 				spec.UpdateField{
 					FieldReference: spec.FieldReference{
-						code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "City")},
+						testutils.FindStructFieldByName(testutils.TypeUserStruct, "City"),
 					},
 					ParamIndex: 2,
 					Operator:   spec.UpdateOperatorSet,
@@ -603,7 +595,7 @@ func TestParseInterfaceMethod_Update(t *testing.T) {
 			Query: spec.QuerySpec{Predicates: []spec.Predicate{
 				{
 					FieldReference: spec.FieldReference{
-						code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "ID")},
+						testutils.FindStructFieldByName(testutils.TypeUserStruct, "ID"),
 					},
 					Comparator: spec.ComparatorEqual,
 					ParamIndex: 3,
@@ -615,7 +607,7 @@ func TestParseInterfaceMethod_Update(t *testing.T) {
 			Update: spec.UpdateFields{
 				spec.UpdateField{
 					FieldReference: spec.FieldReference{
-						code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender")},
+						testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender"),
 					},
 					ParamIndex: 1,
 					Operator:   spec.UpdateOperatorSet,
@@ -625,7 +617,7 @@ func TestParseInterfaceMethod_Update(t *testing.T) {
 			Query: spec.QuerySpec{Predicates: []spec.Predicate{
 				{
 					FieldReference: spec.FieldReference{
-						code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age")},
+						testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
 					},
 					Comparator: spec.ComparatorEqual,
 					ParamIndex: 2,
@@ -637,7 +629,7 @@ func TestParseInterfaceMethod_Update(t *testing.T) {
 			Update: spec.UpdateFields{
 				spec.UpdateField{
 					FieldReference: spec.FieldReference{
-						code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender")},
+						testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender"),
 					},
 					ParamIndex: 1,
 					Operator:   spec.UpdateOperatorSet,
@@ -647,7 +639,7 @@ func TestParseInterfaceMethod_Update(t *testing.T) {
 			Query: spec.QuerySpec{Predicates: []spec.Predicate{
 				{
 					FieldReference: spec.FieldReference{
-						code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "ID")},
+						testutils.FindStructFieldByName(testutils.TypeUserStruct, "ID"),
 					},
 					Comparator: spec.ComparatorEqual,
 					ParamIndex: 2,
@@ -659,8 +651,8 @@ func TestParseInterfaceMethod_Update(t *testing.T) {
 			Update: spec.UpdateFields{
 				spec.UpdateField{
 					FieldReference: spec.FieldReference{
-						code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Name")},
-						code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeNameStruct, "First")},
+						testutils.FindStructFieldByName(testutils.TypeUserStruct, "Name"),
+						testutils.FindStructFieldByName(testutils.TypeNameStruct, "First"),
 					},
 					ParamIndex: 1,
 					Operator:   spec.UpdateOperatorSet,
@@ -670,7 +662,7 @@ func TestParseInterfaceMethod_Update(t *testing.T) {
 			Query: spec.QuerySpec{Predicates: []spec.Predicate{
 				{
 					FieldReference: spec.FieldReference{
-						code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "ID")},
+						testutils.FindStructFieldByName(testutils.TypeUserStruct, "ID"),
 					},
 					Comparator: spec.ComparatorEqual,
 					ParamIndex: 2,
@@ -715,7 +707,7 @@ func TestParseInterfaceMethod_Delete(t *testing.T) {
 			Query: spec.QuerySpec{Predicates: []spec.Predicate{
 				{
 					FieldReference: spec.FieldReference{
-						code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age")},
+						testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
 					},
 					Comparator: spec.ComparatorBetween,
 					ParamIndex: 1,
@@ -728,7 +720,7 @@ func TestParseInterfaceMethod_Delete(t *testing.T) {
 			Query: spec.QuerySpec{Predicates: []spec.Predicate{
 				{
 					FieldReference: spec.FieldReference{
-						code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age")},
+						testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
 					},
 					Comparator: spec.ComparatorGreaterThan,
 					ParamIndex: 1,
@@ -741,7 +733,7 @@ func TestParseInterfaceMethod_Delete(t *testing.T) {
 			Query: spec.QuerySpec{Predicates: []spec.Predicate{
 				{
 					FieldReference: spec.FieldReference{
-						code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age")},
+						testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
 					},
 					Comparator: spec.ComparatorGreaterThanEqual,
 					ParamIndex: 1,
@@ -754,7 +746,7 @@ func TestParseInterfaceMethod_Delete(t *testing.T) {
 			Query: spec.QuerySpec{Predicates: []spec.Predicate{
 				{
 					FieldReference: spec.FieldReference{
-						code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age")},
+						testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
 					},
 					Comparator: spec.ComparatorLessThan,
 					ParamIndex: 1,
@@ -767,7 +759,7 @@ func TestParseInterfaceMethod_Delete(t *testing.T) {
 			Query: spec.QuerySpec{Predicates: []spec.Predicate{
 				{
 					FieldReference: spec.FieldReference{
-						code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age")},
+						testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
 					},
 					Comparator: spec.ComparatorLessThanEqual,
 					ParamIndex: 1,
@@ -780,7 +772,7 @@ func TestParseInterfaceMethod_Delete(t *testing.T) {
 			Query: spec.QuerySpec{Predicates: []spec.Predicate{
 				{
 					FieldReference: spec.FieldReference{
-						code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "City")},
+						testutils.FindStructFieldByName(testutils.TypeUserStruct, "City"),
 					},
 					Comparator: spec.ComparatorEqual,
 					ParamIndex: 1,
@@ -795,14 +787,14 @@ func TestParseInterfaceMethod_Delete(t *testing.T) {
 				Predicates: []spec.Predicate{
 					{
 						FieldReference: spec.FieldReference{
-							code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "City")},
+							testutils.FindStructFieldByName(testutils.TypeUserStruct, "City"),
 						},
 						Comparator: spec.ComparatorEqual,
 						ParamIndex: 1,
 					},
 					{
 						FieldReference: spec.FieldReference{
-							code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender")},
+							testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender"),
 						},
 						Comparator: spec.ComparatorEqual,
 						ParamIndex: 2,
@@ -816,7 +808,7 @@ func TestParseInterfaceMethod_Delete(t *testing.T) {
 			Query: spec.QuerySpec{Predicates: []spec.Predicate{
 				{
 					FieldReference: spec.FieldReference{
-						code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "City")},
+						testutils.FindStructFieldByName(testutils.TypeUserStruct, "City"),
 					},
 					Comparator: spec.ComparatorIn,
 					ParamIndex: 1,
@@ -829,7 +821,7 @@ func TestParseInterfaceMethod_Delete(t *testing.T) {
 			Query: spec.QuerySpec{Predicates: []spec.Predicate{
 				{
 					FieldReference: spec.FieldReference{
-						code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "City")},
+						testutils.FindStructFieldByName(testutils.TypeUserStruct, "City"),
 					},
 					Comparator: spec.ComparatorNot,
 					ParamIndex: 1,
@@ -844,14 +836,14 @@ func TestParseInterfaceMethod_Delete(t *testing.T) {
 				Predicates: []spec.Predicate{
 					{
 						FieldReference: spec.FieldReference{
-							code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "City")},
+							testutils.FindStructFieldByName(testutils.TypeUserStruct, "City"),
 						},
 						Comparator: spec.ComparatorEqual,
 						ParamIndex: 1,
 					},
 					{
 						FieldReference: spec.FieldReference{
-							code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender")},
+							testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender"),
 						},
 						Comparator: spec.ComparatorEqual,
 						ParamIndex: 2,
@@ -865,7 +857,7 @@ func TestParseInterfaceMethod_Delete(t *testing.T) {
 			Query: spec.QuerySpec{Predicates: []spec.Predicate{
 				{
 					FieldReference: spec.FieldReference{
-						code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "ID")},
+						testutils.FindStructFieldByName(testutils.TypeUserStruct, "ID"),
 					},
 					Comparator: spec.ComparatorEqual,
 					ParamIndex: 1,
@@ -878,8 +870,8 @@ func TestParseInterfaceMethod_Delete(t *testing.T) {
 			Query: spec.QuerySpec{Predicates: []spec.Predicate{
 				{
 					FieldReference: spec.FieldReference{
-						code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Name")},
-						code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeNameStruct, "First")},
+						testutils.FindStructFieldByName(testutils.TypeUserStruct, "Name"),
+						testutils.FindStructFieldByName(testutils.TypeNameStruct, "First"),
 					},
 					Comparator: spec.ComparatorEqual,
 					ParamIndex: 1,
@@ -892,9 +884,7 @@ func TestParseInterfaceMethod_Delete(t *testing.T) {
 			Query: spec.QuerySpec{Predicates: []spec.Predicate{
 				{
 					FieldReference: spec.FieldReference{
-						code.StructField{
-							Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "PhoneNumber"),
-						},
+						testutils.FindStructFieldByName(testutils.TypeUserStruct, "PhoneNumber"),
 					},
 					Comparator: spec.ComparatorEqual,
 					ParamIndex: 1,
@@ -939,7 +929,7 @@ func TestParseInterfaceMethod_Count(t *testing.T) {
 				Predicates: []spec.Predicate{
 					{
 						FieldReference: spec.FieldReference{
-							code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender")},
+							testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender"),
 						},
 						Comparator: spec.ComparatorEqual,
 						ParamIndex: 1,
@@ -953,8 +943,8 @@ func TestParseInterfaceMethod_Count(t *testing.T) {
 				Predicates: []spec.Predicate{
 					{
 						FieldReference: spec.FieldReference{
-							code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Name")},
-							code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeNameStruct, "First")},
+							testutils.FindStructFieldByName(testutils.TypeUserStruct, "Name"),
+							testutils.FindStructFieldByName(testutils.TypeNameStruct, "First"),
 						},
 						Comparator: spec.ComparatorEqual,
 						ParamIndex: 1,
@@ -1066,13 +1056,11 @@ func TestParseInterfaceMethod_Find_Invalid(t *testing.T) {
 		// FindByGenderAndCityOrAge
 		spec.NewInvalidQueryError([]string{"Gender", "And", "City", "Or", "Age"}),
 		// FindByGenderFalse
-		spec.NewIncompatibleComparatorError(spec.ComparatorFalse, code.StructField{
-			Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender"),
-		}),
+		spec.NewIncompatibleComparatorError(spec.ComparatorFalse,
+			testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender")),
 		// FindByGenderTrue
-		spec.NewIncompatibleComparatorError(spec.ComparatorTrue, code.StructField{
-			Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender"),
-		}),
+		spec.NewIncompatibleComparatorError(spec.ComparatorTrue,
+			testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender")),
 		// FindByID
 		spec.NewUnsupportedReturnError(testutils.TypeUserNamed, 0),
 		// FindByNameMiddle
@@ -1122,7 +1110,7 @@ func TestParseInterfaceMethod_Update_Invalid(t *testing.T) {
 		spec.NewUnsupportedReturnError(code.TypeFloat64, 0),
 		// UpdateCityIncByID
 		spec.NewIncompatibleUpdateOperatorError(spec.UpdateOperatorInc, spec.FieldReference{
-			code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "City")},
+			testutils.FindStructFieldByName(testutils.TypeUserStruct, "City"),
 		}),
 		// UpdateConsentHistoryPushByID
 		spec.NewArgumentTypeNotMatchedError("ConsentHistory",
@@ -1139,7 +1127,7 @@ func TestParseInterfaceMethod_Update_Invalid(t *testing.T) {
 		spec.NewUnsupportedReturnError(code.TypeBool, 1),
 		// UpdateGenderPushByID
 		spec.NewIncompatibleUpdateOperatorError(spec.UpdateOperatorPush, spec.FieldReference{
-			code.StructField{Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender")},
+			testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender"),
 		}),
 	}
 

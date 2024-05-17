@@ -38,10 +38,7 @@ func TestGenerateMethod_Update(t *testing.T) {
 						Predicates: []spec.Predicate{
 							{
 								FieldReference: spec.FieldReference{
-									{
-										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "ID"),
-										Tag: `bson:"_id,omitempty"`,
-									},
+									testutils.FindStructFieldByName(testutils.TypeUserStruct, "ID"),
 								},
 								Comparator: spec.ComparatorEqual,
 								ParamIndex: 2,
@@ -79,10 +76,7 @@ func TestGenerateMethod_Update(t *testing.T) {
 					Update: spec.UpdateFields{
 						spec.UpdateField{
 							FieldReference: spec.FieldReference{
-								{
-									Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
-									Tag: `bson:"age"`,
-								},
+								testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
 							},
 							ParamIndex: 1,
 							Operator:   spec.UpdateOperatorSet,
@@ -93,10 +87,7 @@ func TestGenerateMethod_Update(t *testing.T) {
 						Predicates: []spec.Predicate{
 							{
 								FieldReference: spec.FieldReference{
-									{
-										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "ID"),
-										Tag: `bson:"_id,omitempty"`,
-									},
+									testutils.FindStructFieldByName(testutils.TypeUserStruct, "ID"),
 								},
 								Comparator: spec.ComparatorEqual,
 								ParamIndex: 2,
@@ -136,10 +127,7 @@ func TestGenerateMethod_Update(t *testing.T) {
 					Update: spec.UpdateFields{
 						spec.UpdateField{
 							FieldReference: spec.FieldReference{
-								{
-									Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
-									Tag: `bson:"age"`,
-								},
+								testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
 							},
 							ParamIndex: 1,
 							Operator:   spec.UpdateOperatorSet,
@@ -150,10 +138,7 @@ func TestGenerateMethod_Update(t *testing.T) {
 						Predicates: []spec.Predicate{
 							{
 								FieldReference: spec.FieldReference{
-									{
-										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender"),
-										Tag: `bson:"gender"`,
-									},
+									testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender"),
 								},
 								Comparator: spec.ComparatorEqual,
 								ParamIndex: 2,
@@ -193,10 +178,7 @@ func TestGenerateMethod_Update(t *testing.T) {
 					Update: spec.UpdateFields{
 						spec.UpdateField{
 							FieldReference: spec.FieldReference{
-								{
-									Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "ConsentHistory"),
-									Tag: `bson:"consent_history"`,
-								},
+								testutils.FindStructFieldByName(testutils.TypeUserStruct, "ConsentHistory"),
 							},
 							ParamIndex: 1,
 							Operator:   spec.UpdateOperatorPush,
@@ -207,10 +189,7 @@ func TestGenerateMethod_Update(t *testing.T) {
 						Predicates: []spec.Predicate{
 							{
 								FieldReference: spec.FieldReference{
-									{
-										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "ID"),
-										Tag: `bson:"_id,omitempty"`,
-									},
+									testutils.FindStructFieldByName(testutils.TypeUserStruct, "ID"),
 								},
 								Comparator: spec.ComparatorEqual,
 								ParamIndex: 2,
@@ -250,10 +229,7 @@ func TestGenerateMethod_Update(t *testing.T) {
 					Update: spec.UpdateFields{
 						spec.UpdateField{
 							FieldReference: spec.FieldReference{
-								{
-									Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
-									Tag: `bson:"age"`,
-								},
+								testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
 							},
 							ParamIndex: 1,
 							Operator:   spec.UpdateOperatorInc,
@@ -264,10 +240,7 @@ func TestGenerateMethod_Update(t *testing.T) {
 						Predicates: []spec.Predicate{
 							{
 								FieldReference: spec.FieldReference{
-									{
-										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "ID"),
-										Tag: `bson:"_id,omitempty"`,
-									},
+									testutils.FindStructFieldByName(testutils.TypeUserStruct, "ID"),
 								},
 								Comparator: spec.ComparatorEqual,
 								ParamIndex: 2,
@@ -308,20 +281,14 @@ func TestGenerateMethod_Update(t *testing.T) {
 					Update: spec.UpdateFields{
 						spec.UpdateField{
 							FieldReference: spec.FieldReference{
-								{
-									Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Enabled"),
-									Tag: `bson:"enabled"`,
-								},
+								testutils.FindStructFieldByName(testutils.TypeUserStruct, "Enabled"),
 							},
 							ParamIndex: 1,
 							Operator:   spec.UpdateOperatorSet,
 						},
 						spec.UpdateField{
 							FieldReference: spec.FieldReference{
-								{
-									Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "ConsentHistory"),
-									Tag: `bson:"consent_history"`,
-								},
+								testutils.FindStructFieldByName(testutils.TypeUserStruct, "ConsentHistory"),
 							},
 							ParamIndex: 2,
 							Operator:   spec.UpdateOperatorPush,
@@ -332,10 +299,7 @@ func TestGenerateMethod_Update(t *testing.T) {
 						Predicates: []spec.Predicate{
 							{
 								FieldReference: spec.FieldReference{
-									{
-										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "ID"),
-										Tag: `bson:"_id,omitempty"`,
-									},
+									testutils.FindStructFieldByName(testutils.TypeUserStruct, "ID"),
 								},
 								Comparator: spec.ComparatorEqual,
 								ParamIndex: 3,
@@ -378,14 +342,8 @@ func TestGenerateMethod_Update(t *testing.T) {
 					Update: spec.UpdateFields{
 						spec.UpdateField{
 							FieldReference: spec.FieldReference{
-								{
-									Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Name"),
-									Tag: `bson:"name"`,
-								},
-								{
-									Var: testutils.FindStructFieldByName(testutils.TypeNameStruct, "FirstName"),
-									Tag: `bson:"first"`,
-								},
+								testutils.FindStructFieldByName(testutils.TypeUserStruct, "Name"),
+								testutils.FindStructFieldByName(testutils.TypeNameStruct, "First"),
 							},
 							ParamIndex: 1,
 							Operator:   spec.UpdateOperatorSet,
@@ -396,10 +354,7 @@ func TestGenerateMethod_Update(t *testing.T) {
 						Predicates: []spec.Predicate{
 							{
 								FieldReference: spec.FieldReference{
-									{
-										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "ID"),
-										Tag: `bson:"_id,omitempty"`,
-									},
+									testutils.FindStructFieldByName(testutils.TypeUserStruct, "ID"),
 								},
 								Comparator: spec.ComparatorEqual,
 								ParamIndex: 2,
