@@ -35,10 +35,7 @@ func TestGenerateMethod_Count(t *testing.T) {
 						Predicates: []spec.Predicate{
 							{
 								FieldReference: spec.FieldReference{
-									{
-										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender"),
-										Tag: `bson:"gender"`,
-									},
+									testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender"),
 								},
 								Comparator: spec.ComparatorEqual,
 								ParamIndex: 1,
@@ -76,20 +73,14 @@ func TestGenerateMethod_Count(t *testing.T) {
 						Predicates: []spec.Predicate{
 							{
 								FieldReference: spec.FieldReference{
-									{
-										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender"),
-										Tag: `bson:"gender"`,
-									},
+									testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender"),
 								},
 								Comparator: spec.ComparatorEqual,
 								ParamIndex: 1,
 							},
 							{
 								FieldReference: spec.FieldReference{
-									{
-										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
-										Tag: `bson:"age"`,
-									},
+									testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
 								},
 								Comparator: spec.ComparatorEqual,
 								ParamIndex: 2,
@@ -134,20 +125,14 @@ func TestGenerateMethod_Count(t *testing.T) {
 						Predicates: []spec.Predicate{
 							{
 								FieldReference: spec.FieldReference{
-									{
-										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender"),
-										Tag: `bson:"gender"`,
-									},
+									testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender"),
 								},
 								Comparator: spec.ComparatorEqual,
 								ParamIndex: 1,
 							},
 							{
 								FieldReference: spec.FieldReference{
-									{
-										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
-										Tag: `bson:"age"`,
-									},
+									testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
 								},
 								Comparator: spec.ComparatorEqual,
 								ParamIndex: 2,
@@ -190,10 +175,7 @@ func TestGenerateMethod_Count(t *testing.T) {
 						Predicates: []spec.Predicate{
 							{
 								FieldReference: spec.FieldReference{
-									{
-										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender"),
-										Tag: `bson:"gender"`,
-									},
+									testutils.FindStructFieldByName(testutils.TypeUserStruct, "Gender"),
 								},
 								Comparator: spec.ComparatorNot,
 								ParamIndex: 1,
@@ -231,10 +213,7 @@ func TestGenerateMethod_Count(t *testing.T) {
 						Predicates: []spec.Predicate{
 							{
 								FieldReference: spec.FieldReference{
-									{
-										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
-										Tag: `bson:"age"`,
-									},
+									testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
 								},
 								Comparator: spec.ComparatorLessThan,
 								ParamIndex: 1,
@@ -272,10 +251,7 @@ func TestGenerateMethod_Count(t *testing.T) {
 						Predicates: []spec.Predicate{
 							{
 								FieldReference: spec.FieldReference{
-									{
-										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
-										Tag: `bson:"age"`,
-									},
+									testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
 								},
 								Comparator: spec.ComparatorLessThanEqual,
 								ParamIndex: 1,
@@ -313,10 +289,7 @@ func TestGenerateMethod_Count(t *testing.T) {
 						Predicates: []spec.Predicate{
 							{
 								FieldReference: spec.FieldReference{
-									{
-										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
-										Tag: `bson:"age"`,
-									},
+									testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
 								},
 								Comparator: spec.ComparatorGreaterThan,
 								ParamIndex: 1,
@@ -354,10 +327,7 @@ func TestGenerateMethod_Count(t *testing.T) {
 						Predicates: []spec.Predicate{
 							{
 								FieldReference: spec.FieldReference{
-									{
-										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
-										Tag: `bson:"age"`,
-									},
+									testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
 								},
 								Comparator: spec.ComparatorGreaterThanEqual,
 								ParamIndex: 1,
@@ -396,10 +366,7 @@ func TestGenerateMethod_Count(t *testing.T) {
 						Predicates: []spec.Predicate{
 							{
 								FieldReference: spec.FieldReference{
-									{
-										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
-										Tag: `bson:"age"`,
-									},
+									testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
 								},
 								Comparator: spec.ComparatorBetween,
 								ParamIndex: 1,
@@ -438,10 +405,7 @@ func TestGenerateMethod_Count(t *testing.T) {
 						Predicates: []spec.Predicate{
 							{
 								FieldReference: spec.FieldReference{
-									{
-										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
-										Tag: `bson:"age"`,
-									},
+									testutils.FindStructFieldByName(testutils.TypeUserStruct, "Age"),
 								},
 								Comparator: spec.ComparatorIn,
 								ParamIndex: 1,

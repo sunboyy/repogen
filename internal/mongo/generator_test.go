@@ -192,9 +192,7 @@ func TestGenerateMethod_Invalid(t *testing.T) {
 						Predicates: []spec.Predicate{
 							{
 								FieldReference: spec.FieldReference{
-									{
-										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "AccessToken"),
-									},
+									testutils.FindStructFieldByName(testutils.TypeUserStruct, "AccessToken"),
 								},
 								Comparator: spec.ComparatorEqual,
 								ParamIndex: 1,
@@ -223,9 +221,7 @@ func TestGenerateMethod_Invalid(t *testing.T) {
 					Sorts: []spec.Sort{
 						{
 							FieldReference: spec.FieldReference{
-								{
-									Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "AccessToken"),
-								},
+								testutils.FindStructFieldByName(testutils.TypeUserStruct, "AccessToken"),
 							},
 							Ordering: spec.OrderingAscending,
 						},
@@ -253,9 +249,7 @@ func TestGenerateMethod_Invalid(t *testing.T) {
 					Update: spec.UpdateFields{
 						spec.UpdateField{
 							FieldReference: spec.FieldReference{
-								{
-									Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "AccessToken"),
-								},
+								testutils.FindStructFieldByName(testutils.TypeUserStruct, "AccessToken"),
 							},
 							ParamIndex: 1,
 							Operator:   spec.UpdateOperatorSet,
@@ -266,10 +260,7 @@ func TestGenerateMethod_Invalid(t *testing.T) {
 						Predicates: []spec.Predicate{
 							{
 								FieldReference: spec.FieldReference{
-									{
-										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "ID"),
-										Tag: `bson:"_id,omitempty"`,
-									},
+									testutils.FindStructFieldByName(testutils.TypeUserStruct, "ID"),
 								},
 								Comparator: spec.ComparatorEqual,
 								ParamIndex: 2,
@@ -302,10 +293,7 @@ func TestGenerateMethod_Invalid(t *testing.T) {
 						Predicates: []spec.Predicate{
 							{
 								FieldReference: spec.FieldReference{
-									{
-										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "ID"),
-										Tag: `bson:"_id,omitempty"`,
-									},
+									testutils.FindStructFieldByName(testutils.TypeUserStruct, "ID"),
 								},
 								Comparator: spec.ComparatorEqual,
 								ParamIndex: 2,
@@ -335,10 +323,7 @@ func TestGenerateMethod_Invalid(t *testing.T) {
 					Update: spec.UpdateFields{
 						spec.UpdateField{
 							FieldReference: spec.FieldReference{
-								{
-									Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "ConsentHistory"),
-									Tag: `bson:"consent_history"`,
-								},
+								testutils.FindStructFieldByName(testutils.TypeUserStruct, "ConsentHistory"),
 							},
 							ParamIndex: 1,
 							Operator:   "APPEND",
@@ -349,10 +334,7 @@ func TestGenerateMethod_Invalid(t *testing.T) {
 						Predicates: []spec.Predicate{
 							{
 								FieldReference: spec.FieldReference{
-									{
-										Var: testutils.FindStructFieldByName(testutils.TypeUserStruct, "ID"),
-										Tag: `bson:"_id,omitempty"`,
-									},
+									testutils.FindStructFieldByName(testutils.TypeUserStruct, "ID"),
 								},
 								Comparator: spec.ComparatorEqual,
 								ParamIndex: 2,

@@ -9,22 +9,22 @@ import (
 type Gender string
 
 type User struct {
-	ID             primitive.ObjectID
-	PhoneNumber    string
-	Gender         Gender
-	City           string
-	Age            int
-	Name           Name
-	Contact        Contact
-	Referrer       *User
-	Enabled        bool
-	ConsentHistory []ConsentHistory
+	ID             primitive.ObjectID `bson:"_id,omitempty"`
+	PhoneNumber    string             `bson:"phone_number"`
+	Gender         Gender             `bson:"gender"`
+	City           string             `bson:"city"`
+	Age            int                `bson:"age"`
+	Name           Name               `bson:"name"`
+	Contact        Contact            `bson:"contact"`
+	Referrer       *User              `bson:"referrer"`
+	Enabled        bool               `bson:"enabled"`
+	ConsentHistory []ConsentHistory   `bson:"consent_history"`
 	AccessToken    string
 }
 
 type Name struct {
-	First string
-	Last  string
+	First string `bson:"first"`
+	Last  string `bson:"last"`
 }
 
 type Contact struct {

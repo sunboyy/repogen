@@ -10,27 +10,100 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func NewUserRepository(collection *mongo.Collection) *UserRepositoryMongo {
-	return &UserRepositoryMongo{
+func NewUserRepositoryIntegration(collection *mongo.Collection) *UserRepositoryIntegrationMongo {
+	return &UserRepositoryIntegrationMongo{
 		collection: collection,
 	}
 }
 
-type UserRepositoryMongo struct {
+type UserRepositoryIntegrationMongo struct {
 	collection *mongo.Collection
 }
 
-func (r *UserRepositoryMongo) FindByID(arg0 context.Context, arg1 primitive.ObjectID) (*User, error) {
-	var entity User
-	if err := r.collection.FindOne(arg0, bson.M{
-		"_id": arg1,
-	}, options.FindOne().SetSort(bson.M{})).Decode(&entity); err != nil {
+func (r *UserRepositoryIntegrationMongo) FindAll(arg0 context.Context) ([]*User, error) {
+	cursor, err := r.collection.Find(arg0, bson.M{}, options.Find().SetSort(bson.M{}))
+	if err != nil {
 		return nil, err
 	}
-	return &entity, nil
+	entities := []*User{}
+	if err := cursor.All(arg0, &entities); err != nil {
+		return nil, err
+	}
+	return entities, nil
 }
 
-func (r *UserRepositoryMongo) FindByGenderNotAndAgeLessThan(arg0 context.Context, arg1 Gender, arg2 int) (*User, error) {
+func (r *UserRepositoryIntegrationMongo) FindByAgeBetween(arg0 context.Context, arg1 int, arg2 int) ([]*User, error) {
+	cursor, err := r.collection.Find(arg0, bson.M{
+		"age": bson.M{
+			"$gte": arg1,
+			"$lte": arg2,
+		},
+	}, options.Find().SetSort(bson.M{}))
+	if err != nil {
+		return nil, err
+	}
+	entities := []*User{}
+	if err := cursor.All(arg0, &entities); err != nil {
+		return nil, err
+	}
+	return entities, nil
+}
+
+func (r *UserRepositoryIntegrationMongo) FindByAgeGreaterThanEqualOrderByAgeDesc(arg0 context.Context, arg1 int) ([]*User, error) {
+	cursor, err := r.collection.Find(arg0, bson.M{
+		"age": bson.M{
+			"$gte": arg1,
+		},
+	}, options.Find().SetSort(bson.M{
+		"age": -1,
+	}))
+	if err != nil {
+		return nil, err
+	}
+	entities := []*User{}
+	if err := cursor.All(arg0, &entities); err != nil {
+		return nil, err
+	}
+	return entities, nil
+}
+
+func (r *UserRepositoryIntegrationMongo) FindByAgeGreaterThanOrderByAgeAsc(arg0 context.Context, arg1 int) ([]*User, error) {
+	cursor, err := r.collection.Find(arg0, bson.M{
+		"age": bson.M{
+			"$gt": arg1,
+		},
+	}, options.Find().SetSort(bson.M{
+		"age": 1,
+	}))
+	if err != nil {
+		return nil, err
+	}
+	entities := []*User{}
+	if err := cursor.All(arg0, &entities); err != nil {
+		return nil, err
+	}
+	return entities, nil
+}
+
+func (r *UserRepositoryIntegrationMongo) FindByAgeLessThanEqualOrderByAge(arg0 context.Context, arg1 int) ([]*User, error) {
+	cursor, err := r.collection.Find(arg0, bson.M{
+		"age": bson.M{
+			"$lte": arg1,
+		},
+	}, options.Find().SetSort(bson.M{
+		"age": 1,
+	}))
+	if err != nil {
+		return nil, err
+	}
+	entities := []*User{}
+	if err := cursor.All(arg0, &entities); err != nil {
+		return nil, err
+	}
+	return entities, nil
+}
+
+func (r *UserRepositoryIntegrationMongo) FindByGenderNotAndAgeLessThan(arg0 context.Context, arg1 Gender, arg2 int) ([]*User, error) {
 	cursor, err := r.collection.Find(arg0, bson.M{
 		"$and": []bson.M{
 			{
@@ -55,78 +128,7 @@ func (r *UserRepositoryMongo) FindByGenderNotAndAgeLessThan(arg0 context.Context
 	return entities, nil
 }
 
-func (r *UserRepositoryMongo) FindByAgeLessThanEqualOrderByAge(arg0 context.Context, arg1 int) ([]*User, error) {
-	cursor, err := r.collection.Find(arg0, bson.M{
-		"age": bson.M{
-			"$lte": arg1,
-		},
-	}, options.Find().SetSort(bson.M{
-		"age": 1,
-	}))
-	if err != nil {
-		return nil, err
-	}
-	entities := []*User{}
-	if err := cursor.All(arg0, &entities); err != nil {
-		return nil, err
-	}
-	return entities, nil
-}
-
-func (r *UserRepositoryMongo) FindByAgeGreaterThanOrderByAgeAsc(arg0 context.Context, arg1 int) ([]*User, error) {
-	cursor, err := r.collection.Find(arg0, bson.M{
-		"age": bson.M{
-			"$gt": arg1,
-		},
-	}, options.Find().SetSort(bson.M{
-		"age": 1,
-	}))
-	if err != nil {
-		return nil, err
-	}
-	entities := []*User{}
-	if err := cursor.All(arg0, &entities); err != nil {
-		return nil, err
-	}
-	return entities, nil
-}
-
-func (r *UserRepositoryMongo) FindByAgeGreaterThanEqualOrderByAgeDesc(arg0 context.Context, arg1 int) ([]*User, error) {
-	cursor, err := r.collection.Find(arg0, bson.M{
-		"age": bson.M{
-			"$gte": arg1,
-		},
-	}, options.Find().SetSort(bson.M{
-		"age": -1,
-	}))
-	if err != nil {
-		return nil, err
-	}
-	entities := []*User{}
-	if err := cursor.All(arg0, &entities); err != nil {
-		return nil, err
-	}
-	return entities, nil
-}
-
-func (r *UserRepositoryMongo) FindByAgeBetween(arg0 context.Context, arg1 int, arg2 int) ([]*User, error) {
-	cursor, err := r.collection.Find(arg0, bson.M{
-		"age": bson.M{
-			"$gte": arg1,
-			"$lte": arg2,
-		},
-	}, options.Find().SetSort(bson.M{}))
-	if err != nil {
-		return nil, err
-	}
-	entities := []*User{}
-	if err := cursor.All(arg0, &entities); err != nil {
-		return nil, err
-	}
-	return entities, nil
-}
-
-func (r *UserRepositoryMongo) FindByGenderOrAge(arg0 context.Context, arg1 Gender, arg2 int) ([]*User, error) {
+func (r *UserRepositoryIntegrationMongo) FindByGenderOrAge(arg0 context.Context, arg1 Gender, arg2 int) ([]*User, error) {
 	cursor, err := r.collection.Find(arg0, bson.M{
 		"$or": []bson.M{
 			{
@@ -145,4 +147,34 @@ func (r *UserRepositoryMongo) FindByGenderOrAge(arg0 context.Context, arg1 Gende
 		return nil, err
 	}
 	return entities, nil
+}
+
+func (r *UserRepositoryIntegrationMongo) FindByID(arg0 context.Context, arg1 primitive.ObjectID) (*User, error) {
+	var entity User
+	if err := r.collection.FindOne(arg0, bson.M{
+		"_id": arg1,
+	}, options.FindOne().SetSort(bson.M{})).Decode(&entity); err != nil {
+		return nil, err
+	}
+	return &entity, nil
+}
+
+func (r *UserRepositoryIntegrationMongo) InsertMany(arg0 context.Context, arg1 []*User) ([]interface{}, error) {
+	var entities []interface{}
+	for _, model := range arg1 {
+		entities = append(entities, model)
+	}
+	result, err := r.collection.InsertMany(arg0, entities)
+	if err != nil {
+		return nil, err
+	}
+	return result.InsertedIDs, nil
+}
+
+func (r *UserRepositoryIntegrationMongo) InsertOne(arg0 context.Context, arg1 *User) (interface{}, error) {
+	result, err := r.collection.InsertOne(arg0, arg1)
+	if err != nil {
+		return nil, err
+	}
+	return result.InsertedID, nil
 }

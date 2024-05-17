@@ -4,13 +4,11 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"go/types"
 	"log"
 	"os"
 	"path/filepath"
 
 	"github.com/sunboyy/repogen/internal/generator"
-	"github.com/sunboyy/repogen/internal/spec"
 	"golang.org/x/tools/go/packages"
 )
 
@@ -27,7 +25,7 @@ func main() {
 	flag.Usage = printUsage
 
 	versionPtr := flag.Bool("version", false, "print version of repogen")
-	pkgDirPtr := flag.String("pkg", ".", "package directory to scan for model struct and repository interface")
+	pkgPtr := flag.String("pkg", ".", "package directory to scan for model struct and repository interface")
 	destPtr := flag.String("dest", "", "destination file")
 	modelPtr := flag.String("model", "", "model struct name")
 	repoPtr := flag.String("repo", "", "repository interface name")
@@ -48,7 +46,13 @@ func main() {
 		log.Fatal("-repo flag required")
 	}
 
-	code, err := generateFromRequest(*pkgDirPtr, *modelPtr, *repoPtr)
+	request := GenerationRequest{
+		Pkg:       *pkgPtr,
+		ModelName: *modelPtr,
+		RepoName:  *repoPtr,
+		Dest:      *destPtr,
+	}
+	code, err := generateFromRequest(request)
 	if err != nil {
 		panic(err)
 	}
@@ -71,6 +75,13 @@ func main() {
 	}
 }
 
+type GenerationRequest struct {
+	Pkg       string
+	ModelName string
+	RepoName  string
+	Dest      string
+}
+
 func printUsage() {
 	fmt.Println(usageText)
 	flag.PrintDefaults()
@@ -80,11 +91,15 @@ func printVersion() {
 	fmt.Println(version)
 }
 
-func generateFromRequest(pkgDir, structModelName, repositoryInterfaceName string) (string, error) {
+var (
+	errNoPackageFound = errors.New("no package found")
+)
+
+func generateFromRequest(request GenerationRequest) (string, error) {
 	cfg := packages.Config{
 		Mode: packages.NeedName | packages.NeedTypes,
 	}
-	pkgs, err := packages.Load(&cfg, pkgDir)
+	pkgs, err := packages.Load(&cfg, request.Pkg)
 	if err != nil {
 		return "", err
 	}
@@ -94,47 +109,5 @@ func generateFromRequest(pkgDir, structModelName, repositoryInterfaceName string
 
 	pkg := pkgs[0]
 
-	return generateRepository(pkg.Types, structModelName, repositoryInterfaceName)
-}
-
-var (
-	errNoPackageFound    = errors.New("no package found")
-	errStructNotFound    = errors.New("struct not found")
-	errNotNamedStruct    = errors.New("not a named struct")
-	errInterfaceNotFound = errors.New("interface not found")
-	errNotInterface      = errors.New("not an interface")
-)
-
-func generateRepository(pkg *types.Package, structModelName, repositoryInterfaceName string) (string, error) {
-	structModelObj := pkg.Scope().Lookup(structModelName)
-	if structModelObj == nil {
-		return "", errStructNotFound
-	}
-	namedStruct, ok := structModelObj.Type().(*types.Named)
-	if !ok {
-		return "", errNotNamedStruct
-	}
-
-	intfObj := pkg.Scope().Lookup(repositoryInterfaceName)
-	if intfObj == nil {
-		return "", errInterfaceNotFound
-	}
-	intf, ok := intfObj.Type().Underlying().(*types.Interface)
-	if !ok {
-		return "", errNotInterface
-	}
-
-	var methodSpecs []spec.MethodSpec
-	for i := 0; i < intf.NumMethods(); i++ {
-		method := intf.Method(i)
-		log.Println("Generating method:", method.Name())
-
-		methodSpec, err := spec.ParseInterfaceMethod(pkg, namedStruct, method)
-		if err != nil {
-			return "", err
-		}
-		methodSpecs = append(methodSpecs, methodSpec)
-	}
-
-	return generator.GenerateRepository(pkg, namedStruct, repositoryInterfaceName, methodSpecs)
+	return generator.GenerateRepositoryImpl(pkg.Types, request.ModelName, request.RepoName)
 }

@@ -2,7 +2,9 @@ package testutils
 
 import (
 	"go/types"
+	"reflect"
 
+	"github.com/sunboyy/repogen/internal/code"
 	"golang.org/x/tools/go/packages"
 )
 
@@ -52,11 +54,17 @@ func init() {
 	TypeConsentHistoryNamed = Pkg.Scope().Lookup("ConsentHistory").Type().(*types.Named)
 }
 
-func FindStructFieldByName(s *types.Struct, name string) *types.Var {
+func FindStructFieldByName(s *types.Struct, name string) code.StructField {
+	fieldIndex := -1
 	for i := 0; i < s.NumFields(); i++ {
 		if s.Field(i).Name() == name {
-			return s.Field(i)
+			fieldIndex = i
+			break
 		}
 	}
-	return nil
+
+	return code.StructField{
+		Var: s.Field(fieldIndex),
+		Tag: reflect.StructTag(s.Tag(fieldIndex)),
+	}
 }

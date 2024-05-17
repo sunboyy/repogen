@@ -6,3 +6,8 @@ coverage:
     patch:
       default:
         target: 80%
+
+ignore:
+  - "examples"
+  - "internal/teststub"
+  - "internal/testutils"
