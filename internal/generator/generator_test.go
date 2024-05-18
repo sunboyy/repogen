@@ -21,7 +21,7 @@ func TestGenerateRepository_Success(t *testing.T) {
 	}
 	expectedCode := string(expectedBytes)
 
-	code, err := generator.GenerateRepositoryImpl(testutils.Pkg, validStructModelName, validRepoInterfaceName)
+	code, err := generator.GenerateRepositoryImpl(testutils.Pkg, testutils.Pkg, testutils.Pkg.Name(), validStructModelName, validRepoInterfaceName)
 
 	if err != nil {
 		t.Fatal(err)
@@ -32,7 +32,7 @@ func TestGenerateRepository_Success(t *testing.T) {
 }
 
 func TestGenerateRepositoryImpl_StructNotFound(t *testing.T) {
-	_, err := generator.GenerateRepositoryImpl(testutils.Pkg, "UnknownModel", validRepoInterfaceName)
+	_, err := generator.GenerateRepositoryImpl(testutils.Pkg, testutils.Pkg, testutils.Pkg.Name(), "UnknownModel", validRepoInterfaceName)
 
 	expectedError := generator.ErrStructNotFound
 	if !errors.Is(err, expectedError) {
@@ -41,7 +41,7 @@ func TestGenerateRepositoryImpl_StructNotFound(t *testing.T) {
 }
 
 func TestGenerateRepositoryImpl_ModelNameNotStruct(t *testing.T) {
-	_, err := generator.GenerateRepositoryImpl(testutils.Pkg, "UserRepositoryFind", validRepoInterfaceName)
+	_, err := generator.GenerateRepositoryImpl(testutils.Pkg, testutils.Pkg, testutils.Pkg.Name(), "UserRepositoryFind", validRepoInterfaceName)
 
 	expectedError := generator.ErrNotNamedStruct
 	if !errors.Is(err, expectedError) {
@@ -50,7 +50,7 @@ func TestGenerateRepositoryImpl_ModelNameNotStruct(t *testing.T) {
 }
 
 func TestGenerateRepositoryImpl_InterfaceNotFound(t *testing.T) {
-	_, err := generator.GenerateRepositoryImpl(testutils.Pkg, validStructModelName, "UnknownRepository")
+	_, err := generator.GenerateRepositoryImpl(testutils.Pkg, testutils.Pkg, testutils.Pkg.Name(), validStructModelName, "UnknownRepository")
 
 	expectedError := generator.ErrInterfaceNotFound
 	if !errors.Is(err, expectedError) {
@@ -59,7 +59,7 @@ func TestGenerateRepositoryImpl_InterfaceNotFound(t *testing.T) {
 }
 
 func TestGenerateRepositoryImpl_RepoNameNotInterface(t *testing.T) {
-	_, err := generator.GenerateRepositoryImpl(testutils.Pkg, validStructModelName, "User")
+	_, err := generator.GenerateRepositoryImpl(testutils.Pkg, testutils.Pkg, testutils.Pkg.Name(), validStructModelName, "User")
 
 	expectedError := generator.ErrNotInterface
 	if !errors.Is(err, expectedError) {

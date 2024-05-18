@@ -9,10 +9,10 @@ import (
 	"github.com/sunboyy/repogen/internal/spec"
 )
 
-func GenerateRepositoryImpl(pkg *types.Package, structModelName,
-	repoInterfaceName string) (string, error) {
+func GenerateRepositoryImpl(pkg, modelPkg *types.Package, structModelName,
+	repoInterfaceName, outputPkgName string) (string, error) {
 
-	namedStruct, intf, err := deriveSourceTypes(pkg, structModelName,
+	namedStruct, intf, err := deriveSourceTypes(pkg, modelPkg, structModelName,
 		repoInterfaceName)
 	if err != nil {
 		return "", err
@@ -24,7 +24,7 @@ func GenerateRepositoryImpl(pkg *types.Package, structModelName,
 	}
 
 	codeBuilder, err := constructCodeBuilder(pkg, namedStruct,
-		repoInterfaceName, methodSpecs)
+		repoInterfaceName, methodSpecs, outputPkgName)
 	if err != nil {
 		return "", err
 	}
@@ -32,10 +32,10 @@ func GenerateRepositoryImpl(pkg *types.Package, structModelName,
 	return codeBuilder.Build()
 }
 
-func deriveSourceTypes(pkg *types.Package, structModelName string,
+func deriveSourceTypes(pkg, modelPkg *types.Package, structModelName string,
 	repositoryInterfaceName string) (*types.Named, *types.Interface, error) {
 
-	structModelObj := pkg.Scope().Lookup(structModelName)
+	structModelObj := modelPkg.Scope().Lookup(structModelName)
 	if structModelObj == nil {
 		return nil, nil, ErrStructNotFound
 	}
@@ -75,13 +75,15 @@ func constructRepositorySpec(pkg *types.Package, namedStruct *types.Named,
 }
 
 func constructCodeBuilder(pkg *types.Package, namedStruct *types.Named,
-	interfaceName string, methodSpecs []spec.MethodSpec) (*codegen.Builder, error) {
+	interfaceName string, methodSpecs []spec.MethodSpec, outputPkgName string) (*codegen.Builder, error) {
 
 	generator := mongo.NewGenerator(pkg, namedStruct, interfaceName)
-
+	if outputPkgName == "" {
+		outputPkgName = pkg.Name()
+	}
 	codeBuilder := codegen.NewBuilder(
 		"repogen",
-		pkg.Name(),
+		outputPkgName,
 		generator.Imports(),
 	)
 

@@ -29,7 +29,16 @@ func main() {
 	destPtr := flag.String("dest", "", "destination file")
 	modelPtr := flag.String("model", "", "model struct name")
 	repoPtr := flag.String("repo", "", "repository interface name")
-
+	modelPkgPtr := flag.String(
+		"model-pkg",
+		"",
+		"package directory to scan for model struct. If not set, will fallback to -pkg.",
+	)
+	destPkgPtr := flag.String(
+		"dest-pkg",
+		"",
+		"destination package name. If not set, will consider as in the same package as repository interface.",
+	)
 	flag.Parse()
 
 	if *versionPtr {
@@ -51,6 +60,8 @@ func main() {
 		ModelName: *modelPtr,
 		RepoName:  *repoPtr,
 		Dest:      *destPtr,
+		ModelPkg:  *modelPkgPtr,
+		DestPkg:   *destPkgPtr,
 	}
 	code, err := generateFromRequest(request)
 	if err != nil {
@@ -80,6 +91,8 @@ type GenerationRequest struct {
 	ModelName string
 	RepoName  string
 	Dest      string
+	ModelPkg  string
+	DestPkg   string
 }
 
 func printUsage() {
@@ -92,22 +105,65 @@ func printVersion() {
 }
 
 var (
-	errNoPackageFound = errors.New("no package found")
+	errNoPackageFound        = errors.New("no package found")
+	errUnsupportMultiplePkgs = errors.New("multiple packages are not supported, please specify the package ID or directory path that only contains one package")
 )
 
 func generateFromRequest(request GenerationRequest) (string, error) {
 	cfg := packages.Config{
 		Mode: packages.NeedName | packages.NeedTypes,
 	}
-	pkgs, err := packages.Load(&cfg, request.Pkg)
+	if request.ModelPkg == "" || request.ModelPkg == request.Pkg {
+		pkgs, err := packages.Load(&cfg, request.Pkg)
+		if err != nil {
+			return "", err
+		}
+		if len(pkgs) < 1 {
+			return "", errNoPackageFound
+		}
+		if len(pkgs) > 1 {
+			return "", errUnsupportMultiplePkgs
+		}
+		return generator.GenerateRepositoryImpl(pkgs[0].Types, pkgs[0].Types, request.ModelName, request.RepoName, request.DestPkg)
+	}
+	intfPkgID, err := getPkgID(request.Pkg)
 	if err != nil {
 		return "", err
 	}
-	if len(pkgs) == 0 {
+	modelPkgID, err := getPkgID(request.ModelPkg)
+	if err != nil {
+		return "", err
+	}
+	patterns := []string{intfPkgID, modelPkgID}
+	pkgs, err := packages.Load(&cfg, patterns...)
+	if err != nil {
+		return "", err
+	}
+	if len(pkgs) != 2 {
 		return "", errNoPackageFound
 	}
+	pkgM := toMap(pkgs)
+	return generator.GenerateRepositoryImpl(pkgM[intfPkgID].Types, pkgM[modelPkgID].Types, request.ModelName, request.RepoName, request.DestPkg)
+}
 
-	pkg := pkgs[0]
+func getPkgID(pattern string) (string, error) {
+	pkgs, err := packages.Load(nil, pattern)
+	if err != nil {
+		return "", err
+	}
+	if len(pkgs) < 1 {
+		return "", errNoPackageFound
+	}
+	if len(pkgs) > 1 {
+		return "", errUnsupportMultiplePkgs
+	}
+	return pkgs[0].ID, nil
+}
 
-	return generator.GenerateRepositoryImpl(pkg.Types, request.ModelName, request.RepoName)
+func toMap(pkgs []*packages.Package) map[string]*packages.Package {
+	m := make(map[string]*packages.Package)
+	for _, pkg := range pkgs {
+		m[pkg.ID] = pkg
+	}
+	return m
 }
