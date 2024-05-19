@@ -128,9 +128,6 @@ func generateFromRequest(request GenerationRequest) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if len(pkgs) == 0 {
-		return "", errNoPackageFound
-	}
 	pkgM := packagesToMap(pkgs)
 	return generator.GenerateRepositoryImpl(pkgM[modelPkgID].Types, pkgM[intfPkgID].Types, request.ModelName, request.RepoName, request.DestPkg)
 }
