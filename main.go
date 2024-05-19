@@ -130,11 +130,11 @@ func generateFromRequest(request GenerationRequest) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	desPkgID, err := getPkgID(request.DestPkg)
+	destPkgID, err := getPkgID(request.DestPkg)
 	if err != nil {
 		return "", err
 	}
-	pkgs, err := packages.Load(&cfg, intfPkgID, modelPkgID, desPkgID)
+	pkgs, err := packages.Load(&cfg, intfPkgID, modelPkgID, destPkgID)
 	if err != nil {
 		return "", err
 	}
@@ -142,9 +142,9 @@ func generateFromRequest(request GenerationRequest) (string, error) {
 	return generator.GenerateRepositoryImpl(
 		pkgM[modelPkgID].Types,
 		pkgM[intfPkgID].Types,
+		pkgM[destPkgID].Types,
 		request.ModelName,
 		request.RepoName,
-		pkgM[desPkgID].Types,
 	)
 }
 

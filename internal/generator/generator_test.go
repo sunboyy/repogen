@@ -24,9 +24,9 @@ func TestGenerateRepository_Success(t *testing.T) {
 	code, err := generator.GenerateRepositoryImpl(
 		testutils.Pkg,
 		testutils.Pkg,
+		testutils.Pkg,
 		validStructModelName,
 		validRepoInterfaceName,
-		testutils.Pkg,
 	)
 
 	if err != nil {
@@ -41,9 +41,9 @@ func TestGenerateRepositoryImpl_StructNotFound(t *testing.T) {
 	_, err := generator.GenerateRepositoryImpl(
 		testutils.Pkg,
 		testutils.Pkg,
+		testutils.Pkg,
 		"UnknownModel",
 		validRepoInterfaceName,
-		testutils.Pkg,
 	)
 
 	expectedError := generator.ErrStructNotFound
@@ -56,9 +56,9 @@ func TestGenerateRepositoryImpl_ModelNameNotStruct(t *testing.T) {
 	_, err := generator.GenerateRepositoryImpl(
 		testutils.Pkg,
 		testutils.Pkg,
+		testutils.Pkg,
 		"UserRepositoryFind",
 		validRepoInterfaceName,
-		testutils.Pkg,
 	)
 
 	expectedError := generator.ErrNotNamedStruct
@@ -71,9 +71,9 @@ func TestGenerateRepositoryImpl_InterfaceNotFound(t *testing.T) {
 	_, err := generator.GenerateRepositoryImpl(
 		testutils.Pkg,
 		testutils.Pkg,
+		testutils.Pkg,
 		validStructModelName,
 		"UnknownRepository",
-		testutils.Pkg,
 	)
 
 	expectedError := generator.ErrInterfaceNotFound
@@ -86,9 +86,9 @@ func TestGenerateRepositoryImpl_RepoNameNotInterface(t *testing.T) {
 	_, err := generator.GenerateRepositoryImpl(
 		testutils.Pkg,
 		testutils.Pkg,
+		testutils.Pkg,
 		validStructModelName,
 		"User",
-		testutils.Pkg,
 	)
 
 	expectedError := generator.ErrNotInterface

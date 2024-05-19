@@ -9,8 +9,8 @@ import (
 	"github.com/sunboyy/repogen/internal/spec"
 )
 
-func GenerateRepositoryImpl(modelPkg, repoPkg *types.Package, structModelName,
-	repoInterfaceName string, destPkg *types.Package) (string, error) {
+func GenerateRepositoryImpl(modelPkg, repoPkg, destPkg *types.Package, structModelName,
+	repoInterfaceName string) (string, error) {
 
 	namedStruct, intf, err := deriveSourceTypes(modelPkg, repoPkg, structModelName,
 		repoInterfaceName)
