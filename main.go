@@ -106,7 +106,10 @@ func printVersion() {
 
 var (
 	errNoPackageFound        = errors.New("no package found")
-	errUnsupportMultiplePkgs = errors.New("multiple packages are not supported, please specify the package ID or directory path that only contains one package")
+	errUnsupportMultiplePkgs = errors.New(
+		`multiple packages are not supported, 
+		please specify the package ID or directory path that only contains one package`,
+	)
 )
 
 func generateFromRequest(request GenerationRequest) (string, error) {
@@ -136,7 +139,13 @@ func generateFromRequest(request GenerationRequest) (string, error) {
 		return "", err
 	}
 	pkgM := packagesToMap(pkgs)
-	return generator.GenerateRepositoryImpl(pkgM[modelPkgID].Types, pkgM[intfPkgID].Types, request.ModelName, request.RepoName, pkgM[desPkgID].Types)
+	return generator.GenerateRepositoryImpl(
+		pkgM[modelPkgID].Types,
+		pkgM[intfPkgID].Types,
+		request.ModelName,
+		request.RepoName,
+		pkgM[desPkgID].Types,
+	)
 }
 
 func getPkgID(pattern string) (string, error) {
