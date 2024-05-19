@@ -110,6 +110,7 @@ var (
 		`multiple packages are not supported, 
 		please specify the package ID or directory path that only contains one package`,
 	)
+	errMissingPackageName = errors.New("missing package name")
 )
 
 func generateFromRequest(request GenerationRequest) (string, error) {
@@ -158,6 +159,9 @@ func getPkgID(pattern string) (string, error) {
 	}
 	if len(pkgs) > 1 {
 		return "", errUnsupportMultiplePkgs
+	}
+	if pkgs[0].Name == "" {
+		return "", fmt.Errorf("%w on %s", errMissingPackageName, pattern)
 	}
 	return pkgs[0].ID, nil
 }
