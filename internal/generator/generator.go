@@ -9,21 +9,21 @@ import (
 	"github.com/sunboyy/repogen/internal/spec"
 )
 
-func GenerateRepositoryImpl(pkg, modelPkg *types.Package, structModelName,
+func GenerateRepositoryImpl(modelPkg, repoPkg *types.Package, structModelName,
 	repoInterfaceName, outputPkgName string) (string, error) {
 
-	namedStruct, intf, err := deriveSourceTypes(pkg, modelPkg, structModelName,
+	namedStruct, intf, err := deriveSourceTypes(modelPkg, repoPkg, structModelName,
 		repoInterfaceName)
 	if err != nil {
 		return "", err
 	}
 
-	methodSpecs, err := constructRepositorySpec(pkg, namedStruct, intf)
+	methodSpecs, err := constructRepositorySpec(repoPkg, namedStruct, intf)
 	if err != nil {
 		return "", err
 	}
 
-	codeBuilder, err := constructCodeBuilder(pkg, namedStruct,
+	codeBuilder, err := constructCodeBuilder(repoPkg, namedStruct,
 		repoInterfaceName, methodSpecs, outputPkgName)
 	if err != nil {
 		return "", err
@@ -32,7 +32,7 @@ func GenerateRepositoryImpl(pkg, modelPkg *types.Package, structModelName,
 	return codeBuilder.Build()
 }
 
-func deriveSourceTypes(pkg, modelPkg *types.Package, structModelName string,
+func deriveSourceTypes(modelPkg, repoPkg *types.Package, structModelName string,
 	repositoryInterfaceName string) (*types.Named, *types.Interface, error) {
 
 	structModelObj := modelPkg.Scope().Lookup(structModelName)
@@ -44,7 +44,7 @@ func deriveSourceTypes(pkg, modelPkg *types.Package, structModelName string,
 		return nil, nil, ErrNotNamedStruct
 	}
 
-	intfObj := pkg.Scope().Lookup(repositoryInterfaceName)
+	intfObj := repoPkg.Scope().Lookup(repositoryInterfaceName)
 	if intfObj == nil {
 		return nil, nil, ErrInterfaceNotFound
 	}
