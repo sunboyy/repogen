@@ -25,7 +25,11 @@ func main() {
 	flag.Usage = printUsage
 
 	versionPtr := flag.Bool("version", false, "print version of repogen")
-	pkgPtr := flag.String("pkg", ".", "package directory to scan for model struct and repository interface")
+	pkgPtr := flag.String(
+		"pkg",
+		".",
+		"package directory to scan for model struct and repository interface",
+	)
 	destPtr := flag.String("dest", "", "destination file")
 	modelPtr := flag.String("model", "", "model struct name")
 	repoPtr := flag.String("repo", "", "repository interface name")
