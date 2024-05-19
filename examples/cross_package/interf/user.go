@@ -7,7 +7,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-//go:generate repogen -model-pkg=../ -model=UserModel -repo=UserRepository -dest=../repo/user_repo.go -dest-pkg=repo
+//go:generate repogen -model-pkg=../ -model=UserModel -repo=UserRepository -dest=../repo/user_repo.go -dest-pkg=../repo
 
 // UserRepository is an interface that describes the specification of querying
 // user data in the database.

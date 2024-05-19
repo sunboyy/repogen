@@ -37,7 +37,7 @@ func main() {
 	destPkgPtr := flag.String(
 		"dest-pkg",
 		"",
-		"destination package name. If not set, will consider as in the same package as repository interface.",
+		"destination package path. If not set, will consider as in the same package as repository interface.",
 	)
 	flag.Parse()
 
@@ -116,6 +116,9 @@ func generateFromRequest(request GenerationRequest) (string, error) {
 	if request.ModelPkg == "" {
 		request.ModelPkg = request.Pkg
 	}
+	if request.DestPkg == "" {
+		request.DestPkg = request.Pkg
+	}
 	intfPkgID, err := getPkgID(request.Pkg)
 	if err != nil {
 		return "", err
@@ -124,12 +127,16 @@ func generateFromRequest(request GenerationRequest) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	pkgs, err := packages.Load(&cfg, intfPkgID, modelPkgID)
+	desPkgID, err := getPkgID(request.DestPkg)
+	if err != nil {
+		return "", err
+	}
+	pkgs, err := packages.Load(&cfg, intfPkgID, modelPkgID, desPkgID)
 	if err != nil {
 		return "", err
 	}
 	pkgM := packagesToMap(pkgs)
-	return generator.GenerateRepositoryImpl(pkgM[modelPkgID].Types, pkgM[intfPkgID].Types, request.ModelName, request.RepoName, request.DestPkg)
+	return generator.GenerateRepositoryImpl(pkgM[modelPkgID].Types, pkgM[intfPkgID].Types, request.ModelName, request.RepoName, pkgM[desPkgID].Types)
 }
 
 func getPkgID(pattern string) (string, error) {

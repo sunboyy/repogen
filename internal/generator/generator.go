@@ -10,7 +10,7 @@ import (
 )
 
 func GenerateRepositoryImpl(modelPkg, repoPkg *types.Package, structModelName,
-	repoInterfaceName, outputPkgName string) (string, error) {
+	repoInterfaceName string, destPkg *types.Package) (string, error) {
 
 	namedStruct, intf, err := deriveSourceTypes(modelPkg, repoPkg, structModelName,
 		repoInterfaceName)
@@ -23,8 +23,8 @@ func GenerateRepositoryImpl(modelPkg, repoPkg *types.Package, structModelName,
 		return "", err
 	}
 
-	codeBuilder, err := constructCodeBuilder(repoPkg, namedStruct,
-		repoInterfaceName, methodSpecs, outputPkgName)
+	codeBuilder, err := constructCodeBuilder(destPkg, namedStruct,
+		repoInterfaceName, methodSpecs)
 	if err != nil {
 		return "", err
 	}
@@ -75,15 +75,12 @@ func constructRepositorySpec(pkg *types.Package, namedStruct *types.Named,
 }
 
 func constructCodeBuilder(pkg *types.Package, namedStruct *types.Named,
-	interfaceName string, methodSpecs []spec.MethodSpec, outputPkgName string) (*codegen.Builder, error) {
+	interfaceName string, methodSpecs []spec.MethodSpec) (*codegen.Builder, error) {
 
 	generator := mongo.NewGenerator(pkg, namedStruct, interfaceName)
-	if outputPkgName == "" {
-		outputPkgName = pkg.Name()
-	}
 	codeBuilder := codegen.NewBuilder(
 		"repogen",
-		outputPkgName,
+		pkg.Name(),
 		generator.Imports(),
 	)
 
