@@ -113,18 +113,8 @@ func generateFromRequest(request GenerationRequest) (string, error) {
 	cfg := packages.Config{
 		Mode: packages.NeedName | packages.NeedTypes,
 	}
-	if request.ModelPkg == "" || request.ModelPkg == request.Pkg {
-		pkgs, err := packages.Load(&cfg, request.Pkg)
-		if err != nil {
-			return "", err
-		}
-		if len(pkgs) < 1 {
-			return "", errNoPackageFound
-		}
-		if len(pkgs) > 1 {
-			return "", errUnsupportMultiplePkgs
-		}
-		return generator.GenerateRepositoryImpl(pkgs[0].Types, pkgs[0].Types, request.ModelName, request.RepoName, request.DestPkg)
+	if request.ModelPkg == "" {
+		request.ModelPkg = request.Pkg
 	}
 	intfPkgID, err := getPkgID(request.Pkg)
 	if err != nil {
@@ -134,16 +124,15 @@ func generateFromRequest(request GenerationRequest) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	patterns := []string{intfPkgID, modelPkgID}
-	pkgs, err := packages.Load(&cfg, patterns...)
+	pkgs, err := packages.Load(&cfg, intfPkgID, modelPkgID)
 	if err != nil {
 		return "", err
 	}
-	if len(pkgs) != 2 {
+	if len(pkgs) == 0 {
 		return "", errNoPackageFound
 	}
-	pkgM := toMap(pkgs)
-	return generator.GenerateRepositoryImpl(pkgM[intfPkgID].Types, pkgM[modelPkgID].Types, request.ModelName, request.RepoName, request.DestPkg)
+	pkgM := packagesToMap(pkgs)
+	return generator.GenerateRepositoryImpl(pkgM[modelPkgID].Types, pkgM[intfPkgID].Types, request.ModelName, request.RepoName, request.DestPkg)
 }
 
 func getPkgID(pattern string) (string, error) {
@@ -160,7 +149,7 @@ func getPkgID(pattern string) (string, error) {
 	return pkgs[0].ID, nil
 }
 
-func toMap(pkgs []*packages.Package) map[string]*packages.Package {
+func packagesToMap(pkgs []*packages.Package) map[string]*packages.Package {
 	m := make(map[string]*packages.Package)
 	for _, pkg := range pkgs {
 		m[pkg.ID] = pkg
