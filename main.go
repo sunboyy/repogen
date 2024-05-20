@@ -25,11 +25,24 @@ func main() {
 	flag.Usage = printUsage
 
 	versionPtr := flag.Bool("version", false, "print version of repogen")
-	pkgPtr := flag.String("pkg", ".", "package directory to scan for model struct and repository interface")
+	pkgPtr := flag.String(
+		"pkg",
+		".",
+		"package directory to scan for model struct and repository interface",
+	)
 	destPtr := flag.String("dest", "", "destination file")
 	modelPtr := flag.String("model", "", "model struct name")
 	repoPtr := flag.String("repo", "", "repository interface name")
-
+	modelPkgPtr := flag.String(
+		"model-pkg",
+		"",
+		"package directory to scan for model struct. If not set, will fallback to -pkg.",
+	)
+	destPkgPtr := flag.String(
+		"dest-pkg",
+		"",
+		"destination package path. If not set, will consider as in the same package as repository interface.",
+	)
 	flag.Parse()
 
 	if *versionPtr {
@@ -51,6 +64,8 @@ func main() {
 		ModelName: *modelPtr,
 		RepoName:  *repoPtr,
 		Dest:      *destPtr,
+		ModelPkg:  *modelPkgPtr,
+		DestPkg:   *destPkgPtr,
 	}
 	code, err := generateFromRequest(request)
 	if err != nil {
@@ -80,6 +95,8 @@ type GenerationRequest struct {
 	ModelName string
 	RepoName  string
 	Dest      string
+	ModelPkg  string
+	DestPkg   string
 }
 
 func printUsage() {
@@ -92,22 +109,73 @@ func printVersion() {
 }
 
 var (
-	errNoPackageFound = errors.New("no package found")
+	errNoPackageFound        = errors.New("no package found")
+	errUnsupportMultiplePkgs = errors.New(
+		`multiple packages are not supported, 
+		please specify the package ID or directory path that only contains one package`,
+	)
+	errMissingPackageName = errors.New("missing package name")
 )
 
 func generateFromRequest(request GenerationRequest) (string, error) {
 	cfg := packages.Config{
 		Mode: packages.NeedName | packages.NeedTypes,
 	}
-	pkgs, err := packages.Load(&cfg, request.Pkg)
+	if request.ModelPkg == "" {
+		request.ModelPkg = request.Pkg
+	}
+	if request.DestPkg == "" {
+		request.DestPkg = request.Pkg
+	}
+	intfPkgID, err := getPkgID(request.Pkg)
 	if err != nil {
 		return "", err
 	}
-	if len(pkgs) == 0 {
+	modelPkgID, err := getPkgID(request.ModelPkg)
+	if err != nil {
+		return "", err
+	}
+	destPkgID, err := getPkgID(request.DestPkg)
+	if err != nil {
+		return "", err
+	}
+	pkgs, err := packages.Load(&cfg, intfPkgID, modelPkgID, destPkgID)
+	if err != nil {
+		return "", err
+	}
+	pkgM := packagesToMap(pkgs)
+	return generator.GenerateRepositoryImpl(
+		pkgM[modelPkgID].Types,
+		pkgM[intfPkgID].Types,
+		pkgM[destPkgID].Types,
+		request.ModelName,
+		request.RepoName,
+	)
+}
+
+func getPkgID(pattern string) (string, error) {
+	pkgs, err := packages.Load(nil, pattern)
+	if err != nil {
+		return "", err
+	}
+	if len(pkgs) < 1 {
 		return "", errNoPackageFound
 	}
+	if len(pkgs) > 1 {
+		return "", errUnsupportMultiplePkgs
+	}
+	// when no go file in the package, the package name will be empty
+	// this prevent the missing field upfront.
+	if pkgs[0].Name == "" {
+		return "", fmt.Errorf("%w on %s", errMissingPackageName, pattern)
+	}
+	return pkgs[0].ID, nil
+}
 
-	pkg := pkgs[0]
-
-	return generator.GenerateRepositoryImpl(pkg.Types, request.ModelName, request.RepoName)
+func packagesToMap(pkgs []*packages.Package) map[string]*packages.Package {
+	m := make(map[string]*packages.Package)
+	for _, pkg := range pkgs {
+		m[pkg.ID] = pkg
+	}
+	return m
 }
