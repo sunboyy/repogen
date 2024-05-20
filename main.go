@@ -164,6 +164,8 @@ func getPkgID(pattern string) (string, error) {
 	if len(pkgs) > 1 {
 		return "", errUnsupportMultiplePkgs
 	}
+	// when no go file in the package, the package name will be empty
+	// this prevent the missing field upfront.
 	if pkgs[0].Name == "" {
 		return "", fmt.Errorf("%w on %s", errMissingPackageName, pattern)
 	}
