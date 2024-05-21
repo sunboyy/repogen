@@ -124,6 +124,19 @@ func (p interfaceMethodParser) parseUpdate(tokens []string) (Update, error) {
 		return UpdateModel{}, nil
 	}
 
+	updateFields, err := p.parseUpdateFieldsFromTokens(tokens)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := p.validateUpdateFieldsWithParams(updateFields); err != nil {
+		return nil, err
+	}
+
+	return updateFields, nil
+}
+
+func (p interfaceMethodParser) parseUpdateFieldsFromTokens(tokens []string) (UpdateFields, error) {
 	updateFieldTokens, ok := splitByAnd(tokens)
 	if !ok {
 		return nil, ErrInvalidUpdateFields
@@ -140,21 +153,6 @@ func (p interfaceMethodParser) parseUpdate(tokens []string) (Update, error) {
 
 		updateFields = append(updateFields, updateField)
 		paramIndex += updateField.Operator.NumberOfArguments()
-	}
-
-	for _, field := range updateFields {
-		if p.Signature.Params().Len() < field.ParamIndex+field.Operator.NumberOfArguments() {
-			return nil, ErrInvalidUpdateFields
-		}
-
-		expectedType := field.Operator.ArgumentType(field.FieldReference.ReferencedField().Var.Type())
-
-		for i := 0; i < field.Operator.NumberOfArguments(); i++ {
-			if !types.Identical(p.Signature.Params().At(field.ParamIndex+i).Type(), expectedType) {
-				return nil, NewArgumentTypeNotMatchedError(field.FieldReference.ReferencingCode(), expectedType,
-					p.Signature.Params().At(field.ParamIndex+i).Type())
-			}
-		}
 	}
 
 	return updateFields, nil
@@ -213,4 +211,23 @@ func (p interfaceMethodParser) validateUpdateOperator(referencedType types.Type,
 		}
 	}
 	return true
+}
+
+func (p interfaceMethodParser) validateUpdateFieldsWithParams(updateFields UpdateFields) error {
+	for _, field := range updateFields {
+		if p.Signature.Params().Len() < field.ParamIndex+field.Operator.NumberOfArguments() {
+			return ErrInvalidUpdateFields
+		}
+
+		expectedType := field.Operator.ArgumentType(field.FieldReference.ReferencedField().Var.Type())
+
+		for i := 0; i < field.Operator.NumberOfArguments(); i++ {
+			if !types.Identical(p.Signature.Params().At(field.ParamIndex+i).Type(), expectedType) {
+				return NewArgumentTypeNotMatchedError(field.FieldReference.ReferencingCode(), expectedType,
+					p.Signature.Params().At(field.ParamIndex+i).Type())
+			}
+		}
+	}
+
+	return nil
 }

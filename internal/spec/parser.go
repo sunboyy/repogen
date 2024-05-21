@@ -136,11 +136,7 @@ func (p interfaceMethodParser) parseFindOperation(tokens []string) (Operation, e
 		return nil, err
 	}
 
-	if err := p.validateContextParam(); err != nil {
-		return nil, err
-	}
-
-	if err := p.validateQueryFromParams(p.Signature.Params(), 1, querySpec); err != nil {
+	if err := p.validateQueryOnlyParams(querySpec); err != nil {
 		return nil, err
 	}
 
@@ -310,11 +306,7 @@ func (p interfaceMethodParser) parseDeleteOperation(tokens []string) (Operation,
 		return nil, err
 	}
 
-	if err := p.validateContextParam(); err != nil {
-		return nil, err
-	}
-
-	if err := p.validateQueryFromParams(p.Signature.Params(), 1, querySpec); err != nil {
+	if err := p.validateQueryOnlyParams(querySpec); err != nil {
 		return nil, err
 	}
 
@@ -334,11 +326,7 @@ func (p interfaceMethodParser) parseCountOperation(tokens []string) (Operation, 
 		return nil, err
 	}
 
-	if err := p.validateContextParam(); err != nil {
-		return nil, err
-	}
-
-	if err := p.validateQueryFromParams(p.Signature.Params(), 1, querySpec); err != nil {
+	if err := p.validateQueryOnlyParams(querySpec); err != nil {
 		return nil, err
 	}
 
@@ -383,6 +371,18 @@ func (p interfaceMethodParser) extractIntOrBoolReturns(returns *types.Tuple) (Qu
 	}
 
 	return "", NewUnsupportedReturnError(returns.At(0).Type(), 0)
+}
+
+func (p interfaceMethodParser) validateQueryOnlyParams(querySpec QuerySpec) error {
+	if err := p.validateContextParam(); err != nil {
+		return err
+	}
+
+	if err := p.validateQueryFromParams(p.Signature.Params(), 1, querySpec); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (p interfaceMethodParser) validateContextParam() error {
