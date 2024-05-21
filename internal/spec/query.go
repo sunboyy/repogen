@@ -88,15 +88,20 @@ func (p queryParser) parseQuery(rawTokens []string, paramIndex int) (QuerySpec,
 		return QuerySpec{}, ErrQueryRequired
 	}
 
-	tokens := rawTokens
-	if len(tokens) == 1 && tokens[0] == "All" {
-		return QuerySpec{}, nil
+	switch rawTokens[0] {
+	case "All":
+		if len(rawTokens) == 1 {
+			return QuerySpec{}, nil
+		}
+	case "By":
+		return p.parseQueryBy(rawTokens, paramIndex)
 	}
 
-	if tokens[0] == "By" {
-		tokens = tokens[1:]
-	}
+	return QuerySpec{}, NewInvalidQueryError(rawTokens)
+}
 
+func (p queryParser) parseQueryBy(rawTokens []string, paramIndex int) (QuerySpec, error) {
+	tokens := rawTokens[1:]
 	if len(tokens) == 0 {
 		return QuerySpec{}, NewInvalidQueryError(rawTokens)
 	}
@@ -155,43 +160,58 @@ func (p queryParser) splitPredicateTokens(tokens []string) (Operator, [][]string
 func (p queryParser) parsePredicate(t []string, paramIndex int) (Predicate,
 	error) {
 
-	if len(t) > 1 && t[len(t)-1] == "Not" {
+	switch {
+	case endsWith(t, "Not"):
 		return p.createPredicate(t[:len(t)-1], ComparatorNot, paramIndex)
-	}
-	if len(t) > 2 && t[len(t)-2] == "Less" && t[len(t)-1] == "Than" {
+
+	case endsWith(t, "Less", "Than"):
 		return p.createPredicate(t[:len(t)-2], ComparatorLessThan, paramIndex)
-	}
-	if len(t) > 3 && t[len(t)-3] == "Less" && t[len(t)-2] == "Than" && t[len(t)-1] == "Equal" {
+
+	case endsWith(t, "Less", "Than", "Equal"):
 		return p.createPredicate(t[:len(t)-3], ComparatorLessThanEqual, paramIndex)
-	}
-	if len(t) > 2 && t[len(t)-2] == "Greater" && t[len(t)-1] == "Than" {
+
+	case endsWith(t, "Greater", "Than"):
 		return p.createPredicate(t[:len(t)-2], ComparatorGreaterThan, paramIndex)
-	}
-	if len(t) > 3 && t[len(t)-3] == "Greater" && t[len(t)-2] == "Than" && t[len(t)-1] == "Equal" {
+
+	case endsWith(t, "Greater", "Than", "Equal"):
 		return p.createPredicate(t[:len(t)-3], ComparatorGreaterThanEqual, paramIndex)
-	}
-	if len(t) > 2 && t[len(t)-2] == "Not" && t[len(t)-1] == "In" {
+
+	case endsWith(t, "Not", "In"):
 		return p.createPredicate(t[:len(t)-2], ComparatorNotIn, paramIndex)
-	}
-	if len(t) > 2 && t[len(t)-2] == "Not" && t[len(t)-1] == "Exists" {
+
+	case endsWith(t, "Not", "Exists"):
 		return p.createPredicate(t[:len(t)-2], ComparatorNotExists, paramIndex)
-	}
-	if len(t) > 1 && t[len(t)-1] == "In" {
+
+	case endsWith(t, "In"):
 		return p.createPredicate(t[:len(t)-1], ComparatorIn, paramIndex)
-	}
-	if len(t) > 1 && t[len(t)-1] == "Between" {
+
+	case endsWith(t, "Between"):
 		return p.createPredicate(t[:len(t)-1], ComparatorBetween, paramIndex)
-	}
-	if len(t) > 1 && t[len(t)-1] == "True" {
+
+	case endsWith(t, "True"):
 		return p.createPredicate(t[:len(t)-1], ComparatorTrue, paramIndex)
-	}
-	if len(t) > 1 && t[len(t)-1] == "False" {
+
+	case endsWith(t, "False"):
 		return p.createPredicate(t[:len(t)-1], ComparatorFalse, paramIndex)
-	}
-	if len(t) > 1 && t[len(t)-1] == "Exists" {
+
+	case endsWith(t, "Exists"):
 		return p.createPredicate(t[:len(t)-1], ComparatorExists, paramIndex)
 	}
+
 	return p.createPredicate(t, ComparatorEqual, paramIndex)
+}
+
+func endsWith(t []string, suffix ...string) bool {
+	if len(t) < len(suffix) {
+		return false
+	}
+
+	for i, suffixToken := range suffix {
+		if t[len(t)-len(suffix)+i] != suffixToken {
+			return false
+		}
+	}
+	return true
 }
 
 func (p queryParser) createPredicate(t []string, comparator Comparator,
