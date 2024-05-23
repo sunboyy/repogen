@@ -45,11 +45,12 @@ func TestGenerateMethod_Find(t *testing.T) {
 					},
 				},
 			},
-			ExpectedBody: `	var entity User
+			ExpectedBody: `	findOptions := options.FindOne().SetSort(bson.M{
+	})
+	var entity User
 	if err := r.collection.FindOne(arg0, bson.M{
 		"_id": arg1,
-	}, options.FindOne().SetSort(bson.M{
-	})).Decode(&entity); err != nil {
+	}, findOptions).Decode(&entity); err != nil {
 		return nil, err
 	}
 	return &entity, nil`,
@@ -83,10 +84,11 @@ func TestGenerateMethod_Find(t *testing.T) {
 					},
 				},
 			},
-			ExpectedBody: `	cursor, err := r.collection.Find(arg0, bson.M{
+			ExpectedBody: `	findOptions := options.Find().SetSort(bson.M{
+	})
+	cursor, err := r.collection.Find(arg0, bson.M{
 		"gender": arg1,
-	}, options.Find().SetSort(bson.M{
-	}))
+	}, findOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -127,11 +129,12 @@ func TestGenerateMethod_Find(t *testing.T) {
 					},
 				},
 			},
-			ExpectedBody: `	var entity User
+			ExpectedBody: `	findOptions := options.FindOne().SetSort(bson.M{
+	})
+	var entity User
 	if err := r.collection.FindOne(arg0, bson.M{
 		"name.first": arg1,
-	}, options.FindOne().SetSort(bson.M{
-	})).Decode(&entity); err != nil {
+	}, findOptions).Decode(&entity); err != nil {
 		return nil, err
 	}
 	return &entity, nil`,
@@ -174,7 +177,9 @@ func TestGenerateMethod_Find(t *testing.T) {
 					},
 				},
 			},
-			ExpectedBody: `	cursor, err := r.collection.Find(arg0, bson.M{
+			ExpectedBody: `	findOptions := options.Find().SetSort(bson.M{
+	})
+	cursor, err := r.collection.Find(arg0, bson.M{
 		"$and": []bson.M{
 			{
 				"gender": arg1,
@@ -183,8 +188,7 @@ func TestGenerateMethod_Find(t *testing.T) {
 				"age": arg2,
 			},
 		},
-	}, options.Find().SetSort(bson.M{
-	}))
+	}, findOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -233,7 +237,9 @@ func TestGenerateMethod_Find(t *testing.T) {
 					},
 				},
 			},
-			ExpectedBody: `	cursor, err := r.collection.Find(arg0, bson.M{
+			ExpectedBody: `	findOptions := options.Find().SetSort(bson.M{
+	})
+	cursor, err := r.collection.Find(arg0, bson.M{
 		"$or": []bson.M{
 			{
 				"gender": arg1,
@@ -242,8 +248,7 @@ func TestGenerateMethod_Find(t *testing.T) {
 				"age": arg2,
 			},
 		},
-	}, options.Find().SetSort(bson.M{
-	}))
+	}, findOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -283,12 +288,13 @@ func TestGenerateMethod_Find(t *testing.T) {
 					},
 				},
 			},
-			ExpectedBody: `	cursor, err := r.collection.Find(arg0, bson.M{
+			ExpectedBody: `	findOptions := options.Find().SetSort(bson.M{
+	})
+	cursor, err := r.collection.Find(arg0, bson.M{
 		"gender": bson.M{
 			"$ne": arg1,
 		},
-	}, options.Find().SetSort(bson.M{
-	}))
+	}, findOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -328,12 +334,13 @@ func TestGenerateMethod_Find(t *testing.T) {
 					},
 				},
 			},
-			ExpectedBody: `	cursor, err := r.collection.Find(arg0, bson.M{
+			ExpectedBody: `	findOptions := options.Find().SetSort(bson.M{
+	})
+	cursor, err := r.collection.Find(arg0, bson.M{
 		"age": bson.M{
 			"$lt": arg1,
 		},
-	}, options.Find().SetSort(bson.M{
-	}))
+	}, findOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -373,12 +380,13 @@ func TestGenerateMethod_Find(t *testing.T) {
 					},
 				},
 			},
-			ExpectedBody: `	cursor, err := r.collection.Find(arg0, bson.M{
+			ExpectedBody: `	findOptions := options.Find().SetSort(bson.M{
+	})
+	cursor, err := r.collection.Find(arg0, bson.M{
 		"age": bson.M{
 			"$lte": arg1,
 		},
-	}, options.Find().SetSort(bson.M{
-	}))
+	}, findOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -418,12 +426,13 @@ func TestGenerateMethod_Find(t *testing.T) {
 					},
 				},
 			},
-			ExpectedBody: `	cursor, err := r.collection.Find(arg0, bson.M{
+			ExpectedBody: `	findOptions := options.Find().SetSort(bson.M{
+	})
+	cursor, err := r.collection.Find(arg0, bson.M{
 		"age": bson.M{
 			"$gt": arg1,
 		},
-	}, options.Find().SetSort(bson.M{
-	}))
+	}, findOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -463,12 +472,13 @@ func TestGenerateMethod_Find(t *testing.T) {
 					},
 				},
 			},
-			ExpectedBody: `	cursor, err := r.collection.Find(arg0, bson.M{
+			ExpectedBody: `	findOptions := options.Find().SetSort(bson.M{
+	})
+	cursor, err := r.collection.Find(arg0, bson.M{
 		"age": bson.M{
 			"$gte": arg1,
 		},
-	}, options.Find().SetSort(bson.M{
-	}))
+	}, findOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -509,13 +519,14 @@ func TestGenerateMethod_Find(t *testing.T) {
 					},
 				},
 			},
-			ExpectedBody: `	cursor, err := r.collection.Find(arg0, bson.M{
+			ExpectedBody: `	findOptions := options.Find().SetSort(bson.M{
+	})
+	cursor, err := r.collection.Find(arg0, bson.M{
 		"age": bson.M{
 			"$gte": arg1,
 			"$lte": arg2,
 		},
-	}, options.Find().SetSort(bson.M{
-	}))
+	}, findOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -555,12 +566,13 @@ func TestGenerateMethod_Find(t *testing.T) {
 					},
 				},
 			},
-			ExpectedBody: `	cursor, err := r.collection.Find(arg0, bson.M{
+			ExpectedBody: `	findOptions := options.Find().SetSort(bson.M{
+	})
+	cursor, err := r.collection.Find(arg0, bson.M{
 		"gender": bson.M{
 			"$in": arg1,
 		},
-	}, options.Find().SetSort(bson.M{
-	}))
+	}, findOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -600,12 +612,13 @@ func TestGenerateMethod_Find(t *testing.T) {
 					},
 				},
 			},
-			ExpectedBody: `	cursor, err := r.collection.Find(arg0, bson.M{
+			ExpectedBody: `	findOptions := options.Find().SetSort(bson.M{
+	})
+	cursor, err := r.collection.Find(arg0, bson.M{
 		"gender": bson.M{
 			"$nin": arg1,
 		},
-	}, options.Find().SetSort(bson.M{
-	}))
+	}, findOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -644,10 +657,11 @@ func TestGenerateMethod_Find(t *testing.T) {
 					},
 				},
 			},
-			ExpectedBody: `	cursor, err := r.collection.Find(arg0, bson.M{
+			ExpectedBody: `	findOptions := options.Find().SetSort(bson.M{
+	})
+	cursor, err := r.collection.Find(arg0, bson.M{
 		"enabled": true,
-	}, options.Find().SetSort(bson.M{
-	}))
+	}, findOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -686,10 +700,11 @@ func TestGenerateMethod_Find(t *testing.T) {
 					},
 				},
 			},
-			ExpectedBody: `	cursor, err := r.collection.Find(arg0, bson.M{
+			ExpectedBody: `	findOptions := options.Find().SetSort(bson.M{
+	})
+	cursor, err := r.collection.Find(arg0, bson.M{
 		"enabled": false,
-	}, options.Find().SetSort(bson.M{
-	}))
+	}, findOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -728,12 +743,13 @@ func TestGenerateMethod_Find(t *testing.T) {
 					},
 				},
 			},
-			ExpectedBody: `	cursor, err := r.collection.Find(arg0, bson.M{
+			ExpectedBody: `	findOptions := options.Find().SetSort(bson.M{
+	})
+	cursor, err := r.collection.Find(arg0, bson.M{
 		"referrer": bson.M{
 			"$exists": 1,
 		},
-	}, options.Find().SetSort(bson.M{
-	}))
+	}, findOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -772,12 +788,13 @@ func TestGenerateMethod_Find(t *testing.T) {
 					},
 				},
 			},
-			ExpectedBody: `	cursor, err := r.collection.Find(arg0, bson.M{
+			ExpectedBody: `	findOptions := options.Find().SetSort(bson.M{
+	})
+	cursor, err := r.collection.Find(arg0, bson.M{
 		"referrer": bson.M{
 			"$exists": 0,
 		},
-	}, options.Find().SetSort(bson.M{
-	}))
+	}, findOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -813,10 +830,11 @@ func TestGenerateMethod_Find(t *testing.T) {
 					},
 				},
 			},
-			ExpectedBody: `	cursor, err := r.collection.Find(arg0, bson.M{
-	}, options.Find().SetSort(bson.M{
+			ExpectedBody: `	findOptions := options.Find().SetSort(bson.M{
 		"age": 1,
-	}))
+	})
+	cursor, err := r.collection.Find(arg0, bson.M{
+	}, findOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -852,10 +870,11 @@ func TestGenerateMethod_Find(t *testing.T) {
 					},
 				},
 			},
-			ExpectedBody: `	cursor, err := r.collection.Find(arg0, bson.M{
-	}, options.Find().SetSort(bson.M{
+			ExpectedBody: `	findOptions := options.Find().SetSort(bson.M{
 		"age": -1,
-	}))
+	})
+	cursor, err := r.collection.Find(arg0, bson.M{
+	}, findOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -892,10 +911,11 @@ func TestGenerateMethod_Find(t *testing.T) {
 					},
 				},
 			},
-			ExpectedBody: `	cursor, err := r.collection.Find(arg0, bson.M{
-	}, options.Find().SetSort(bson.M{
+			ExpectedBody: `	findOptions := options.Find().SetSort(bson.M{
 		"name.first": 1,
-	}))
+	})
+	cursor, err := r.collection.Find(arg0, bson.M{
+	}, findOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -937,11 +957,12 @@ func TestGenerateMethod_Find(t *testing.T) {
 					},
 				},
 			},
-			ExpectedBody: `	cursor, err := r.collection.Find(arg0, bson.M{
-	}, options.Find().SetSort(bson.M{
+			ExpectedBody: `	findOptions := options.Find().SetSort(bson.M{
 		"gender": 1,
 		"age": -1,
-	}))
+	})
+	cursor, err := r.collection.Find(arg0, bson.M{
+	}, findOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -978,10 +999,11 @@ func TestGenerateMethod_Find(t *testing.T) {
 					Limit: 5,
 				},
 			},
-			ExpectedBody: `	cursor, err := r.collection.Find(arg0, bson.M{
-	}, options.Find().SetSort(bson.M{
+			ExpectedBody: `	findOptions := options.Find().SetSort(bson.M{
 		"age": -1,
-	}).SetLimit(5))
+	}).SetLimit(5)
+	cursor, err := r.collection.Find(arg0, bson.M{
+	}, findOptions)
 	if err != nil {
 		return nil, err
 	}

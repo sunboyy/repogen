@@ -9,8 +9,8 @@
 ### Added
 
 - Now supports interface embedding
-- `-model-pkg` option to specify the package containing the model struct
-- `-dest-pkg` option to specify the package path to write the generated code to
+- `-model-pkg` option to specify the package containing the model struct. Without specifying this option, it will fall back to the same value as `-pkg` option.
+- `-dest-pkg` option to specify the package path to write the generated code to. Without specifying this option, it will fall back to the same value as `-pkg` option.
 
 ### Changed
 
