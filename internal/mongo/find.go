@@ -44,6 +44,15 @@ func (g findBodyGenerator) generateFindOneBody(querySpec querySpec,
 	sortsCode codegen.MapStatement) codegen.FunctionBody {
 
 	return codegen.FunctionBody{
+		codegen.DeclAssignStatement{
+			Vars: []string{"findOptions"},
+			Values: []codegen.Statement{
+				codegen.NewChainBuilder("options").
+					Call("FindOne").
+					Call("SetSort", sortsCode).
+					Build(),
+			},
+		},
 		codegen.NewDeclStatement(g.targetPkg, "entity", g.structModelNamed),
 		codegen.IfBlock{
 			Condition: []codegen.Statement{
@@ -55,10 +64,7 @@ func (g findBodyGenerator) generateFindOneBody(querySpec querySpec,
 							Call("FindOne",
 								codegen.Identifier("arg0"),
 								querySpec.Code(),
-								codegen.NewChainBuilder("options").
-									Call("FindOne").
-									Call("SetSort", sortsCode).
-									Build(),
+								codegen.Identifier("findOptions"),
 							).
 							Call("Decode",
 								codegen.RawStatement("&entity"),
@@ -83,6 +89,12 @@ func (g findBodyGenerator) generateFindManyBody(querySpec querySpec,
 
 	return codegen.FunctionBody{
 		codegen.DeclAssignStatement{
+			Vars: []string{"findOptions"},
+			Values: []codegen.Statement{
+				g.findManyOptions(sortsCode),
+			},
+		},
+		codegen.DeclAssignStatement{
 			Vars: []string{"cursor", "err"},
 			Values: codegen.StatementList{
 				codegen.NewChainBuilder("r").
@@ -90,7 +102,7 @@ func (g findBodyGenerator) generateFindManyBody(querySpec querySpec,
 					Call("Find",
 						codegen.Identifier("arg0"),
 						querySpec.Code(),
-						g.findManyOptions(sortsCode),
+						codegen.Identifier("findOptions"),
 					).Build(),
 			},
 		},
