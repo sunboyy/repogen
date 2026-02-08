@@ -10,11 +10,11 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v5
 
-    - uses: actions/setup-go@v4
+    - uses: actions/setup-go@v6
       with:
-        go-version: 1.22
+        go-version: 1.24
 
     - name: Build
       run: go build -v ./...
@@ -25,7 +25,7 @@ jobs:
     - name: Vet
       run: go vet ./...
 
-    - uses: codecov/codecov-action@v4
+    - uses: codecov/codecov-action@v5
       with:
         flags: unittests
         token: ${{ secrets.CODECOV_TOKEN }}
