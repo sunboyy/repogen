@@ -1,10 +1,11 @@
+version: "2"
 linters:
   enable:
+    - err113
     - errname
     - errorlint
-    - err113
     - lll
-    - stylecheck
-linters-settings:
-  lll:
-    tab-width: 4
+    - staticcheck
+  settings:
+    lll:
+      tab-width: 4

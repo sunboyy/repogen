@@ -4,12 +4,12 @@ package main
 import (
 	"context"
 
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
-func NewUserOtherRepository(collection *mongo.Collection) UserOtherRepository {
+func NewUserOtherRepository(collection *mongo.Collection) *UserOtherRepositoryMongo {
 	return &UserOtherRepositoryMongo{
 		collection: collection,
 	}
@@ -19,17 +19,8 @@ type UserOtherRepositoryMongo struct {
 	collection *mongo.Collection
 }
 
-func (r *UserOtherRepositoryMongo) FindByContactEmail(arg0 context.Context, arg1 string) (*UserModel, error) {
-	var entity UserModel
-	if err := r.collection.FindOne(arg0, bson.M{
-		"contact.email": arg1,
-	}, options.FindOne().SetSort(bson.M{})).Decode(&entity); err != nil {
-		return nil, err
-	}
-	return &entity, nil
-}
-
 func (r *UserOtherRepositoryMongo) FindByAgeAndCity(arg0 context.Context, arg1 int, arg2 string) ([]*UserModel, error) {
+	findOptions := options.Find().SetSort(bson.M{})
 	cursor, err := r.collection.Find(arg0, bson.M{
 		"$and": []bson.M{
 			{
@@ -39,7 +30,7 @@ func (r *UserOtherRepositoryMongo) FindByAgeAndCity(arg0 context.Context, arg1 i
 				"city": arg2,
 			},
 		},
-	}, options.Find().SetSort(bson.M{}))
+	}, findOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +41,19 @@ func (r *UserOtherRepositoryMongo) FindByAgeAndCity(arg0 context.Context, arg1 i
 	return entities, nil
 }
 
+func (r *UserOtherRepositoryMongo) FindByContactEmail(arg0 context.Context, arg1 string) (*UserModel, error) {
+	findOptions := options.FindOne().SetSort(bson.M{})
+	var entity UserModel
+	if err := r.collection.FindOne(arg0, bson.M{
+		"contact.email": arg1,
+	}, findOptions).Decode(&entity); err != nil {
+		return nil, err
+	}
+	return &entity, nil
+}
+
 func (r *UserOtherRepositoryMongo) FindByGenderOrAgeGreaterThan(arg0 context.Context, arg1 Gender, arg2 int) ([]*UserModel, error) {
+	findOptions := options.Find().SetSort(bson.M{})
 	cursor, err := r.collection.Find(arg0, bson.M{
 		"$or": []bson.M{
 			{
@@ -62,7 +65,7 @@ func (r *UserOtherRepositoryMongo) FindByGenderOrAgeGreaterThan(arg0 context.Con
 				},
 			},
 		},
-	}, options.Find().SetSort(bson.M{}))
+	}, findOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -74,9 +77,10 @@ func (r *UserOtherRepositoryMongo) FindByGenderOrAgeGreaterThan(arg0 context.Con
 }
 
 func (r *UserOtherRepositoryMongo) FindTop5AllOrderByAge(arg0 context.Context) ([]*UserModel, error) {
-	cursor, err := r.collection.Find(arg0, bson.M{}, options.Find().SetSort(bson.M{
+	findOptions := options.Find().SetSort(bson.M{
 		"age": 1,
-	}).SetLimit(5))
+	}).SetLimit(5)
+	cursor, err := r.collection.Find(arg0, bson.M{}, findOptions)
 	if err != nil {
 		return nil, err
 	}

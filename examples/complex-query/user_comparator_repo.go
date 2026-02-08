@@ -4,12 +4,12 @@ package main
 import (
 	"context"
 
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
-func NewUserComparatorRepository(collection *mongo.Collection) UserComparatorRepository {
+func NewUserComparatorRepository(collection *mongo.Collection) *UserComparatorRepositoryMongo {
 	return &UserComparatorRepositoryMongo{
 		collection: collection,
 	}
@@ -19,22 +19,31 @@ type UserComparatorRepositoryMongo struct {
 	collection *mongo.Collection
 }
 
-func (r *UserComparatorRepositoryMongo) FindByUsername(arg0 context.Context, arg1 string) (*UserModel, error) {
-	var entity UserModel
-	if err := r.collection.FindOne(arg0, bson.M{
-		"username": arg1,
-	}, options.FindOne().SetSort(bson.M{})).Decode(&entity); err != nil {
+func (r *UserComparatorRepositoryMongo) FindByAgeBetween(arg0 context.Context, arg1 int, arg2 int) ([]*UserModel, error) {
+	findOptions := options.Find().SetSort(bson.M{})
+	cursor, err := r.collection.Find(arg0, bson.M{
+		"age": bson.M{
+			"$gte": arg1,
+			"$lte": arg2,
+		},
+	}, findOptions)
+	if err != nil {
 		return nil, err
 	}
-	return &entity, nil
+	entities := []*UserModel{}
+	if err := cursor.All(arg0, &entities); err != nil {
+		return nil, err
+	}
+	return entities, nil
 }
 
 func (r *UserComparatorRepositoryMongo) FindByAgeGreaterThan(arg0 context.Context, arg1 int) ([]*UserModel, error) {
+	findOptions := options.Find().SetSort(bson.M{})
 	cursor, err := r.collection.Find(arg0, bson.M{
 		"age": bson.M{
 			"$gt": arg1,
 		},
-	}, options.Find().SetSort(bson.M{}))
+	}, findOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -46,11 +55,12 @@ func (r *UserComparatorRepositoryMongo) FindByAgeGreaterThan(arg0 context.Contex
 }
 
 func (r *UserComparatorRepositoryMongo) FindByAgeGreaterThanEqual(arg0 context.Context, arg1 int) ([]*UserModel, error) {
+	findOptions := options.Find().SetSort(bson.M{})
 	cursor, err := r.collection.Find(arg0, bson.M{
 		"age": bson.M{
 			"$gte": arg1,
 		},
-	}, options.Find().SetSort(bson.M{}))
+	}, findOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -62,11 +72,12 @@ func (r *UserComparatorRepositoryMongo) FindByAgeGreaterThanEqual(arg0 context.C
 }
 
 func (r *UserComparatorRepositoryMongo) FindByAgeLessThan(arg0 context.Context, arg1 int) ([]*UserModel, error) {
+	findOptions := options.Find().SetSort(bson.M{})
 	cursor, err := r.collection.Find(arg0, bson.M{
 		"age": bson.M{
 			"$lt": arg1,
 		},
-	}, options.Find().SetSort(bson.M{}))
+	}, findOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -78,90 +89,12 @@ func (r *UserComparatorRepositoryMongo) FindByAgeLessThan(arg0 context.Context, 
 }
 
 func (r *UserComparatorRepositoryMongo) FindByAgeLessThanEqual(arg0 context.Context, arg1 int) ([]*UserModel, error) {
+	findOptions := options.Find().SetSort(bson.M{})
 	cursor, err := r.collection.Find(arg0, bson.M{
 		"age": bson.M{
 			"$lte": arg1,
 		},
-	}, options.Find().SetSort(bson.M{}))
-	if err != nil {
-		return nil, err
-	}
-	entities := []*UserModel{}
-	if err := cursor.All(arg0, &entities); err != nil {
-		return nil, err
-	}
-	return entities, nil
-}
-
-func (r *UserComparatorRepositoryMongo) FindByAgeBetween(arg0 context.Context, arg1 int, arg2 int) ([]*UserModel, error) {
-	cursor, err := r.collection.Find(arg0, bson.M{
-		"age": bson.M{
-			"$gte": arg1,
-			"$lte": arg2,
-		},
-	}, options.Find().SetSort(bson.M{}))
-	if err != nil {
-		return nil, err
-	}
-	entities := []*UserModel{}
-	if err := cursor.All(arg0, &entities); err != nil {
-		return nil, err
-	}
-	return entities, nil
-}
-
-func (r *UserComparatorRepositoryMongo) FindByCityNot(arg0 context.Context, arg1 string) ([]*UserModel, error) {
-	cursor, err := r.collection.Find(arg0, bson.M{
-		"city": bson.M{
-			"$ne": arg1,
-		},
-	}, options.Find().SetSort(bson.M{}))
-	if err != nil {
-		return nil, err
-	}
-	entities := []*UserModel{}
-	if err := cursor.All(arg0, &entities); err != nil {
-		return nil, err
-	}
-	return entities, nil
-}
-
-func (r *UserComparatorRepositoryMongo) FindByCityIn(arg0 context.Context, arg1 []string) ([]*UserModel, error) {
-	cursor, err := r.collection.Find(arg0, bson.M{
-		"city": bson.M{
-			"$in": arg1,
-		},
-	}, options.Find().SetSort(bson.M{}))
-	if err != nil {
-		return nil, err
-	}
-	entities := []*UserModel{}
-	if err := cursor.All(arg0, &entities); err != nil {
-		return nil, err
-	}
-	return entities, nil
-}
-
-func (r *UserComparatorRepositoryMongo) FindByCityNotIn(arg0 context.Context, arg1 []string) ([]*UserModel, error) {
-	cursor, err := r.collection.Find(arg0, bson.M{
-		"city": bson.M{
-			"$nin": arg1,
-		},
-	}, options.Find().SetSort(bson.M{}))
-	if err != nil {
-		return nil, err
-	}
-	entities := []*UserModel{}
-	if err := cursor.All(arg0, &entities); err != nil {
-		return nil, err
-	}
-	return entities, nil
-}
-
-func (r *UserComparatorRepositoryMongo) FindByBannedTrue(arg0 context.Context) ([]*UserModel, error) {
-	cursor, err := r.collection.Find(arg0, bson.M{
-		"banned": true,
-	}, options.Find().SetSort(bson.M{}))
+	}, findOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -173,9 +106,76 @@ func (r *UserComparatorRepositoryMongo) FindByBannedTrue(arg0 context.Context) (
 }
 
 func (r *UserComparatorRepositoryMongo) FindByBannedFalse(arg0 context.Context) ([]*UserModel, error) {
+	findOptions := options.Find().SetSort(bson.M{})
 	cursor, err := r.collection.Find(arg0, bson.M{
 		"banned": false,
-	}, options.Find().SetSort(bson.M{}))
+	}, findOptions)
+	if err != nil {
+		return nil, err
+	}
+	entities := []*UserModel{}
+	if err := cursor.All(arg0, &entities); err != nil {
+		return nil, err
+	}
+	return entities, nil
+}
+
+func (r *UserComparatorRepositoryMongo) FindByBannedTrue(arg0 context.Context) ([]*UserModel, error) {
+	findOptions := options.Find().SetSort(bson.M{})
+	cursor, err := r.collection.Find(arg0, bson.M{
+		"banned": true,
+	}, findOptions)
+	if err != nil {
+		return nil, err
+	}
+	entities := []*UserModel{}
+	if err := cursor.All(arg0, &entities); err != nil {
+		return nil, err
+	}
+	return entities, nil
+}
+
+func (r *UserComparatorRepositoryMongo) FindByCityIn(arg0 context.Context, arg1 []string) ([]*UserModel, error) {
+	findOptions := options.Find().SetSort(bson.M{})
+	cursor, err := r.collection.Find(arg0, bson.M{
+		"city": bson.M{
+			"$in": arg1,
+		},
+	}, findOptions)
+	if err != nil {
+		return nil, err
+	}
+	entities := []*UserModel{}
+	if err := cursor.All(arg0, &entities); err != nil {
+		return nil, err
+	}
+	return entities, nil
+}
+
+func (r *UserComparatorRepositoryMongo) FindByCityNot(arg0 context.Context, arg1 string) ([]*UserModel, error) {
+	findOptions := options.Find().SetSort(bson.M{})
+	cursor, err := r.collection.Find(arg0, bson.M{
+		"city": bson.M{
+			"$ne": arg1,
+		},
+	}, findOptions)
+	if err != nil {
+		return nil, err
+	}
+	entities := []*UserModel{}
+	if err := cursor.All(arg0, &entities); err != nil {
+		return nil, err
+	}
+	return entities, nil
+}
+
+func (r *UserComparatorRepositoryMongo) FindByCityNotIn(arg0 context.Context, arg1 []string) ([]*UserModel, error) {
+	findOptions := options.Find().SetSort(bson.M{})
+	cursor, err := r.collection.Find(arg0, bson.M{
+		"city": bson.M{
+			"$nin": arg1,
+		},
+	}, findOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -187,24 +187,37 @@ func (r *UserComparatorRepositoryMongo) FindByBannedFalse(arg0 context.Context) 
 }
 
 func (r *UserComparatorRepositoryMongo) FindByContactExists(arg0 context.Context) (*UserModel, error) {
+	findOptions := options.FindOne().SetSort(bson.M{})
 	var entity UserModel
 	if err := r.collection.FindOne(arg0, bson.M{
 		"contact": bson.M{
 			"$exists": 1,
 		},
-	}, options.FindOne().SetSort(bson.M{})).Decode(&entity); err != nil {
+	}, findOptions).Decode(&entity); err != nil {
 		return nil, err
 	}
 	return &entity, nil
 }
 
 func (r *UserComparatorRepositoryMongo) FindByContactNotExists(arg0 context.Context) (*UserModel, error) {
+	findOptions := options.FindOne().SetSort(bson.M{})
 	var entity UserModel
 	if err := r.collection.FindOne(arg0, bson.M{
 		"contact": bson.M{
 			"$exists": 0,
 		},
-	}, options.FindOne().SetSort(bson.M{})).Decode(&entity); err != nil {
+	}, findOptions).Decode(&entity); err != nil {
+		return nil, err
+	}
+	return &entity, nil
+}
+
+func (r *UserComparatorRepositoryMongo) FindByUsername(arg0 context.Context, arg1 string) (*UserModel, error) {
+	findOptions := options.FindOne().SetSort(bson.M{})
+	var entity UserModel
+	if err := r.collection.FindOne(arg0, bson.M{
+		"username": arg1,
+	}, findOptions).Decode(&entity); err != nil {
 		return nil, err
 	}
 	return &entity, nil

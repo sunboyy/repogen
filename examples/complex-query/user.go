@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 type Gender string
@@ -14,13 +14,13 @@ const (
 )
 
 type UserModel struct {
-	ID       primitive.ObjectID `bson:"_id,omitempty" json:"id"`
-	Username string             `bson:"username" json:"username"`
-	Gender   Gender             `bson:"gender" json:"gender"`
-	Age      int                `bson:"age" json:"age"`
-	City     string             `bson:"city" json:"city"`
-	Contact  *UserContactModel  `bson:"contact,omitempty" json:"contact"`
-	Banned   bool               `bson:"banned" json:"banned"`
+	ID       bson.ObjectID     `bson:"_id,omitempty" json:"id"`
+	Username string            `bson:"username" json:"username"`
+	Gender   Gender            `bson:"gender" json:"gender"`
+	Age      int               `bson:"age" json:"age"`
+	City     string            `bson:"city" json:"city"`
+	Contact  *UserContactModel `bson:"contact,omitempty" json:"contact"`
+	Banned   bool              `bson:"banned" json:"banned"`
 }
 
 type UserContactModel struct {

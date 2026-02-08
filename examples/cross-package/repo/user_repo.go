@@ -4,11 +4,10 @@ package repo
 import (
 	"context"
 
-	"github.com/sunboyy/repogen/examples/cross_package"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	crosspackage "github.com/sunboyy/repogen/examples/cross-package"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 func NewUserRepository(collection *mongo.Collection) *UserRepositoryMongo {
@@ -41,17 +40,18 @@ func (r *UserRepositoryMongo) DeleteByCity(arg0 context.Context, arg1 string) (i
 	return int(result.DeletedCount), nil
 }
 
-func (r *UserRepositoryMongo) FindByUsername(arg0 context.Context, arg1 string) (*cross_package.UserModel, error) {
-	var entity cross_package.UserModel
+func (r *UserRepositoryMongo) FindByUsername(arg0 context.Context, arg1 string) (*crosspackage.UserModel, error) {
+	findOptions := options.FindOne().SetSort(bson.M{})
+	var entity crosspackage.UserModel
 	if err := r.collection.FindOne(arg0, bson.M{
 		"username": arg1,
-	}, options.FindOne().SetSort(bson.M{})).Decode(&entity); err != nil {
+	}, findOptions).Decode(&entity); err != nil {
 		return nil, err
 	}
 	return &entity, nil
 }
 
-func (r *UserRepositoryMongo) InsertOne(arg0 context.Context, arg1 *cross_package.UserModel) (interface{}, error) {
+func (r *UserRepositoryMongo) InsertOne(arg0 context.Context, arg1 *crosspackage.UserModel) (interface{}, error) {
 	result, err := r.collection.InsertOne(arg0, arg1)
 	if err != nil {
 		return nil, err
@@ -59,7 +59,7 @@ func (r *UserRepositoryMongo) InsertOne(arg0 context.Context, arg1 *cross_packag
 	return result.InsertedID, nil
 }
 
-func (r *UserRepositoryMongo) UpdateDisplayNameByID(arg0 context.Context, arg1 string, arg2 primitive.ObjectID) (bool, error) {
+func (r *UserRepositoryMongo) UpdateDisplayNameByID(arg0 context.Context, arg1 string, arg2 bson.ObjectID) (bool, error) {
 	result, err := r.collection.UpdateOne(arg0, bson.M{
 		"_id": arg2,
 	}, bson.M{

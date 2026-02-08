@@ -16,18 +16,18 @@ package user
 import (
 	_ "context"
 
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	_ "go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	_ "go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 type User struct {
-	ID       primitive.ObjectID ` + "`bson:\"id\" json:\"id,omitempty\"`" + `
+	ID       bson.ObjectID ` + "`bson:\"id\" json:\"id,omitempty\"`" + `
 	Username string
 }
 
 func NewUser(username string) User {
 	return User{
-		ID:       primitive.NewObjectID(),
+		ID:       bson.NewObjectID(),
 		Username: username,
 	}
 }
@@ -47,11 +47,11 @@ func TestBuilderBuild(t *testing.T) {
 		},
 		{
 			{
-				Path: "go.mongodb.org/mongo-driver/bson/primitive",
+				Path: "go.mongodb.org/mongo-driver/v2/bson",
 			},
 			{
 				Name: "_",
-				Path: "go.mongodb.org/mongo-driver/mongo/options",
+				Path: "go.mongodb.org/mongo-driver/v2/mongo/options",
 			},
 		},
 	})
@@ -85,7 +85,7 @@ func TestBuilderBuild(t *testing.T) {
 						{
 							Key: "ID",
 							Value: codegen.ChainStatement{
-								codegen.Identifier("primitive"),
+								codegen.Identifier("bson"),
 								codegen.CallStatement{
 									FuncName: "NewObjectID",
 								},

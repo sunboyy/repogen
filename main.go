@@ -81,7 +81,11 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-		defer file.Close()
+		defer func() {
+			if err := file.Close(); err != nil {
+				panic(err)
+			}
+		}()
 		dest = file
 	}
 

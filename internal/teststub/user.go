@@ -3,22 +3,22 @@ package teststub
 import (
 	"context"
 
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 type Gender string
 
 type User struct {
-	ID             primitive.ObjectID `bson:"_id,omitempty"`
-	PhoneNumber    string             `bson:"phone_number"`
-	Gender         Gender             `bson:"gender"`
-	City           string             `bson:"city"`
-	Age            int                `bson:"age"`
-	Name           Name               `bson:"name"`
-	Contact        Contact            `bson:"contact"`
-	Referrer       *User              `bson:"referrer"`
-	Enabled        bool               `bson:"enabled"`
-	ConsentHistory []ConsentHistory   `bson:"consent_history"`
+	ID             bson.ObjectID    `bson:"_id,omitempty"`
+	PhoneNumber    string           `bson:"phone_number"`
+	Gender         Gender           `bson:"gender"`
+	City           string           `bson:"city"`
+	Age            int              `bson:"age"`
+	Name           Name             `bson:"name"`
+	Contact        Contact          `bson:"contact"`
+	Referrer       *User            `bson:"referrer"`
+	Enabled        bool             `bson:"enabled"`
+	ConsentHistory []ConsentHistory `bson:"consent_history"`
 	AccessToken    string
 }
 
@@ -32,7 +32,7 @@ type Contact struct {
 }
 
 type ConsentHistory struct {
-	ID    primitive.ObjectID
+	ID    bson.ObjectID
 	Value bool
 }
 
@@ -81,7 +81,7 @@ type UserRepositoryFind interface {
 	// Test find with True operator
 	FindByEnabledTrue(ctx context.Context) ([]*User, error)
 	// Test find ONE mode
-	FindByID(ctx context.Context, id primitive.ObjectID) (*User, error)
+	FindByID(ctx context.Context, id bson.ObjectID) (*User, error)
 	// Test find with deep referencing
 	FindByNameFirst(ctx context.Context, firstName string) ([]*User, error)
 	// Test find with multi-word arg
@@ -89,7 +89,7 @@ type UserRepositoryFind interface {
 	// Test find with Exists operator
 	FindByReferrerExists(ctx context.Context) ([]*User, error)
 	// Test find with deep pointer referencing
-	FindByReferrerID(ctx context.Context, id primitive.ObjectID) ([]*User, error)
+	FindByReferrerID(ctx context.Context, id bson.ObjectID) ([]*User, error)
 	// Test find with NotExists operator
 	FindByReferrerNotExists(ctx context.Context) ([]*User, error)
 	// Test find Top N
@@ -98,23 +98,23 @@ type UserRepositoryFind interface {
 
 type UserRepositoryUpdate interface {
 	// Test update inc operator
-	UpdateAgeIncByID(ctx context.Context, age int, id primitive.ObjectID) (bool, error)
+	UpdateAgeIncByID(ctx context.Context, age int, id bson.ObjectID) (bool, error)
 	// Test update model ONE mode
-	UpdateByID(ctx context.Context, user *User, id primitive.ObjectID) (bool, error)
+	UpdateByID(ctx context.Context, user *User, id bson.ObjectID) (bool, error)
 	// Test update push operator
 	UpdateConsentHistoryPushByID(ctx context.Context, consentHistoryItem ConsentHistory,
-		id primitive.ObjectID) (int, error)
+		id bson.ObjectID) (int, error)
 	// Test update multiple fields with push operator
 	UpdateEnabledAndConsentHistoryPushByID(ctx context.Context, enabled bool,
-		consentHistoryItem ConsentHistory, id primitive.ObjectID) (int, error)
+		consentHistoryItem ConsentHistory, id bson.ObjectID) (int, error)
 	// Test update multiple fields
-	UpdateGenderAndCityByID(ctx context.Context, gender Gender, city string, id primitive.ObjectID) (int, error)
+	UpdateGenderAndCityByID(ctx context.Context, gender Gender, city string, id bson.ObjectID) (int, error)
 	// Test update field MANY mode
 	UpdateGenderByAge(ctx context.Context, gender Gender, age int) (int, error)
 	// Test update field ONE mode
-	UpdateGenderByID(ctx context.Context, gender Gender, id primitive.ObjectID) (bool, error)
+	UpdateGenderByID(ctx context.Context, gender Gender, id bson.ObjectID) (bool, error)
 	// Test update deep reference field
-	UpdateNameFirstByID(ctx context.Context, firstName string, id primitive.ObjectID) (bool, error)
+	UpdateNameFirstByID(ctx context.Context, firstName string, id bson.ObjectID) (bool, error)
 }
 
 type UserRepositoryDelete interface {
@@ -141,7 +141,7 @@ type UserRepositoryDelete interface {
 	// Test delete with Or operator
 	DeleteByCityOrGender(ctx context.Context, city string, gender Gender) (int, error)
 	// Test delete ONE mode
-	DeleteByID(ctx context.Context, id primitive.ObjectID) (bool, error)
+	DeleteByID(ctx context.Context, id bson.ObjectID) (bool, error)
 	// Test delete with deep reference
 	DeleteByNameFirst(ctx context.Context, firstName string) (int, error)
 	// Test delete multi-word arg
@@ -158,7 +158,7 @@ type UserRepositoryCount interface {
 }
 
 type UserRepositoryInvalidOperation interface {
-	SearchByID(ctx context.Context, id primitive.ObjectID) (*User, error)
+	SearchByID(ctx context.Context, id bson.ObjectID) (*User, error)
 }
 
 type UserRepositoryInvalidInsert interface {
@@ -214,7 +214,7 @@ type UserRepositoryInvalidFind interface {
 	// Test find with incompatible struct field for True comparator
 	FindByGenderTrue(ctx context.Context) ([]*User, error)
 	// Test find with invalid return type
-	FindByID(ctx context.Context, id primitive.ObjectID) (User, error)
+	FindByID(ctx context.Context, id bson.ObjectID) (User, error)
 	// Test find with deep reference field not found
 	FindByNameMiddle(ctx context.Context, middleName string) ([]*User, error)
 	// Test find top with no number and query
@@ -230,27 +230,27 @@ type UserRepositoryInvalidFind interface {
 type UserRepositoryInvalidUpdate interface {
 	// Test update with mismatched And token in update fields
 	UpdateAgeAndAndGenderByID(ctx context.Context, age int, gender Gender,
-		id primitive.ObjectID) (bool, error)
+		id bson.ObjectID) (bool, error)
 	// Test update without context parameter
 	UpdateAgeByGender(age int, gender Gender) (int, error)
 	// Test update with invalid number of returns
-	UpdateAgeByID(ctx context.Context, age int, id primitive.ObjectID) (bool, int, error)
+	UpdateAgeByID(ctx context.Context, age int, id bson.ObjectID) (bool, int, error)
 	// Test update with ambiguous query
-	UpdateAgeByIDAndUsernameOrGender(ctx context.Context, age int, id primitive.ObjectID,
+	UpdateAgeByIDAndUsernameOrGender(ctx context.Context, age int, id bson.ObjectID,
 		username string, gender Gender) (bool, error)
 	// Test update model with invalid parameter type
 	UpdateByGender(ctx context.Context, gender Gender) (bool, error)
 	// Test update with no update parameter provided
-	UpdateByID(ctx context.Context, id primitive.ObjectID) (bool, error)
+	UpdateByID(ctx context.Context, id bson.ObjectID) (bool, error)
 	// Test update without query
 	UpdateCity(ctx context.Context, city string) (bool, error)
 	// Test update with invalid return type
-	UpdateCityByID(ctx context.Context, city string, id primitive.ObjectID) (float64, error)
+	UpdateCityByID(ctx context.Context, city string, id bson.ObjectID) (float64, error)
 	// Test update with inc operator in non-number field
-	UpdateCityIncByID(ctx context.Context, city string, id primitive.ObjectID) (bool, error)
+	UpdateCityIncByID(ctx context.Context, city string, id bson.ObjectID) (bool, error)
 	// Test update with push operator with incorrect parameter type
 	UpdateConsentHistoryPushByID(ctx context.Context, consentHistoryItem []ConsentHistory,
-		id primitive.ObjectID) (int, error)
+		id bson.ObjectID) (int, error)
 	// Test update field not found in struct
 	UpdateCountryByGender(ctx context.Context, country string, gender Gender) (int, error)
 	// Test update with insufficient function parameters
@@ -260,9 +260,9 @@ type UserRepositoryInvalidUpdate interface {
 	// Test update with incorrect parameter type for update field
 	UpdateEnabledByGender(ctx context.Context, enabled int, gender Gender) (bool, error)
 	// Test update with no error return
-	UpdateEnabledByID(ctx context.Context, enabled bool, id primitive.ObjectID) (bool, bool)
+	UpdateEnabledByID(ctx context.Context, enabled bool, id bson.ObjectID) (bool, bool)
 	// Test update with push operator in non-array field
-	UpdateGenderPushByID(ctx context.Context, gender Gender, id primitive.ObjectID) (bool, error)
+	UpdateGenderPushByID(ctx context.Context, gender Gender, id bson.ObjectID) (bool, error)
 }
 
 type UserRepositoryInvalidDelete interface {
