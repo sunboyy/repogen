@@ -3,7 +3,7 @@ package teststub
 import (
 	"context"
 
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 type UserRepositoryIntegration interface {
@@ -14,7 +14,7 @@ type UserRepositoryIntegration interface {
 	FindByAgeBetween(ctx context.Context, ageFrom int, ageTo int) ([]*User, error)
 	FindByGenderNotAndAgeLessThan(ctx context.Context, gender Gender, age int) ([]*User, error)
 	FindByGenderOrAge(ctx context.Context, gender Gender, age int) ([]*User, error)
-	FindByID(ctx context.Context, id primitive.ObjectID) (*User, error)
+	FindByID(ctx context.Context, id bson.ObjectID) (*User, error)
 	InsertMany(ctx context.Context, users []*User) ([]interface{}, error)
 	InsertOne(ctx context.Context, user *User) (interface{}, error)
 }

@@ -16,10 +16,10 @@ var (
 )
 
 func init() {
-	bareMongoPkg := types.NewPackage("go.mongodb.org/mongo-driver/mongo", "mongo")
+	bareMongoPkg := types.NewPackage("go.mongodb.org/mongo-driver/v2/mongo", "mongo")
 	mongoCollectionType = types.NewNamed(types.NewTypeName(token.NoPos, bareMongoPkg, "Collection", nil), nil, nil)
 
-	bareBsonPkg := types.NewPackage("go.mongodb.org/mongo-driver/bson", "bson")
+	bareBsonPkg := types.NewPackage("go.mongodb.org/mongo-driver/v2/bson", "bson")
 	bsonMType = types.NewNamed(types.NewTypeName(token.NoPos, bareBsonPkg, "M", nil), nil, nil)
 }
 

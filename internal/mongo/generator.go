@@ -35,10 +35,9 @@ func (g RepositoryGenerator) Imports() [][]codegen.Import {
 			{Path: "context"},
 		},
 		{
-			{Path: "go.mongodb.org/mongo-driver/bson"},
-			{Path: "go.mongodb.org/mongo-driver/bson/primitive"},
-			{Path: "go.mongodb.org/mongo-driver/mongo"},
-			{Path: "go.mongodb.org/mongo-driver/mongo/options"},
+			{Path: "go.mongodb.org/mongo-driver/v2/bson"},
+			{Path: "go.mongodb.org/mongo-driver/v2/mongo"},
+			{Path: "go.mongodb.org/mongo-driver/v2/mongo/options"},
 		},
 	}
 }

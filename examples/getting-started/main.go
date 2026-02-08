@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 // Replace these values with your own connection option. This connection option is hard-coded for easy
@@ -19,12 +19,12 @@ const (
 
 var (
 	userRepository UserRepository
-	userID         primitive.ObjectID
+	userID         bson.ObjectID
 )
 
 func init() {
 	// create a connection to the database
-	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(connectionString))
+	client, err := mongo.Connect(options.Client().ApplyURI(connectionString))
 	if err != nil {
 		panic(err)
 	}
@@ -53,7 +53,7 @@ func demonstrateInsertion() {
 	if err != nil {
 		panic(err)
 	}
-	userID = insertedID.(primitive.ObjectID)
+	userID = insertedID.(bson.ObjectID)
 	fmt.Printf("Insert (one): inserted id = %v\n", insertedID)
 }
 

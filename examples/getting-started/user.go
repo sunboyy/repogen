@@ -3,15 +3,15 @@ package main
 import (
 	"context"
 
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 // UserModel is a model of user that is stored in the database
 type UserModel struct {
-	ID          primitive.ObjectID `bson:"_id,omitempty" json:"id"`
-	Username    string             `bson:"username" json:"username"`
-	DisplayName string             `bson:"display_name" json:"displayName"`
-	City        string             `bson:"city" json:"city"`
+	ID          bson.ObjectID `bson:"_id,omitempty" json:"id"`
+	Username    string        `bson:"username" json:"username"`
+	DisplayName string        `bson:"display_name" json:"displayName"`
+	City        string        `bson:"city" json:"city"`
 }
 
 //go:generate repogen -dest=user_repo.go -model=UserModel -repo=UserRepository
@@ -32,7 +32,7 @@ type UserRepository interface {
 	// display name. If there is a user matches the query, it will return
 	// true. Error will be returned only when error occurs while accessing
 	// the database.
-	UpdateDisplayNameByID(ctx context.Context, displayName string, id primitive.ObjectID) (bool, error)
+	UpdateDisplayNameByID(ctx context.Context, displayName string, id bson.ObjectID) (bool, error)
 
 	// DeleteByCity deletes users that have `city` value match the parameter
 	// and returns the match count. The error will be returned only when

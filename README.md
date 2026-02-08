@@ -53,7 +53,7 @@ type UserRepository interface {
 	// display name. If there is a user matches the query, it will return true.
 	// Error will be returned only when error occurs while accessing the
 	// database.
-	UpdateDisplayNameByID(ctx context.Context, displayName string, id primitive.ObjectID) (bool, error)
+	UpdateDisplayNameByID(ctx context.Context, displayName string, id bson.ObjectID) (bool, error)
 
 	// DeleteByCity deletes users that have `city` value match the parameter
 	// and returns the match count. The error will be returned only when an
@@ -123,7 +123,7 @@ A `Find` operation also has two modes like `Insert` operation: single-entity and
 
 ```go
 // FindByID gets a single document by ID
-FindByID(ctx context.Context, id primitive.ObjectID) (*Model, error)
+FindByID(ctx context.Context, id bson.ObjectID) (*Model, error)
 
 // FindByCity gets all documents that match city parameter
 FindByCity(ctx context.Context, city string) ([]*Model, error)
@@ -169,7 +169,7 @@ This type of update is for changing the whole model, replacing all the fields ex
 
 ```go
 // UpdateByID updates a single document by ID
-UpdateByID(ctx context.Context, model *Model, id primitive.ObjectID) (bool, error)
+UpdateByID(ctx context.Context, model *Model, id bson.ObjectID) (bool, error)
 ```
 
 2. Fields-type update
@@ -180,7 +180,7 @@ This type of update is for changing only some fields in the model. To write this
 // UpdateDisplayNameAndCityByID updates a single document with a new display name and
 // city by ID
 UpdateDisplayNameAndCityByID(ctx context.Context, displayName string, city string,
-	id primitive.ObjectID) (bool, error)
+	id bson.ObjectID) (bool, error)
 
 // UpdateGenderByCity updates Gender field of documents with matching city parameter
 UpdateGenderByCity(ctx context.Context, gender Gender, city string) (int, error)
@@ -191,10 +191,10 @@ The update operator will be default to `$set` operator. In case that you want to
 ```go
 // UpdateConsentHistoryPushByID appends consentHistory to the ConsentHistory field
 UpdateConsentHistoryPushByID(ctx context.Context, consentHistory ConsentHistory,
-	id primitive.ObjectID) (bool, error)
+	id bson.ObjectID) (bool, error)
 
 // UpdateAgeIncByID increments age value by `incAge`
-UpdateAgeIncByID(ctx context.Context, incAge int, id primitive.ObjectID) (bool, error)
+UpdateAgeIncByID(ctx context.Context, incAge int, id bson.ObjectID) (bool, error)
 ```
 
 For all types of updates, repogen determines a single-entity operation or a multiple-entity by checking the first return value. If it is of type `bool`, the method will be single-entity operation. If it is of type `int`, the method will be multiple-entity operation. For single-entity operation, the method returns true if there is a matching document. For multiple-entity operation, the integer return shows the number of matched documents.
@@ -207,7 +207,7 @@ A `Delete` operation is the very similar to `Find` operation. It has two modes. 
 
 ```go
 // DeleteByID deletes a single document by ID
-DeleteByID(ctx context.Context, id primitive.ObjectID) (bool, error)
+DeleteByID(ctx context.Context, id bson.ObjectID) (bool, error)
 
 // DeleteByCity deletes all documents that match city parameter
 DeleteByCity(ctx context.Context, city string) (int, error)

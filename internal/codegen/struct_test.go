@@ -13,7 +13,7 @@ import (
 
 const expectedStructBuilderCode = `
 type User struct {
-	ID primitive.ObjectID ` + "`bson:\"id,omitempty\" json:\"id,omitempty\"`" + `
+	ID bson.ObjectID ` + "`bson:\"id,omitempty\" json:\"id,omitempty\"`" + `
 	Username string ` + "`bson:\"username\" json:\"username\"`" + `
 	Age int ` + "`bson:\"age\"`" + `
 	orderCount *int

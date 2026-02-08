@@ -21,10 +21,9 @@ func TestImports(t *testing.T) {
 			{Path: "context"},
 		},
 		{
-			{Path: "go.mongodb.org/mongo-driver/bson"},
-			{Path: "go.mongodb.org/mongo-driver/bson/primitive"},
-			{Path: "go.mongodb.org/mongo-driver/mongo"},
-			{Path: "go.mongodb.org/mongo-driver/mongo/options"},
+			{Path: "go.mongodb.org/mongo-driver/v2/bson"},
+			{Path: "go.mongodb.org/mongo-driver/v2/mongo"},
+			{Path: "go.mongodb.org/mongo-driver/v2/mongo/options"},
 		},
 	}
 
@@ -36,7 +35,7 @@ func TestImports(t *testing.T) {
 }
 
 func TestGenerateStruct(t *testing.T) {
-	bareMongoPkg := types.NewPackage("go.mongodb.org/mongo-driver/mongo", "mongo")
+	bareMongoPkg := types.NewPackage("go.mongodb.org/mongo-driver/v2/mongo", "mongo")
 	bareCollectionType := types.NewNamed(types.NewTypeName(token.NoPos, bareMongoPkg, "Collection", nil), nil, nil)
 	generator := mongo.NewGenerator(testutils.Pkg, testutils.TypeUserNamed, "UserRepository")
 	expected := codegen.StructBuilder{

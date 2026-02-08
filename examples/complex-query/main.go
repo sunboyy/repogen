@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 // Replace these values with your own connection option. This connection option is hard-coded for easy
@@ -23,7 +23,7 @@ var (
 
 func init() {
 	// create a connection to the database
-	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(connectionString))
+	client, err := mongo.Connect(options.Client().ApplyURI(connectionString))
 	if err != nil {
 		panic(err)
 	}
@@ -37,10 +37,11 @@ func init() {
 func main() {
 	demonstrateFindByExists()
 	demonstrateFindByNotExists()
+	demonstrateFindByContactEmail()
 }
 
 // demonstrateFindByExists shows how find method in repogen works. It receives
-// query parameters through method arguments and returns matched result
+// query parameters through method arguments and returns matched result.
 func demonstrateFindByExists() {
 	users, err := userComparatorRepository.FindByContactExists(context.Background())
 	if err != nil {
@@ -60,4 +61,16 @@ func demonstrateFindByNotExists() {
 	}
 
 	fmt.Printf("FindByNotExists: found users = %+v\n", users)
+}
+
+// demonstrateFindByContactEmail shows how find method in repogen works. It
+// receives query parameters through method arguments and returns matched
+// result.
+func demonstrateFindByContactEmail() {
+	users, err := userOtherRepository.FindByContactEmail(context.Background(), "sunboyy@gmail.com")
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("FindByContactEmail: found users = %+v\n", users)
 }

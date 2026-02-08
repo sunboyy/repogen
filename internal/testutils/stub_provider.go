@@ -30,13 +30,13 @@ func init() {
 	}
 	TypeContextNamed = contextPkgs[0].Types.Scope().Lookup("Context").Type().(*types.Named)
 
-	primitivePkgs, err := packages.Load(cfg, "go.mongodb.org/mongo-driver/bson/primitive")
+	bsonPkgs, err := packages.Load(cfg, "go.mongodb.org/mongo-driver/v2/bson")
 	if err != nil {
 		panic(err)
 	}
-	TypeObjectIDNamed = primitivePkgs[0].Types.Scope().Lookup("ObjectID").Type().(*types.Named)
+	TypeObjectIDNamed = bsonPkgs[0].Types.Scope().Lookup("ObjectID").Type().(*types.Named)
 
-	mongoPkgs, err := packages.Load(cfg, "go.mongodb.org/mongo-driver/mongo")
+	mongoPkgs, err := packages.Load(cfg, "go.mongodb.org/mongo-driver/v2/mongo")
 	if err != nil {
 		panic(err)
 	}
