@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## v0.4.1 - 2025-02-08
+
+### Fixed
+
+- Fixed failed generation when the interface parameter has map type which contains a named type.
+
 ## v0.4.0 - 2025-02-08
 
 ### Breaking Changes
