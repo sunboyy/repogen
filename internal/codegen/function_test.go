@@ -174,6 +174,27 @@ func TestTypeToString(t *testing.T) {
 			want: "[]string",
 		},
 		{
+			name: "map type",
+			typ:  types.NewMap(code.TypeString, code.TypeInt),
+			want: "map[string]int",
+		},
+		{
+			name: "map with internal named type",
+			typ: types.NewMap(
+				types.NewNamed(types.NewTypeName(token.NoPos, internalPkg, "User", nil), nil, nil),
+				types.NewNamed(types.NewTypeName(token.NoPos, internalPkg, "Gender", nil), nil, nil),
+			),
+			want: "map[User]Gender",
+		},
+		{
+			name: "map with external named value type",
+			typ: types.NewMap(
+				types.NewNamed(types.NewTypeName(token.NoPos, externalPkg, "User", nil), nil, nil),
+				types.NewNamed(types.NewTypeName(token.NoPos, externalPkg, "Gender", nil), nil, nil),
+			),
+			want: "map[bar.User]bar.Gender",
+		},
+		{
 			name: "named type internal",
 			typ:  types.NewNamed(types.NewTypeName(token.NoPos, internalPkg, "User", nil), nil, nil),
 			want: "User",
@@ -234,6 +255,11 @@ func TestTypeToString_PkgNil(t *testing.T) {
 			name: "slice type",
 			typ:  types.NewSlice(code.TypeString),
 			want: "[]string",
+		},
+		{
+			name: "map type",
+			typ:  types.NewMap(code.TypeString, code.TypeInt),
+			want: "map[string]int",
 		},
 		{
 			name: "named type external",

@@ -65,6 +65,9 @@ func TypeToString(pkg *types.Package, t types.Type) string {
 	case *types.Slice:
 		return fmt.Sprintf("[]%s", TypeToString(pkg, t.Elem()))
 
+	case *types.Map:
+		return fmt.Sprintf("map[%s]%s", TypeToString(pkg, t.Key()), TypeToString(pkg, t.Elem()))
+
 	case *types.Named:
 		if pkg == nil || (t.Obj().Pkg() != nil && t.Obj().Pkg().Path() != pkg.Path()) {
 			return fmt.Sprintf("%s.%s", t.Obj().Pkg().Name(), t.Obj().Name())
