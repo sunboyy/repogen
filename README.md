@@ -6,8 +6,8 @@
 <a href="https://codecov.io/gh/sunboyy/repogen" target="_blank">
     <img src="https://codecov.io/gh/sunboyy/repogen/branch/main/graph/badge.svg?token=9BD5Y8X7NO"/>
 </a>
-<a href="https://codeclimate.com/github/sunboyy/repogen/maintainability" target="_blank">
-	<img src="https://api.codeclimate.com/v1/badges/d0270245c28814200c5f/maintainability" />
+<a href="https://qlty.sh/gh/sunboyy/projects/repogen" target="_blank">
+	<img src="https://qlty.sh/gh/sunboyy/projects/repogen/maintainability.svg" />
 </a>
 
 Repogen is a code generator for database repository in Golang inspired by Spring Data JPA.

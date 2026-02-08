@@ -19,7 +19,7 @@ const usageText = `repogen generates MongoDB repository implementation from repo
 Supported options:`
 
 // version indicates the version of repogen.
-const version = "v0.4-next"
+const version = "v0.4"
 
 func main() {
 	flag.Usage = printUsage

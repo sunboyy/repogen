@@ -1,10 +1,11 @@
 # Changelog
 
-## Unreleased
+## v0.4.0 - 2025-02-08
 
 ### Breaking Changes
 
 - With the integration to the go/packages library, `-pkg` option now requires a **Go-style package path** instead of a path to the directory. If you want to use a relative path, you need to prefix it with `./` or `../`.
+- Mongo Go driver is now updated to v2. This means that generated code will tend to import v2 packages of the driver instead.
 
 ### Added
 
